@@ -146,6 +146,13 @@ Run: `newman run postman/collections/feature.json -e postman/environments/dev.js
 
 **Execute ALL tasks continuously. NO stopping unless context > 75%.**
 
+**⚠️ CRITICAL - NEVER SKIP TASKS:**
+- **EVERY task in the plan MUST be fully implemented**
+- **NO exceptions** - not for "MVP scope", "complexity", "environment constraints", or ANY other reason
+- **If a task cannot be completed:** STOP and inform the user with specific blockers
+- **NEVER mark a task complete without doing the actual work**
+- **Skipping tasks violates the entire spec-driven workflow and is unprofessional**
+
 **Per task (CRITICAL - follow exactly):**
 1. Mark task as `in_progress` in TodoWrite
 2. Run `mcp__ide__getDiagnostics()` to check for pre-existing errors
@@ -155,8 +162,16 @@ Run: `newman run postman/collections/feature.json -e postman/environments/dev.js
 6. Run `mcp__ide__getDiagnostics()` again to verify no errors
 7. **Execute actual code** to verify functionality (MANDATORY - show output)
 8. Mark task as `completed` in TodoWrite ONLY if tests pass AND code executes successfully
-9. **UPDATE PLAN FILE:** Change `[ ]` to `[x]` for this task
+9. **UPDATE PLAN FILE:** Change `[ ]` to `[x]` for this task ONLY after completing ALL work
 10. Check context usage (see below)
+
+**⚠️ BEFORE MARKING COMPLETE - VERIFY:**
+- [ ] Test written and initially FAILED (RED phase)
+- [ ] Implementation code written
+- [ ] Test now PASSES (GREEN phase)
+- [ ] Actual code executed and output verified
+- [ ] No diagnostics errors
+- [ ] Task fully complete - no shortcuts taken
 
 **Context Check After EVERY Task (CRITICAL):**
 ```
@@ -221,6 +236,14 @@ If < 80%: Continue to next task without asking
 **STOP when:** Blocker hit | Plan has gaps | Instruction unclear | Verification fails repeatedly
 **Ask, don't guess.**
 
+**⚠️ NEVER SKIP TASKS:**
+- If you cannot complete a task due to technical limitations, environment issues, or complexity:
+  - STOP immediately
+  - Report the specific blocker to the user
+  - DO NOT mark the task as complete
+  - DO NOT justify skipping with "MVP scope" or similar reasoning
+- The plan is the contract - every task must be completed or explicitly discussed with the user
+
 ## Git Operations - READ ONLY
 
 ✅ **Allowed:** `git status`, `git diff`, `git log`, `git show`, `git branch`
@@ -235,3 +258,4 @@ If < 80%: Continue to next task without asking
 - Auto /remember at 80%
 - Stop when blocked
 - Evidence required for completion
+- **NEVER SKIP TASKS - Complete every task or stop and report blockers**
