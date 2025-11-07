@@ -120,7 +120,7 @@
 
 ## 🎬 Masterclass Coming Soon!
 
-If you want to dive deeper into the setup and advanced usage of Claude CodePro, check out the upcoming video masterclass with 12 comprehensive modules where we do a deep-dive into all important topics:
+If you want to dive deeper into the setup and advanced usage of Claude CodePro, check out the upcoming video masterclass with 10 comprehensive modules where we do a deep-dive into all important topics:
 
 ### ➡️ [www.claude-code.pro](https://www.claude-code.pro)
 
