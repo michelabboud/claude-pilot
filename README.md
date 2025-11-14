@@ -80,44 +80,7 @@ Run this one-liner in any existing project directory:
 curl -sSL https://raw.githubusercontent.com/maxritter/claude-codepro/main/scripts/install.sh | bash
 ```
 
-**Installation steps:**
-
-1. **Optional Python Support** - Choose whether to install advanced Python features
-   - Answer `y` to install: uv, ruff, mypy, basedpyright, and Python quality hooks
-   - Answer `n` for language-agnostic setup (Node.js, Go, Rust, etc.)
-
-2. **Claude CodePro Files** - Downloads configuration and rules
-   - `.claude/` - Commands, skills, hooks, and settings
-   - `.cipher/` - Persistent memory configuration
-   - `.qlty/` - Code quality configuration
-   - `.mcp.json` & `.mcp-funnel.json` - MCP server configuration
-
-3. **API Keys Setup** - Interactive wizard guides you through:
-   - Zilliz Cloud (vector DB for memory and semantic search)
-   - OpenAI API (for memory LLM calls)
-   - Context7 (library documentation)
-   - Ref (documentation search)
-   - Firecrawl (web scraping)
-
-4. **Dependencies Installation** - Automatically installs:
-   - **Node.js & npm** (if not present): Required for MCP servers and tooling
-   - **Core** (always): Claude Code CLI, qlty, Cipher, Newman, dotenvx, Statusline
-   - **Python** (optional): uv, ruff, mypy, basedpyright
-
-5. **Shell Configuration** - Adds `cc` alias to bash, zsh, and fish
-
-6. **Build Commands & Skills** - Generates all slash commands and skills from rules
-
-**After installation:**
-
-1. Reload your shell: `source ~/.bashrc` (or `~/.zshrc`)
-2. Run: `cc`
-3. Configure with `/config`:
-   - Set 'Auto-connect to IDE' = true
-   - Set 'Auto-compact' = false
-4. Verify setup:
-   - `/ide` - Connect to VS Code
-   - `/mcp` - Check MCP servers are online
+It will automatically install all dependencies and ask you a few setup questions.
 
 ---
 
