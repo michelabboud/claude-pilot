@@ -20,10 +20,22 @@ add_shell_alias() {
 
 	# Check if this specific project alias exists
 	if grep -q "# Claude CodePro alias - $PROJECT_DIR" "$shell_file"; then
-		# Update existing alias for this project
-		sed -i.bak "/# Claude CodePro alias - ${PROJECT_DIR//\//\\/}/,/^alias ${alias_name}=/c\\
-# Claude CodePro alias - $PROJECT_DIR\\
-$alias_cmd" "$shell_file" && rm -f "${shell_file}.bak"
+		# Update existing alias for this project - create temp file for better compatibility
+		local temp_file="${shell_file}.tmp"
+		local in_section=0
+		while IFS= read -r line; do
+			if [[ "$line" == "# Claude CodePro alias - $PROJECT_DIR" ]]; then
+				in_section=1
+				echo "# Claude CodePro alias - $PROJECT_DIR" >> "$temp_file"
+				echo "$alias_cmd" >> "$temp_file"
+			elif [[ $in_section -eq 1 ]] && [[ "$line" =~ ^alias\ ${alias_name}= ]]; then
+				in_section=0
+				continue
+			else
+				echo "$line" >> "$temp_file"
+			fi
+		done < "$shell_file"
+		mv "$temp_file" "$shell_file"
 		print_success "Updated alias '$alias_name' in $shell_name"
 	elif grep -q "^alias ${alias_name}=" "$shell_file"; then
 		print_warning "Alias '$alias_name' already exists in $shell_name (skipped)"

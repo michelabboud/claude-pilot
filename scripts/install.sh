@@ -94,11 +94,16 @@ trap cleanup EXIT
 build_rules() {
 	print_status "Building Claude Code commands and skills..."
 
-	if [[ -f "$PROJECT_DIR/scripts/build-rules.sh" ]]; then
-		bash "$PROJECT_DIR/scripts/build-rules.sh"
+	if [[ ! -f "$PROJECT_DIR/scripts/build-rules.sh" ]]; then
+		print_warning "build-rules.sh not found, skipping"
+		return
+	fi
+
+	if bash "$PROJECT_DIR/scripts/build-rules.sh"; then
 		print_success "Built commands and skills"
 	else
-		print_warning "build-rules.sh not found, skipping"
+		print_error "Failed to build commands and skills"
+		print_warning "You may need to run 'bash scripts/build-rules.sh' manually"
 	fi
 }
 

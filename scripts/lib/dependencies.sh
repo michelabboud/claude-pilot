@@ -155,9 +155,21 @@ install_cipher() {
 	fi
 
 	print_status "Installing Cipher..."
-	npm install -g @byterover/cipher
 
-	print_success "Installed Cipher"
+	if npm install -g @byterover/cipher; then
+		# Verify installation was successful
+		if command -v cipher &>/dev/null; then
+			print_success "Installed Cipher"
+		else
+			print_warning "Cipher was installed but command not found in PATH"
+			print_warning "You may need to restart your shell or add npm global bin to PATH"
+			echo "   Run: npm config get prefix"
+			echo "   Then add <prefix>/bin to your PATH"
+		fi
+	else
+		print_error "Failed to install Cipher"
+		print_warning "You can install it manually later with: npm install -g @byterover/cipher"
+	fi
 }
 
 # Install Newman (Postman CLI)

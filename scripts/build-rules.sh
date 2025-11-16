@@ -6,6 +6,8 @@
 # Reads rules from .claude/rules/ and generates:
 # - Slash commands in .claude/commands/
 # - Skills in .claude/skills/*/SKILL.md
+#
+# Compatible with Bash 3.2+ (default on macOS)
 # =============================================================================
 
 set -e
@@ -34,8 +36,11 @@ RULES_DIR="$CLAUDE_DIR/rules"
 COMMANDS_DIR="$CLAUDE_DIR/commands"
 SKILLS_DIR="$CLAUDE_DIR/skills"
 
-# Associative arrays for rules and skills
-declare -A RULES
+# Use temp directory for storing rules (Bash 3.2 compatible)
+TEMP_RULES_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_RULES_DIR"' EXIT
+
+# Array for available skills
 declare -a AVAILABLE_SKILLS
 
 # -----------------------------------------------------------------------------
@@ -70,7 +75,8 @@ load_rules() {
         while IFS= read -r -d '' md_file; do
             local rule_id
             rule_id=$(basename "$md_file" .md)
-            RULES["$rule_id"]=$(cat "$md_file")
+            # Store rule content in temp file instead of associative array
+            cat "$md_file" > "$TEMP_RULES_DIR/$rule_id"
             log_success "Loaded $category/$(basename "$md_file")"
             ((rule_count++)) || true
         done < <(find "$category_dir" -maxdepth 1 -name "*.md" -print0 2>/dev/null)
@@ -236,19 +242,21 @@ build_commands() {
     local command_count=0
 
     while IFS='|' read -r cmd_name description model inject_skills rules_list; do
-        local output_parts=()
+        local command_file="$COMMANDS_DIR/${cmd_name}.md"
 
-        # Add frontmatter
-        output_parts+=("---")
-        output_parts+=("description: $description")
-        output_parts+=("model: $model")
-        output_parts+=("---")
+        # Write frontmatter
+        {
+            echo "---"
+            echo "description: $description"
+            echo "model: $model"
+            echo "---"
+        } > "$command_file"
 
         # Add rules content
         for rule_id in $rules_list; do
-            if [[ -n "${RULES[$rule_id]}" ]]; then
-                output_parts+=("${RULES[$rule_id]}")
-                output_parts+=("")
+            if [[ -f "$TEMP_RULES_DIR/$rule_id" ]]; then
+                cat "$TEMP_RULES_DIR/$rule_id" >> "$command_file"
+                echo "" >> "$command_file"
             else
                 log_warning "Rule '$rule_id' not found"
             fi
@@ -256,14 +264,8 @@ build_commands() {
 
         # Add skills section if needed
         if [[ "$inject_skills" == "True" || "$inject_skills" == "true" ]]; then
-            local skills_section
-            skills_section=$(format_skills_section)
-            [[ -n "$skills_section" ]] && output_parts+=("$skills_section")
+            format_skills_section >> "$command_file"
         fi
-
-        # Write command file
-        local command_file="$COMMANDS_DIR/${cmd_name}.md"
-        printf "%s\n" "${output_parts[@]}" > "$command_file"
 
         if [[ "$inject_skills" == "True" || "$inject_skills" == "true" ]]; then
             log_success "Generated ${cmd_name}.md (with skills)"
@@ -296,13 +298,13 @@ build_skills() {
         local rule_id
         rule_id=$(basename "$md_file" .md)
 
-        [[ -z "${RULES[$rule_id]}" ]] && continue
+        [[ ! -f "$TEMP_RULES_DIR/$rule_id" ]] && continue
 
         local skill_dir="$SKILLS_DIR/$rule_id"
         mkdir -p "$skill_dir"
 
         local skill_file="$skill_dir/SKILL.md"
-        echo "${RULES[$rule_id]}" > "$skill_file"
+        cat "$TEMP_RULES_DIR/$rule_id" > "$skill_file"
 
         log_success "Generated $rule_id/SKILL.md"
         ((skill_count++)) || true
