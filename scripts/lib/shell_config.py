@@ -72,11 +72,6 @@ def add_shell_alias(
         ui.print_success(f"Added alias '{alias_name}' to {shell_name}")
 
 
-def _get_ccp_run_cmd() -> str:
-    """Get the command to run CCP (shared between shells)."""
-    return "nvm use 22 && python3 .claude/rules/build.py &>/dev/null && clear && dotenvx run claude"
-
-
 def add_cc_alias() -> None:
     """
     Add 'ccp' alias to all detected shells.
@@ -89,36 +84,39 @@ def add_cc_alias() -> None:
     alias_name = "ccp"
     ui.print_status(f"Configuring shell for NVM and '{alias_name}' alias...")
     home = Path.home()
-    run_cmd = _get_ccp_run_cmd()
 
-    # Bash/Zsh: Priority-based CCP detection
-    bash_alias = f"""alias {alias_name}='
-if [ -f .claude/rules/build.py ]; then
-  {run_cmd};
-elif [ -d /workspaces ]; then
-  ccp_dir=""; for d in /workspaces/*/; do [ -f "$d.claude/rules/build.py" ] && ccp_dir="$d" && break; done;
-  if [ -n "$ccp_dir" ]; then cd "$ccp_dir" && {run_cmd};
-  else echo "Error: No CCP project found in /workspaces"; fi;
-else
-  echo "Error: Not a Claude CodePro project"; echo "Please cd to a CCP-enabled project first.";
-fi'"""
+    # Bash/Zsh: Single-line alias to avoid multi-line parsing issues
+    # Uses semicolons to chain commands within the alias
+    bash_alias = (
+        f"alias {alias_name}='"
+        "if [ -f .claude/rules/build.py ]; then "
+        "nvm use 22 && python3 .claude/rules/build.py &>/dev/null && clear && dotenvx run claude; "
+        "elif [ -d /workspaces ]; then "
+        'ccp_dir=""; for d in /workspaces/*/; do [ -f "$d.claude/rules/build.py" ] && ccp_dir="$d" && break; done; '
+        'if [ -n "$ccp_dir" ]; then cd "$ccp_dir" && nvm use 22 && python3 .claude/rules/build.py &>/dev/null && clear && dotenvx run claude; '
+        'else echo "Error: No CCP project found in /workspaces"; fi; '
+        "else "
+        'echo "Error: Not a Claude CodePro project. Please cd to a CCP-enabled project first."; '
+        "fi'"
+    )
 
     add_shell_alias(home / ".bashrc", bash_alias, ".bashrc", alias_name)
     add_shell_alias(home / ".zshrc", bash_alias, ".zshrc", alias_name)
 
-    # Fish: Different syntax for conditionals
+    # Fish: Different syntax for conditionals (single line)
     fish_config = home / ".config" / "fish" / "config.fish"
-    fish_run_cmd = run_cmd.replace("&&", "; and")
-    fish_alias = f"""alias {alias_name}='
-if test -f .claude/rules/build.py
-  {fish_run_cmd}
-else if test -d /workspaces
-  set ccp_dir ""; for d in /workspaces/*/; test -f "$d.claude/rules/build.py"; and set ccp_dir "$d"; and break; end;
-  if test -n "$ccp_dir"; cd "$ccp_dir"; and {fish_run_cmd};
-  else; echo "Error: No CCP project found in /workspaces"; end
-else
-  echo "Error: Not a Claude CodePro project"; echo "Please cd to a CCP-enabled project first."
-end'"""
+    fish_alias = (
+        f"alias {alias_name}='"
+        "if test -f .claude/rules/build.py; "
+        "nvm use 22; and python3 .claude/rules/build.py &>/dev/null; and clear; and dotenvx run claude; "
+        "else if test -d /workspaces; "
+        'set ccp_dir ""; for d in /workspaces/*/; test -f "$d.claude/rules/build.py"; and set ccp_dir "$d"; and break; end; '
+        'if test -n "$ccp_dir"; cd "$ccp_dir"; and nvm use 22; and python3 .claude/rules/build.py &>/dev/null; and clear; and dotenvx run claude; '
+        'else; echo "Error: No CCP project found in /workspaces"; end; '
+        "else; "
+        'echo "Error: Not a Claude CodePro project. Please cd to a CCP-enabled project first."; '
+        "end'"
+    )
 
     add_shell_alias(fish_config, fish_alias, "config.fish", alias_name)
 

@@ -34,23 +34,40 @@ fi
 
 echo ""
 
-# Install zsh fzf
+# Configure zsh with fzf (idempotent - only add if not present)
 echo "Configuring zsh with fzf..."
-echo -e "\nsource <(fzf --zsh)" >>~/.zshrc
-
-# Enable dotenv plugin for automatic .env loading
-# This will auto-load .env files when you cd into directories
-if ! grep -q "plugins=.*dotenv" ~/.zshrc; then
-    # Add dotenv to plugins array if not already present
-    sed -i 's/plugins=(/plugins=(dotenv /' ~/.zshrc
-
-    # Disable prompt for auto-loading .env (trust dev container environment)
-    echo -e "\n# Auto-load .env files without prompting" >>~/.zshrc
-    echo 'export ZSH_DOTENV_PROMPT=false' >>~/.zshrc
+if ! grep -q "source <(fzf --zsh)" ~/.zshrc 2>/dev/null; then
+    echo -e "\nsource <(fzf --zsh)" >>~/.zshrc
+    echo "✓ Added fzf configuration"
+else
+    echo "✓ fzf already configured"
 fi
 
-# Make zsh the default shell
-chsh -s $(which zsh)
+# Enable dotenv plugin for automatic .env loading (idempotent)
+if ! grep -q "plugins=.*dotenv" ~/.zshrc 2>/dev/null; then
+    # Add dotenv to plugins array if not already present
+    sed -i 's/plugins=(/plugins=(dotenv /' ~/.zshrc
+    echo "✓ Added dotenv plugin"
+else
+    echo "✓ dotenv plugin already configured"
+fi
+
+# Set ZSH_DOTENV_PROMPT (idempotent)
+if ! grep -q "ZSH_DOTENV_PROMPT" ~/.zshrc 2>/dev/null; then
+    echo -e "\n# Auto-load .env files without prompting" >>~/.zshrc
+    echo 'export ZSH_DOTENV_PROMPT=false' >>~/.zshrc
+    echo "✓ Added ZSH_DOTENV_PROMPT setting"
+else
+    echo "✓ ZSH_DOTENV_PROMPT already configured"
+fi
+
+# Make zsh the default shell (idempotent - only if not already zsh)
+if [ "$SHELL" != "$(which zsh)" ]; then
+    chsh -s $(which zsh)
+    echo "✓ Set zsh as default shell"
+else
+    echo "✓ zsh already default shell"
+fi
 
 echo "✓ Shell configuration complete"
 echo ""
