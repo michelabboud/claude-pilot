@@ -4,6 +4,11 @@ model: opus
 ---
 # PLAN MODE: Five-Phase Planning Process
 
+> **WARNING: DO NOT use the built-in `ExitPlanMode` or `EnterPlanMode` tools.**
+> This project has its own planning workflow using `/plan`, `/implement`, and `/verify` slash commands.
+> The built-in Claude Code plan mode tools write to different paths and are incompatible.
+> When planning is complete, simply inform the user and wait for confirmation - no special tool needed.
+
 ## MCP Servers - Use Throughout Planning
 
 | Server | Purpose | When to Use |
@@ -311,3 +316,4 @@ These rules are non-negotiable:
 6. **ALWAYS get user confirmation before implementing** - User owns the decision
 7. **ALWAYS re-read the plan after user confirms** - They may have edited it
 8. **The plan must be detailed enough that another developer could follow it**
+9. **NEVER use built-in ExitPlanMode or EnterPlanMode tools** - This project uses custom `/plan`, `/implement`, `/verify` slash commands. The built-in plan mode tools are incompatible with this workflow.
