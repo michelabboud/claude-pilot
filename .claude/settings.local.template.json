@@ -74,6 +74,15 @@
             "command": "python3 {{PROJECT_DIR}}/.claude/hooks/file_checker_python.py"
           }
         ]
+      },
+      {
+        "matcher": "Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{PROJECT_DIR}}/.claude/bin/ccp-premium context-monitor"
+          }
+        ]
       }
     ]
   },

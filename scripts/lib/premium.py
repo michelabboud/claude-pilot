@@ -141,48 +141,6 @@ def save_license_to_env(project_dir: Path, license_key: str) -> None:
     env_file.write_text("\n".join(filtered_lines) + "\n")
 
 
-def update_settings_for_premium(settings_file: Path, binary_path: Path) -> bool:
-    """Update settings.local.json to add premium context-monitor hook."""
-    if not settings_file.exists():
-        return False
-
-    try:
-        settings = json.loads(settings_file.read_text())
-
-        # Ensure hooks structure exists
-        if "hooks" not in settings:
-            settings["hooks"] = {}
-        if "PostToolUse" not in settings["hooks"]:
-            settings["hooks"]["PostToolUse"] = []
-
-        # Check if context-monitor hook already exists
-        context_hook_exists = False
-        for hook_group in settings["hooks"]["PostToolUse"]:
-            matcher = hook_group.get("matcher", "")
-            if "Bash" in matcher or "Read" in matcher or "Grep" in matcher:
-                for hook in hook_group.get("hooks", []):
-                    cmd = hook.get("command", "")
-                    if "context-monitor" in cmd or "context_monitor" in cmd:
-                        # Update existing hook to use binary
-                        hook["command"] = f"{binary_path} context-monitor"
-                        context_hook_exists = True
-
-        # Add new hook group if context-monitor doesn't exist
-        if not context_hook_exists:
-            settings["hooks"]["PostToolUse"].append(
-                {
-                    "matcher": "Bash|Read|Grep|Glob",
-                    "hooks": [{"type": "command", "command": f"{binary_path} context-monitor"}],
-                }
-            )
-
-        settings_file.write_text(json.dumps(settings, indent=2) + "\n")
-        return True
-
-    except (json.JSONDecodeError, OSError):
-        return False
-
-
 def prompt_for_premium(non_interactive: bool) -> str | None:
     """Prompt user for premium license key."""
     from lib import ui
@@ -251,18 +209,6 @@ def install_premium_features(project_dir: Path, non_interactive: bool) -> bool:
 
     binary_path = Path(result)
     ui.print_success(f"Installed premium binary to {binary_path}")
-
-    # Update settings to use binary
-    settings_file = project_dir / ".claude" / "settings.local.json"
-    if update_settings_for_premium(settings_file, binary_path):
-        ui.print_success("Configured premium hooks")
-    else:
-        ui.print_warning("Could not update settings - you may need to configure hooks manually")
-
-    # Remove Python version of context monitor (replaced by binary)
-    python_monitor = project_dir / ".claude" / "hooks" / "context_monitor.py"
-    if python_monitor.exists():
-        python_monitor.unlink()
-        ui.print_status("Removed Python context monitor (replaced by binary)")
+    ui.print_success("Premium context monitor enabled (hook in settings template)")
 
     return True
