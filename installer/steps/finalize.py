@@ -97,11 +97,8 @@ class FinalizeStep(BaseStep):
                     "     • Auto-connect to IDE (external terminal) = true",
                 ),
                 (
-                    "Enable claude-mem plugin",
-                    "Run: /plugins → Marketplaces → thedotmack → 'Update marketplace' & 'Enable auto-update'\n"
-                    "     Then restart Claude Code with: ccp\n"
-                    "     After restart: /plugins → Installed → claude-mem → Enable plugin\n"
-                    "     Open http://localhost:37777/ to see the Memory Web UI",
+                    "View claude-mem Memory UI",
+                    "Open http://localhost:37777/ to see the Memory Web UI",
                 ),
                 ("Verify MCP servers", "Run: /mcp → If any fail, click on the server and select 'Reconnect'"),
                 ("Connect IDE", "Run: /ide → Enables real-time diagnostics"),

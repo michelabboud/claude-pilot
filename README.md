@@ -82,7 +82,7 @@ curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/v3.3.1/ins
 ### 🏗️ One-Command Installation
 
 - **Global Tools** - Python tools, qlty, Claude Code, dotenvx installed globally
-- **LSP Servers** - basedpyright (Python) and vtsls (TypeScript/JS) for code intelligence
+- **LSP Servers** - Python and TypeScript CC Language Servers for extended code intelligence
 - **Dev Container Required** - Isolated Linux environment with pre-configured tools and extensions
 - **Automated Setup Script** - Installs and configures everything in one command
 - **Shell Integration** - Auto-configures bash and zsh with `ccp` alias
@@ -146,5 +146,4 @@ paths: src/**/*.py
 - **[astral-sh/uv](https://github.com/astral-sh/uv)** - Fast Python package manager
 - **[astral-sh/ruff](https://github.com/astral-sh/ruff)** - Fast Python linter and formatter
 - **[DetachHead/basedpyright](https://github.com/DetachHead/basedpyright)** - Enhanced Python type checker
-- **[yioneko/vtsls](https://github.com/yioneko/vtsls)** - TypeScript/JavaScript language server
 - **[dotenvx/dotenvx](https://github.com/dotenvx/dotenvx)** - Automatic .env loading for Claude Code
