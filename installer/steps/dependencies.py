@@ -413,8 +413,9 @@ class DependenciesStep(BaseStep):
             else:
                 run_tweakcc(ctx.project_dir)
 
-        if _install_with_spinner(ui, "TypeScript LSP", install_typescript_lsp):
-            installed.append("typescript_lsp")
+        if ctx.install_typescript:
+            if _install_with_spinner(ui, "TypeScript LSP", install_typescript_lsp):
+                installed.append("typescript_lsp")
 
         if ctx.install_python:
             if _install_with_spinner(ui, "Pyright LSP", install_pyright_lsp):

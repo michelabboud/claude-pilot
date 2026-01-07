@@ -73,11 +73,11 @@ curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/v3.5.0/ins
 
 ### 🛠️ Intelligent Hooks for Quality, Standards and Context
 
-- **Qlty Quality** - Post-edit hook for automated formatting and code checking for all languages
-- **Python Quality** - Post-edit hook for uv, ruff, mypy, basedpyright linting and type checking (optional)
+- **Python Quality** - Post-edit hook for ruff, mypy, basedpyright linting and type checking (optional)
+- **TypeScript Quality** - Post-edit hook for eslint, tsc, prettier checks (optional)
+- **General Quality** - Post-edit hook for all languages for automated formatting and checking using qlty
 - **TDD Enforcer** - Pre-edit hook that warns when modifying code without failing tests first
 - **Context Monitor** - Post-tool hook that warns CC automatically at 85%/95% context usage
-- **Claude Memory** - Various hooks that intelligently manage Claude Memory context injection via claude-mem
 
 ### 🏗️ One-Command Installation
 
