@@ -1,6 +1,6 @@
 ## TypeScript Development Standards
 
-**Standards:** Detect package manager | Explicit types on exports | Self-documenting code
+**Standards:** Detect package manager | Strict types | No `any` | Self-documenting code
 
 ### Package Manager - DETECT FIRST, THEN USE CONSISTENTLY
 
@@ -18,7 +18,7 @@ If no lock file exists, check `packageManager` field in `package.json`, or defau
 
 **Why this matters:** Mixing package managers corrupts lock files and breaks reproducible builds.
 
-### Type Annotations
+### Type Safety
 
 **Explicit return types on all exported functions:**
 ```typescript
@@ -31,6 +31,14 @@ export async function fetchUser(id: string): Promise<User> { ... }
 interface User { id: string; email: string; }
 type Status = 'pending' | 'active' | 'suspended';
 ```
+
+**Avoid `any` - use `unknown` instead:**
+```typescript
+// BAD: function parse(data: any) { ... }
+// GOOD: function parse(data: unknown) { ... }
+```
+
+**If you're about to type `any`:** STOP. Use `unknown`, a specific type, or a generic instead.
 
 ### Code Style
 
@@ -52,14 +60,22 @@ export function calculateDiscount(price: number, rate: number): number { ... }
 
 Before completing TypeScript work, **always run** (using detected package manager):
 
-1. **Format:** Use project's `format` script, or `prettier --write .` / `biome format --write .`
-2. **Lint:** Use project's `lint` script, or `eslint . --fix` / `biome check --fix .`
-3. **Type check:** Use project's `typecheck` script, or `tsc --noEmit`
-4. **Tests:** Use project's `test` script
+1. **Type check:** `tsc --noEmit` or project's `typecheck` script
+2. **Lint:** `eslint . --fix` or project's `lint` script
+3. **Format:** `prettier --write .` or project's `format` script
+4. **Tests:** Project's `test` script
+
+**⚠️ BLOCKERS - Do NOT mark work complete if:**
+- Type checking fails (`tsc --noEmit` has errors)
+- Lint errors exist (warnings OK, errors are blockers)
+- Tests fail
+
+**If `tsc --noEmit` shows errors:** STOP. Fix type errors before proceeding.
 
 Verify:
-- [ ] All commands pass
+- [ ] All commands pass without errors
 - [ ] Explicit return types on exports
+- [ ] No `any` types (use `unknown` instead)
 - [ ] Correct lock file committed
 
 ### Quick Reference
@@ -70,4 +86,4 @@ Verify:
 | Add package  | `npm install pkg`    | `yarn add pkg`    | `pnpm add pkg`    | `bun add pkg`    |
 | Add dev dep  | `npm install -D pkg` | `yarn add -D pkg` | `pnpm add -D pkg` | `bun add -D pkg` |
 | Run script   | `npm run script`     | `yarn script`     | `pnpm script`     | `bun script`     |
-| Exec binary  | `npx cmd`            | `yarn dlx cmd`    | `pnpm dlx cmd`    | `bunx cmd`       |
+| Type check   | `npx tsc --noEmit`   | `yarn tsc --noEmit` | `pnpm tsc --noEmit` | `bunx tsc --noEmit` |
