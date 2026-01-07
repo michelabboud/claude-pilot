@@ -13,54 +13,58 @@ class TestProcessSettings:
 
     def test_process_settings_preserves_python_hook_when_enabled(self):
         """process_settings keeps Python hook when install_python=True."""
-        from installer.steps.claude_files import PYTHON_CHECKER_HOOK, process_settings
+        from installer.steps.claude_files import process_settings
 
+        # Use absolute path like real source file
+        python_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_python.py"
         settings = {
             "hooks": {
                 "PostToolUse": [
                     {
                         "matcher": "Write|Edit|MultiEdit",
                         "hooks": [
-                            {"type": "command", "command": "python3 .claude/hooks/file_checker_qlty.py"},
-                            {"type": "command", "command": PYTHON_CHECKER_HOOK},
+                            {"type": "command", "command": "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_qlty.py"},
+                            {"type": "command", "command": python_hook},
                         ],
                     }
                 ]
             }
         }
 
-        result = process_settings(json.dumps(settings), install_python=True)
+        result = process_settings(json.dumps(settings), install_python=True, install_typescript=True)
         parsed = json.loads(result)
 
         hooks = parsed["hooks"]["PostToolUse"][0]["hooks"]
         commands = [h["command"] for h in hooks]
-        assert PYTHON_CHECKER_HOOK in commands
+        assert any("file_checker_python.py" in cmd for cmd in commands)
         assert len(hooks) == 2
 
     def test_process_settings_removes_python_hook_when_disabled(self):
         """process_settings removes Python hook when install_python=False."""
-        from installer.steps.claude_files import PYTHON_CHECKER_HOOK, process_settings
+        from installer.steps.claude_files import process_settings
 
+        # Use absolute path like real source file
+        python_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_python.py"
         settings = {
             "hooks": {
                 "PostToolUse": [
                     {
                         "matcher": "Write|Edit|MultiEdit",
                         "hooks": [
-                            {"type": "command", "command": "python3 .claude/hooks/file_checker_qlty.py"},
-                            {"type": "command", "command": PYTHON_CHECKER_HOOK},
+                            {"type": "command", "command": "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_qlty.py"},
+                            {"type": "command", "command": python_hook},
                         ],
                     }
                 ]
             }
         }
 
-        result = process_settings(json.dumps(settings), install_python=False)
+        result = process_settings(json.dumps(settings), install_python=False, install_typescript=True)
         parsed = json.loads(result)
 
         hooks = parsed["hooks"]["PostToolUse"][0]["hooks"]
         commands = [h["command"] for h in hooks]
-        assert PYTHON_CHECKER_HOOK not in commands
+        assert not any("file_checker_python.py" in cmd for cmd in commands)
         assert any("file_checker_qlty.py" in cmd for cmd in commands)
         assert len(hooks) == 1
 
@@ -70,7 +74,7 @@ class TestProcessSettings:
 
         settings = {"model": "opus", "env": {"key": "value"}}
 
-        result = process_settings(json.dumps(settings), install_python=False)
+        result = process_settings(json.dumps(settings), install_python=False, install_typescript=False)
         parsed = json.loads(result)
 
         assert parsed["model"] == "opus"
@@ -78,8 +82,10 @@ class TestProcessSettings:
 
     def test_process_settings_preserves_other_settings(self):
         """process_settings preserves all other settings unchanged."""
-        from installer.steps.claude_files import PYTHON_CHECKER_HOOK, process_settings
+        from installer.steps.claude_files import process_settings
 
+        # Use absolute path like real source file
+        python_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_python.py"
         settings = {
             "model": "opus",
             "env": {"DISABLE_TELEMETRY": "true"},
@@ -88,13 +94,13 @@ class TestProcessSettings:
                 "PostToolUse": [
                     {
                         "matcher": "Write|Edit|MultiEdit",
-                        "hooks": [{"type": "command", "command": PYTHON_CHECKER_HOOK}],
+                        "hooks": [{"type": "command", "command": python_hook}],
                     }
                 ]
             },
         }
 
-        result = process_settings(json.dumps(settings), install_python=False)
+        result = process_settings(json.dumps(settings), install_python=False, install_typescript=True)
         parsed = json.loads(result)
 
         assert parsed["model"] == "opus"
@@ -117,10 +123,71 @@ class TestProcessSettings:
 
         for settings in malformed_cases:
             # Should not raise an exception
-            result = process_settings(json.dumps(settings), install_python=False)
+            result = process_settings(json.dumps(settings), install_python=False, install_typescript=False)
             # Should return valid JSON
             parsed = json.loads(result)
             assert parsed is not None
+
+    def test_process_settings_removes_typescript_hook_when_disabled(self):
+        """process_settings removes TypeScript hook when install_typescript=False."""
+        from installer.steps.claude_files import process_settings
+
+        # Use absolute path like real source file
+        ts_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_ts.py"
+        settings = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "Write|Edit|MultiEdit",
+                        "hooks": [
+                            {"type": "command", "command": "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_qlty.py"},
+                            {"type": "command", "command": ts_hook},
+                        ],
+                    }
+                ]
+            }
+        }
+
+        result = process_settings(json.dumps(settings), install_python=True, install_typescript=False)
+        parsed = json.loads(result)
+
+        hooks = parsed["hooks"]["PostToolUse"][0]["hooks"]
+        commands = [h["command"] for h in hooks]
+        assert not any("file_checker_ts.py" in cmd for cmd in commands)
+        assert any("file_checker_qlty.py" in cmd for cmd in commands)
+        assert len(hooks) == 1
+
+    def test_process_settings_removes_both_hooks_when_both_disabled(self):
+        """process_settings removes both Python and TypeScript hooks when both disabled."""
+        from installer.steps.claude_files import process_settings
+
+        # Use absolute paths like real source file
+        python_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_python.py"
+        ts_hook = "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_ts.py"
+        settings = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "Write|Edit|MultiEdit",
+                        "hooks": [
+                            {"type": "command", "command": "python3 /workspaces/claude-codepro/.claude/hooks/file_checker_qlty.py"},
+                            {"type": "command", "command": python_hook},
+                            {"type": "command", "command": ts_hook},
+                        ],
+                    }
+                ]
+            }
+        }
+
+        result = process_settings(json.dumps(settings), install_python=False, install_typescript=False)
+        parsed = json.loads(result)
+
+        hooks = parsed["hooks"]["PostToolUse"][0]["hooks"]
+        commands = [h["command"] for h in hooks]
+        assert not any("file_checker_python.py" in cmd for cmd in commands)
+        assert not any("file_checker_ts.py" in cmd for cmd in commands)
+        assert any("file_checker_qlty.py" in cmd for cmd in commands)
+        assert len(hooks) == 1
 
 
 class TestClaudeFilesStep:
@@ -354,6 +421,51 @@ class TestClaudeFilesStep:
             assert not (dest_dir / ".claude" / "hooks" / "file_checker_python.py").exists()
             # Other hooks should be copied
             assert (dest_dir / ".claude" / "hooks" / "other_hook.sh").exists()
+
+    def test_claude_files_skips_typescript_when_disabled(self):
+        """ClaudeFilesStep skips TypeScript files when install_typescript=False."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create source with TypeScript files
+            source_claude = Path(tmpdir) / "source" / ".claude"
+            source_hooks = source_claude / "hooks"
+            source_rules = source_claude / "rules" / "custom"
+            source_hooks.mkdir(parents=True)
+            source_rules.mkdir(parents=True)
+            (source_hooks / "file_checker_ts.py").write_text("# typescript hook")
+            (source_hooks / "other_hook.sh").write_text("# other hook")
+            (source_rules / "typescript-rules.md").write_text("# typescript rules")
+            (source_rules / "other-rules.md").write_text("# other rules")
+            # Add settings file (required by the step)
+            (source_claude / "settings.local.json").write_text('{"hooks": {}}')
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_dir.mkdir()
+            (dest_dir / ".claude").mkdir()
+            (dest_dir / ".claude" / "hooks").mkdir()
+            (dest_dir / ".claude" / "rules" / "custom").mkdir(parents=True)
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                install_typescript=False,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=Path(tmpdir) / "source",
+            )
+
+            step.run(ctx)
+
+            # TypeScript hook should NOT be copied
+            assert not (dest_dir / ".claude" / "hooks" / "file_checker_ts.py").exists()
+            # TypeScript rules should NOT be copied
+            assert not (dest_dir / ".claude" / "rules" / "custom" / "typescript-rules.md").exists()
+            # Other files should be copied
+            assert (dest_dir / ".claude" / "hooks" / "other_hook.sh").exists()
+            assert (dest_dir / ".claude" / "rules" / "custom" / "other-rules.md").exists()
 
 
 class TestClaudeFilesCustomRulesPreservation:
