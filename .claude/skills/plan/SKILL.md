@@ -180,9 +180,11 @@ Questions:
 
 | Tool | When to Use | Example |
 |------|-------------|---------|
-| **Context7** | Library/framework docs | Use `resolve-library-id` then `query-docs` to look up API usage |
+| **Context7** | Library/framework docs | `resolve-library-id(query="your question", libraryName="lib")` then `query-docs(libraryId, query)` |
 | **Firecrawl** | Web scraping/content | Use `firecrawl_scrape` for single pages, `firecrawl_search` for research |
 | **mcp-cli** | Custom MCP servers | Use `mcp-cli <server>/<tool> '<json>'` for servers in `mcp_servers.json` |
+
+**Context7 requires descriptive queries for both tools - see `library-docs.md` for full docs.**
 
 **Firecrawl MCP Tools (preferred for web content):**
 - `firecrawl_scrape` - Single page content extraction (documentation, articles, code)
@@ -212,7 +214,7 @@ First search will trigger automatic indexing. Use `vexor search "query" --mode c
 
 **For each area:**
 - Use `vexor search "query" --mode code` for semantic searches like "authentication middleware" or "database connection handling"
-- Use Context7 (`resolve-library-id` then `query-docs`) when you need library/framework API details
+- Use Context7 when you need library/framework API details: `resolve-library-id(query="your question", libraryName="lib")` then `query-docs(libraryId, query)` - descriptive queries enable server-side reranking
 - Use Firecrawl (`firecrawl_search`, `firecrawl_scrape`) for web research, fetching documentation, or extracting code examples
 - Use `Read`, `Grep`, `Glob` tools directly for file exploration
 - Document hypotheses (not conclusions)

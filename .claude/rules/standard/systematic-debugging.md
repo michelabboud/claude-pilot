@@ -6,9 +6,16 @@
 
 | Tool | When to Use |
 |------|-------------|
-| **Context7** | Library/framework API lookup (`resolve-library-id` then `query-docs`) |
+| **Context7** | Library/framework API lookup (see `library-docs.md` for full docs) |
 | **Firecrawl** | Search error messages, find solutions (`firecrawl_search`), fetch docs (`firecrawl_scrape`) |
 | **Vexor** | Find similar patterns in codebase (`vexor search "error handling"`) |
+
+**Context7 Quick Reference:**
+```
+resolve-library-id(query="descriptive question", libraryName="lib")
+query-docs(libraryId="/npm/lib", query="specific question")
+```
+Both parameters required. Descriptive queries enable server-side reranking.
 
 ### Phase 1: Root Cause Investigation
 

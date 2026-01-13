@@ -59,9 +59,11 @@ Update counts:
 
 | Tool | When to Use | Example |
 |------|-------------|---------|
-| **Context7** | Library API lookup | Use `resolve-library-id` then `query-docs` - "pytest fixtures" |
+| **Context7** | Library API lookup | `resolve-library-id(query="how to use fixtures", libraryName="pytest")` then `query-docs(libraryId, query)` |
 | **Firecrawl** | Web content/research | Use `firecrawl_search` for solutions, `firecrawl_scrape` for docs |
 | **mcp-cli** | Custom MCP servers | Use `mcp-cli <server>/<tool> '<json>'` for servers in `mcp_servers.json` |
+
+**Context7 requires descriptive queries for both tools - see `library-docs.md` for full docs.**
 
 **Firecrawl MCP Tools (preferred for web content):**
 - `firecrawl_search` - Search web for solutions, debug errors, find examples
@@ -75,7 +77,7 @@ vexor --version
 
 **During implementation:**
 - Use `vexor search "query" --mode code` to find similar implementations and patterns
-- Use Context7 (`resolve-library-id` then `query-docs`) when unsure about library/framework APIs
+- Use Context7 when unsure about library/framework APIs: `resolve-library-id(query="your question", libraryName="lib")` then `query-docs(libraryId, query="specific question")` - descriptive queries required
 - Use Firecrawl (`firecrawl_search`, `firecrawl_scrape`) to research error messages, find solutions, or fetch documentation
 
 ## ⚠️ CRITICAL: Migration/Refactoring Tasks

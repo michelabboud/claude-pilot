@@ -6,7 +6,9 @@
 |------|----------|----------|
 | Web search | `firecrawl_search` | WebSearch |
 | Fetch web page | `firecrawl_scrape` | WebFetch |
-| Library docs | Context7 (`query-docs`) | WebSearch/WebFetch |
+| Library docs | Context7 (see `library-docs.md`) | WebSearch/WebFetch |
+
+### Firecrawl - Web Scraping
 
 Use Firecrawl MCP when you need to:
 - Extract content from web pages and convert to markdown
