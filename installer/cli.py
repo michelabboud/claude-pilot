@@ -111,6 +111,92 @@ def install(
     effective_local_repo_dir = local_repo_dir if local_repo_dir else (Path.cwd() if local else None)
 
     skip_prompts = non_interactive
+    project_dir = Path.cwd()
+    saved_config = load_config(project_dir)
+
+    if not skip_prompts and not saved_config.get("license_acknowledged"):
+        console.print()
+        console.print("  [bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
+        console.print("  [bold]📜 License Agreement[/bold]")
+        console.print("  [bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
+        console.print()
+        console.print("  Claude CodePro is [bold green]FREE[/bold green] for:")
+        console.print("    • Individuals (personal projects, learning)")
+        console.print("    • Freelancers (client work, consulting)")
+        console.print("    • Open Source Projects (AGPL-3.0 compatible)")
+        console.print()
+        console.print("  [bold yellow]Commercial License REQUIRED[/bold yellow] for:")
+        console.print("    • Companies with closed-source/proprietary software")
+        console.print("    • Internal tools at companies not willing to open-source")
+        console.print("    • SaaS products using Claude CodePro")
+        console.print()
+        console.print("  [bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
+        console.print("  [bold]💡 Why Support Claude CodePro?[/bold]")
+        console.print("  [bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
+        console.print()
+        console.print("  Your license supports continuous development of:")
+        console.print("    ✨ Pre-configured professional development environment")
+        console.print("    ✨ Endless Mode for unlimited context sessions")
+        console.print("    ✨ TDD enforcement, quality hooks, and LSP integration")
+        console.print("    ✨ Semantic search, persistent memory, and MCP servers")
+        console.print("    ✨ Regular updates with latest Claude Code best practices")
+        console.print()
+        console.print("  [dim]Save your team countless hours of setup, configuration,[/dim]")
+        console.print("  [dim]and keeping up with the rapidly evolving AI tooling landscape.[/dim]")
+        console.print()
+        console.print("  [bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
+        console.print()
+
+        license_choices = [
+            "Free tier (individual/freelancer/open-source)",
+            "Commercial - I want to evaluate first",
+            "Commercial - I need a license",
+        ]
+        choice = console.select("How will you use Claude CodePro?", license_choices)
+
+        if choice == license_choices[2]:
+            console.print()
+            console.print("  [bold]To obtain a commercial license, please contact:[/bold]")
+            console.print()
+            console.print("  [bold cyan]✉️  mail@maxritter.net[/bold cyan]")
+            console.print()
+            console.print("  [dim]Include your company name and expected number of users.[/dim]")
+            console.print()
+            raise typer.Exit(0)
+
+        use_type = "free" if choice == license_choices[0] else "commercial_eval"
+
+        if use_type == "commercial_eval":
+            console.print()
+            console.print("  [bold green]✓ Evaluation mode enabled[/bold green]")
+            console.print()
+            console.print("  You may proceed with installation to evaluate Claude CodePro.")
+            console.print("  [bold yellow]Please acquire a license before production use.[/bold yellow]")
+            console.print()
+            console.print("  [bold]Contact:[/bold] [cyan]mail@maxritter.net[/cyan]")
+            console.print()
+
+        console.print("  [bold]Please type the following to confirm:[/bold]")
+        console.print()
+        console.print('  [cyan]"I acknowledge the Claude CodePro license terms"[/cyan]')
+        console.print()
+
+        confirmation = console.input("Your confirmation").strip().lower()
+        expected = "i acknowledge the claude codepro license terms"
+
+        if confirmation != expected:
+            console.print()
+            console.error("Confirmation text did not match. Installation cancelled.")
+            console.print("  [dim]Please type the exact phrase shown above.[/dim]")
+            raise typer.Exit(1)
+
+        console.print()
+        console.success("License terms acknowledged. Thank you!")
+        console.print()
+
+        saved_config["license_acknowledged"] = True
+        saved_config["license_type"] = use_type
+        save_config(project_dir, saved_config)
 
     claude_dir = Path.cwd() / ".claude"
     if claude_dir.exists() and not skip_prompts:
@@ -147,9 +233,6 @@ def install(
 
             shutil.copytree(claude_dir, backup_dir, ignore=ignore_special_files)
             console.success(f"Backup created: {backup_dir}")
-
-    project_dir = Path.cwd()
-    saved_config = load_config(project_dir)
 
     install_python = not skip_python
     if not skip_python and not skip_prompts:
