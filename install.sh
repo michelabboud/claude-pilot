@@ -282,8 +282,39 @@ fi
 echo "  [OK] CCP binary downloaded"
 echo ""
 
+# Run installer with error handling for macOS Gatekeeper
+set +e  # Temporarily disable exit on error
 if [ "$LOCAL_INSTALL" = true ]; then
     "$INSTALLER_PATH" install --local-system "$@"
 else
     "$INSTALLER_PATH" install "$@"
+fi
+EXIT_CODE=$?
+set -e
+
+if [ $EXIT_CODE -ne 0 ]; then
+    # Check if killed by signal (137 = 128 + 9 = SIGKILL)
+    if [ $EXIT_CODE -eq 137 ] || [ $EXIT_CODE -eq 9 ]; then
+        echo ""
+        echo "  ╭─────────────────────────────────────────────────────────────╮"
+        echo "  │  macOS Security Blocked the Installer                       │"
+        echo "  ╰─────────────────────────────────────────────────────────────╯"
+        echo ""
+        echo "  macOS Gatekeeper blocked the unsigned installer binary."
+        echo ""
+        echo "  To fix this, run these commands:"
+        echo ""
+        echo "    sudo xattr -rd com.apple.quarantine $INSTALLER_PATH"
+        echo "    $INSTALLER_PATH install --local-system"
+        echo ""
+        echo "  Or allow it in System Settings:"
+        echo "    1. Open System Settings → Privacy & Security"
+        echo "    2. Scroll down to find the blocked app message"
+        echo "    3. Click 'Allow Anyway'"
+        echo "    4. Re-run this installer"
+        echo ""
+        exit 1
+    else
+        exit $EXIT_CODE
+    fi
 fi
