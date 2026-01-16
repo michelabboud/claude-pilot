@@ -6,12 +6,11 @@
 
 Start shipping systematically with Endless Mode, Spec-Driven Development, Skills, TDD, LSP, Semantic Search, Persistent Memory, Quality Hooks, Modular Rules System, and much more 🚀
 
-
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![Opus 4.5](https://img.shields.io/badge/Opus_4.5-Compatible-purple.svg)
 ![Endless Mode](https://img.shields.io/badge/Endless-Mode-red.svg)
 ![Spec-Driven](https://img.shields.io/badge/Spec-Driven-yellow.svg)
 ![TDD](https://img.shields.io/badge/TDD-Enforcement-green.svg)
+![License](https://img.shields.io/badge/License-AGPL--3.0%20%2F%20Commercial-blue.svg)
 
 #### ⭐ [Star this repository](https://github.com/maxritter/claude-codepro) · 🌐 [Visit the website](https://claude-code.pro) · 💼 [Follow for updates](https://www.linkedin.com/in/rittermax/) · ✉️ [Get in touch](mailto:mail@maxritter.net)
 
@@ -60,6 +59,14 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 3. Wait for installation to finish then follow the post-setup instructions
 4. Reload your shell: `source ~/.zshrc` (or `~/.bashrc`)
 5. Run `ccp` to start Claude CodePro
+
+### Claude Subscription
+
+Claude CodePro is designed to be token-efficient, but quality has its cost. For the best experience, use:
+
+- **Claude Max 5x** — For individual developers with moderate usage
+- **Claude Max 20x** — For heavy usage or professional development
+- **Enterprise Plan** — For teams and organizations
 
 ---
 
