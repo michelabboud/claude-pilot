@@ -157,7 +157,8 @@ download_installer() {
 
     # Extract installer/*.py files using grep/sed (POSIX compatible)
     # Filter: starts with installer/, ends with .py, excludes __pycache__ and dist/build
-    echo "$tree_json" | grep -o '"path":"installer/[^"]*\.py"' | sed 's/"path":"//g; s/"$//g' | while IFS= read -r file_path; do
+    # Note: GitHub API JSON has space after colon: "path": "installer/..."
+    echo "$tree_json" | grep -oE '"path": ?"installer/[^"]*\.py"' | sed 's/"path": *"//g; s/"$//g' | while IFS= read -r file_path; do
         # Skip __pycache__, dist, build directories
         case "$file_path" in
             *__pycache__*|*dist/*|*build/*) continue ;;
