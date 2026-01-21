@@ -164,7 +164,7 @@ download_installer() {
 
     echo "$tree_json" | grep -oE '"path": ?"installer/[^"]*\.py"' | sed 's/"path": *"//g; s/"$//g' | while IFS= read -r file_path; do
         case "$file_path" in
-        *__pycache__* | *dist/* | *build/*) continue ;;
+        *__pycache__* | *dist/* | *build/* | *tests/*) continue ;;
         esac
 
         local dest_file="$installer_dir/$file_path"
