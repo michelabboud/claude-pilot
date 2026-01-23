@@ -48,7 +48,7 @@ Then run `ccp` and `/sync` once. Use `/spec` or the quick mode for full quality.
 
 🖥️ **Platforms:** macOS, Linux, Windows (WSL2)
 
-💳 **Claude:** [Max](https://www.anthropic.com/max) 5x/20x or [Enterprise](https://www.anthropic.com/enterprise) recommended
+💳 **Claude:** [Max](https://www.anthropic.com/max), [Team](https://claude.com/pricing/team), or [Enterprise](https://www.anthropic.com/enterprise) recommended
 
 Choose your installation method:
 
