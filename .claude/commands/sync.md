@@ -1,19 +1,21 @@
 ---
-description: Sync project rules with codebase - reads existing rules, explores code, updates documentation
+description: Sync project rules and skills with codebase - reads existing rules/skills, explores code, updates documentation, creates new skills
 model: opus
 ---
-# /sync - Sync Project Rules
+# /sync - Sync Project Rules & Skills
 
-**Sync custom rules with the current state of the codebase.** Reads existing rules, explores code patterns, identifies gaps, and updates documentation. Run anytime to keep rules current.
+**Sync custom rules and skills with the current state of the codebase.** Reads existing rules/skills, explores code patterns, identifies gaps, updates documentation, and creates new skills when workflows are discovered. Run anytime to keep rules and skills current.
 
 ## What It Does
 
-1. **Read existing rules** - Load all `.claude/rules/custom/*.md` to understand current state
+1. **Read existing rules & skills** - Load all `.claude/rules/custom/*.md` and `.claude/skills/` to understand current state
 2. **Build search index** - Initialize/update Vexor for semantic code search
 3. **Explore codebase** - Use Vexor, Grep, and file analysis to discover patterns
 4. **Compare & sync** - Update outdated rules, add missing patterns
+5. **Create skills** - When reusable workflows are discovered, invoke skill-creator
 
 All files in `.claude/rules/custom/` are project-specific rules loaded into every session.
+Custom skills in `.claude/skills/` (non-standard names) are preserved during updates.
 
 ---
 
@@ -299,7 +301,62 @@ For each selected pattern:
 ```
 ```
 
-### Phase 8: Summary
+### Phase 8: Discover & Create Skills
+
+**Identify patterns that would be better as skills than rules.**
+
+Skills are appropriate when you find:
+- **Multi-step workflows** - Procedures with sequential steps
+- **Tool integrations** - Working with specific file formats, APIs, or external tools
+- **Reusable scripts** - Code that gets rewritten repeatedly
+- **Domain expertise** - Complex knowledge that benefits from bundled references
+
+#### Step 8.1: Identify Skill Candidates
+
+Based on codebase exploration, look for:
+
+1. **Repeated workflows** - Same sequence of steps in multiple places
+2. **Complex tool usage** - Specific patterns for working with tools/formats
+3. **Scripts that could be bundled** - Utility code that's reused
+
+**Use AskUserQuestion:**
+```
+Question: "I found patterns that might work better as skills. Create any?"
+Header: "New Skills"
+multiSelect: true
+Options:
+- "[Workflow 1]" - [Description of multi-step process]
+- "[Tool integration]" - [Description of tool/format handling]
+- "[Domain area]" - [Description of specialized knowledge]
+- "None" - Skip skill creation
+```
+
+#### Step 8.2: Create Selected Skills
+
+For each selected skill, **invoke the skill-creator skill**:
+
+```
+Skill(skill="skill-creator", args="create skill for [selected pattern]")
+```
+
+The skill-creator will:
+1. Ask clarifying questions about the workflow
+2. Plan reusable contents (scripts, references, assets)
+3. Create the skill directory in `.claude/skills/`
+4. Write the SKILL.md with proper frontmatter
+
+**Important:** Use a unique skill name (not `plan`, `implement`, `verify`, or `standards-*`) so it's preserved during updates.
+
+#### Step 8.3: Verify Skill Creation
+
+After skill-creator completes:
+1. Verify skill directory exists in `.claude/skills/`
+2. Confirm SKILL.md has proper frontmatter (name, description)
+3. Test skill is recognized: mention it in conversation to trigger
+
+---
+
+### Phase 9: Summary
 
 **Report what was synced:**
 
@@ -315,6 +372,9 @@ For each selected pattern:
 **New Rules Created:**
 - api-responses.md - Response envelope pattern
 
+**New Skills Created:**
+- my-workflow - Multi-step deployment process
+
 **No Changes Needed:**
 - cdk-rules.md - Still current
 - opensearch-mcp-server.md - Still current
@@ -326,6 +386,7 @@ Question: "Sync complete. What next?"
 Header: "Continue?"
 Options:
 - "Discover more standards" - Look for more patterns to document
+- "Create more skills" - Look for more workflow patterns
 - "Done" - Finish sync
 ```
 
@@ -380,13 +441,23 @@ When an error occurs in our application, we have established a consistent patter
 
 ## Output Locations
 
-All custom rules in `.claude/rules/custom/`:
+**Custom rules** in `.claude/rules/custom/`:
 
 | Rule Type | File | Purpose |
 |-----------|------|---------|
 | Project context | `project.md` | Tech stack, structure, commands |
 | MCP servers | `mcp-servers.md` | Custom MCP server documentation |
 | Discovered standards | `[pattern-name].md` | Tribal knowledge, conventions |
+
+**Custom skills** in `.claude/skills/`:
+
+| Skill Type | Directory | Purpose |
+|------------|-----------|---------|
+| Workflows | `[workflow-name]/` | Multi-step procedures |
+| Tool integrations | `[tool-name]/` | File format or API handling |
+| Domain expertise | `[domain-name]/` | Specialized knowledge with references |
+
+**Note:** Use unique names (not `plan`, `implement`, `verify`, `standards-*`) for custom skills.
 
 Vexor index: `.vexor/` (auto-managed)
 

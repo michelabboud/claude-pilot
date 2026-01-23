@@ -232,11 +232,14 @@ Before marking complete:
 
 **When all tasks are done and Status is set to COMPLETE, this skill ends.**
 
-**Control returns to /spec. /spec MUST then:**
-1. Re-read the plan file to confirm Status: COMPLETE
-2. **IMMEDIATELY invoke Skill(verify, plan-path) in the same response**
-3. **DO NOT** end the response without invoking /verify
+**YOU (as /spec orchestrator) MUST then in the SAME response:**
+1. Read the plan file to confirm Status: COMPLETE
+2. **IMMEDIATELY invoke `Skill(verify, "plan-path")`**
 
-**The phrase "Proceeding to verification..." means NOTHING if you don't actually invoke /verify.**
+**DO NOT:**
+- ❌ Say "Proceeding to verification..." and stop
+- ❌ End your response without invoking /verify
+- ❌ Wait for user input
 
-**This skill's job is done. /spec takes over and MUST continue the workflow.**
+**DO:**
+- ✅ `Skill(verify, "docs/plans/2026-01-23-feature.md")` ← Actually call it

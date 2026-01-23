@@ -7,7 +7,9 @@ description: Create a detailed implementation plan with exploration for Claude C
 > **WARNING: DO NOT use the built-in `ExitPlanMode` or `EnterPlanMode` tools.**
 > This project has its own planning workflow using `/plan`, `/implement`, and `/verify` skill commands that are automatically invoked via the `/spec` slash-command.
 > The built-in Claude Code plan mode tools write to different paths and are incompatible.
-> When planning is complete, simply inform the user and wait for confirmation - no special tool needed.
+>
+> **⛔ CRITICAL: When planning is complete and approved, this skill ENDS and control returns to /spec.**
+> Do NOT stop or wait - /spec will automatically invoke /implement next.
 
 ## Using AskUserQuestion - Core Planning Tool
 
@@ -420,9 +422,10 @@ Iterations: 0
 
    **If user approves ("Yes, proceed..."):**
    - Edit the plan file to change `Approved: No` to `Approved: Yes`
-   - Tell user: "Plan approved. Proceeding with implementation..."
-   - **EXIT /plan immediately - /spec will invoke /implement**
+   - Output: "Plan approved. **Plan path:** `<plan-path>`"
+   - **THIS SKILL NOW ENDS** - your response is complete
    - Do NOT write any implementation code - that's /implement's job
+   - Do NOT say "proceeding to implementation" and then stop - that's a violation
 
    **If user wants changes ("No, I need to make changes"):**
    - Tell user: "Please edit the plan file at `<plan-path>`, then say 'ready' when done"
@@ -434,6 +437,19 @@ Iterations: 0
 
 **⚠️ CRITICAL: Claude handles the `Approved:` field update - user never edits it manually**
 **DO NOT write or edit any implementation files until approved.**
+
+---
+
+## ⛔ WHEN THIS SKILL COMPLETES - CRITICAL
+
+**When the plan is approved, this skill ends and control returns to /spec.**
+
+**What /spec MUST do next (in the SAME response):**
+1. Re-read the plan file to confirm Status: PENDING, Approved: Yes
+2. **IMMEDIATELY invoke `Skill(implement, "<plan-path>")`**
+3. **DO NOT** end the response without invoking /implement
+
+**If you approved the plan and then stopped without /spec invoking /implement, that's a CRITICAL VIOLATION of the workflow.**
 
 
 ## Critical Rules

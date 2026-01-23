@@ -209,7 +209,6 @@ class ClaudeFilesStep(BaseStep):
             dirs_to_clear = [
                 ("commands", categories["commands"], ctx.project_dir / ".claude" / "commands"),
                 ("hooks", categories["hooks"], ctx.project_dir / ".claude" / "hooks"),
-                ("skills", categories["skills"], ctx.project_dir / ".claude" / "skills"),
                 ("standard rules", categories["rules_standard"], ctx.project_dir / ".claude" / "rules" / "standard"),
             ]
 
@@ -222,6 +221,21 @@ class ClaudeFilesStep(BaseStep):
                     except (OSError, IOError) as e:
                         if ui:
                             ui.warning(f"Failed to clear {name} directory: {e}")
+
+            skills_dir = ctx.project_dir / ".claude" / "skills"
+            if skills_dir.exists() and categories["skills"]:
+                standard_skill_names = {"plan", "implement", "verify"}
+                for skill_subdir in skills_dir.iterdir():
+                    if skill_subdir.is_dir():
+                        name = skill_subdir.name
+                        if name in standard_skill_names or name.startswith("standards-"):
+                            if ui:
+                                ui.status(f"Clearing old skill: {name}...")
+                            try:
+                                shutil.rmtree(skill_subdir)
+                            except (OSError, IOError) as e:
+                                if ui:
+                                    ui.warning(f"Failed to clear skill {name}: {e}")
 
             scripts_dir = ctx.project_dir / ".claude" / "scripts"
             if scripts_dir.exists():
@@ -306,10 +320,10 @@ class ClaudeFilesStep(BaseStep):
             custom_dir.mkdir(parents=True, exist_ok=True)
             (custom_dir / ".gitkeep").touch()
 
-        skills_dir = ctx.project_dir / ".claude" / "skills"
-        if not skills_dir.exists():
-            skills_dir.mkdir(parents=True, exist_ok=True)
-            (skills_dir / ".gitkeep").touch()
+        skills_custom_dir = ctx.project_dir / ".claude" / "skills" / "custom"
+        if not skills_custom_dir.exists():
+            skills_custom_dir.mkdir(parents=True, exist_ok=True)
+            (skills_custom_dir / ".gitkeep").touch()
 
         if ui:
             if file_count > 0:

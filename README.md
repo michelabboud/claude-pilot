@@ -27,7 +27,7 @@ Quality automated. Continuously improved. TDD enforced. Ship with confidence. �
 curl -fsSL https://raw.githubusercontent.com/maxritter/claude-codepro/v5.1.12/install.sh | bash
 ```
 
-Then run `ccp` and `/sync` once. Use `/spec` or the quick mode for full quality.
+Then run `ccp` and `/sync` once to sync rules and skills. Use `/spec` or the quick mode for full quality.
 
 ---
 
@@ -94,12 +94,12 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 - **Implementation** - Executes the plan with TDD enforcement and context management
 - **Verification** - Runs tests, quality checks, and validates completion based on the plan
 
-### 📚 Modular Rules System
+### 📚 Modular Rules & Skills System
 
-- **Standard Rules** - Best-Practices for TDD, Context Management, etc. in `.claude/rules/standard/`
-- **Custom Rules** - Project-specific rules in `.claude/rules/custom/` (never touched by updates)
-- **Command Skills** - Workflow-specific modes: `/spec`, `/sync`, `/plan`, `/implement`, `/verify`
-- **Standards Skills** - Best-Practices for Frontend, Backend, Testing, etc. automatically injected
+- **Standard Rules** in `.claude/rules/standard/` - Best practices for TDD, context management, etc.
+- **Custom Rules** in `.claude/rules/custom/` - Project-specific rules, never touched by updates
+- **Standard Skills** in `.claude/skills/` (`plan`, `implement`, `verify`, `standards-*`) - Updated on install
+- **Custom Skills** in `.claude/skills/` (any other name) - Never touched by updates
 
 ### 🧠 Enhanced Context Capabilities
 
@@ -145,9 +145,9 @@ Same task. Different results.
 
 ## ⚡ Usage
 
-### 🔄 Sync Project Rules
+### 🔄 Sync Rules & Skills
 
-Run `/sync` to sync project rules with your codebase. Run it once initially, then anytime after major changes:
+Run `/sync` to sync custom rules and skills with your codebase. Run it once initially, then anytime after major changes:
 
 ```bash
 ccp
@@ -187,13 +187,14 @@ ccp
 > Fix the null pointer bug in user.py
 ```
 
-### 📐 Rules System
+### 📐 Rules & Skills System
 
 Claude CodePro uses [Claude Code's modular rules](https://code.claude.com/docs/en/memory#modular-rules-with-claude/rules/):
 
-- **Standard Rules** in `.claude/rules/standard/` - Best-Practices updated on install, don't modify those
-- **Custom Rules** in `.claude/rules/custom/` - Your project-specific rules, never touched by updates
-- **Quality Hooks** - Pre-edit and post-edit hooks that enforce standards automatically
+- **Standard Rules** in `.claude/rules/standard/` - Updated on install
+- **Custom Rules** in `.claude/rules/custom/` - Never touched by updates
+- **Standard Skills** in `.claude/skills/` (`plan`, `implement`, `verify`, `standards-*`) - Updated on install
+- **Custom Skills** in `.claude/skills/` (any other name) - Never touched by updates
 
 
 ---

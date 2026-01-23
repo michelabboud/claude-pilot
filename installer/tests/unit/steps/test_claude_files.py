@@ -741,19 +741,19 @@ class TestDirectoryClearing:
 
         step = ClaudeFilesStep()
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create source with skills
+            # Create source with standard skill (plan is a standard skill name)
             source_dir = Path(tmpdir) / "source"
             source_claude = source_dir / ".claude"
-            source_skills = source_claude / "skills" / "test-skill"
+            source_skills = source_claude / "skills" / "plan"
             source_skills.mkdir(parents=True)
-            (source_skills / "SKILL.md").write_text("new skill")
+            (source_skills / "SKILL.md").write_text("new plan skill")
 
-            # Create destination with OLD skills (should be cleared)
+            # Create destination with OLD standard skill (should be cleared)
             dest_dir = Path(tmpdir) / "dest"
             dest_claude = dest_dir / ".claude"
-            dest_skills = dest_claude / "skills" / "old-skill"
+            dest_skills = dest_claude / "skills" / "plan"
             dest_skills.mkdir(parents=True)
-            (dest_skills / "SKILL.md").write_text("old skill to be removed")
+            (dest_skills / "SKILL.md").write_text("old plan skill to be removed")
 
             ctx = InstallContext(
                 project_dir=dest_dir,
@@ -764,10 +764,9 @@ class TestDirectoryClearing:
 
             step.run(ctx)
 
-            # Old skill should be GONE (directory was cleared)
-            assert not (dest_claude / "skills" / "old-skill").exists()
-            # New skill should be installed
-            assert (dest_claude / "skills" / "test-skill" / "SKILL.md").exists()
+            # New standard skill should be installed (old was cleared)
+            assert (dest_claude / "skills" / "plan" / "SKILL.md").exists()
+            assert (dest_claude / "skills" / "plan" / "SKILL.md").read_text() == "new plan skill"
 
     def test_skips_clearing_when_source_equals_destination(self):
         """Directories are NOT cleared when source == destination (same dir)."""
@@ -779,7 +778,7 @@ class TestDirectoryClearing:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create .claude directory (source AND destination are same)
             claude_dir = Path(tmpdir) / ".claude"
-            skills_dir = claude_dir / "skills" / "my-skill"
+            skills_dir = claude_dir / "skills" / "plan"
             skills_dir.mkdir(parents=True)
             (skills_dir / "SKILL.md").write_text("existing skill content")
 
@@ -838,3 +837,45 @@ class TestDirectoryClearing:
             assert not (dest_standard / "old-rule.md").exists()
             # New standard rule should be installed
             assert (dest_standard / "new-rule.md").exists()
+
+    def test_custom_skills_never_cleared(self):
+        """Custom skills (non-standard names) are NEVER cleared, only standard skills."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create source with standard skill (plan)
+            source_dir = Path(tmpdir) / "source"
+            source_claude = source_dir / ".claude"
+            source_plan = source_claude / "skills" / "plan"
+            source_plan.mkdir(parents=True)
+            (source_plan / "SKILL.md").write_text("new plan skill")
+
+            # Create destination with custom skill AND old standard skill
+            dest_dir = Path(tmpdir) / "dest"
+            dest_claude = dest_dir / ".claude"
+            dest_custom = dest_claude / "skills" / "my-custom-skill"  # Custom name
+            dest_plan = dest_claude / "skills" / "plan"  # Standard name
+            dest_custom.mkdir(parents=True)
+            dest_plan.mkdir(parents=True)
+            (dest_custom / "SKILL.md").write_text("USER CUSTOM SKILL")
+            (dest_plan / "SKILL.md").write_text("old plan skill")
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            step.run(ctx)
+
+            # Custom skill should be PRESERVED (not a standard name)
+            assert (dest_custom / "SKILL.md").exists()
+            assert (dest_custom / "SKILL.md").read_text() == "USER CUSTOM SKILL"
+
+            # Standard skill should be updated
+            assert (dest_plan / "SKILL.md").exists()
+            assert (dest_plan / "SKILL.md").read_text() == "new plan skill"

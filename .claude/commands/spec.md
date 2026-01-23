@@ -86,7 +86,8 @@ ELSE:
     task_description = arguments
     → Use Skill tool to run /plan with task_description
     → /plan handles user approval internally via AskUserQuestion
-    → After /plan completes, RE-READ plan status and continue (DO NOT STOP)
+    → ⛔ CRITICAL: After /plan completes, RE-READ plan status and IMMEDIATELY continue
+    → DO NOT STOP after /plan - invoke /implement in the SAME response
 ```
 
 ### Session Resume (--continue)

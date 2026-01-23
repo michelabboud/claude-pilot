@@ -99,8 +99,8 @@ def has_related_failing_test(project_dir: str, impl_file: str) -> bool:
     """
     cache_file = Path(project_dir) / ".pytest_cache" / "v" / "cache" / "lastfailed"
 
-    parts = path.parts
-    stem = path.stem
+    if not cache_file.exists():
+        return False
 
     impl_path = Path(impl_file)
     module_name = impl_path.stem
@@ -177,7 +177,8 @@ def run_tdd_enforcer() -> int:
         return 0
 
     if file_path.endswith(".py"):
-        test_file = get_corresponding_test_file(file_path)
+        path = Path(file_path).parent
+        found_failing = False
 
         for _ in range(10):
             if has_related_failing_test(str(path), file_path):

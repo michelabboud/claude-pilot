@@ -93,3 +93,20 @@ class TestBootstrapStep:
             assert ctx.config.get("is_upgrade") is True
             assert (claude_dir / "test.txt").exists()
             assert (claude_dir / "test.txt").read_text() == "existing content"
+
+    def test_bootstrap_creates_skills_directory(self):
+        """BootstrapStep creates skills directory."""
+        from installer.context import InstallContext
+        from installer.steps.bootstrap import BootstrapStep
+        from installer.ui import Console
+
+        step = BootstrapStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctx = InstallContext(
+                project_dir=Path(tmpdir),
+                ui=Console(non_interactive=True),
+            )
+            step.run(ctx)
+
+            # Should create skills directory
+            assert (Path(tmpdir) / ".claude" / "skills").exists()
