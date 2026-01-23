@@ -48,7 +48,7 @@ const Index = () => {
     "name": "Claude CodePro",
     "description": "Production-grade AI development for Claude Code. TDD enforced, quality automated, ship with confidence.",
     "applicationCategory": "DeveloperApplication",
-    "operatingSystem": "Linux, macOS, Windows (via Docker)",
+    "operatingSystem": "Linux, macOS, Windows",
     "offers": {
       "@type": "Offer",
       "price": "0",

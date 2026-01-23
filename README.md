@@ -46,21 +46,25 @@ Then run `ccp` and `/sync` once. Use `/spec` or the quick mode for full quality.
 
 ### ✅ Prerequisites
 
+🖥️ **Platforms:** macOS, Linux, Windows (WSL2)
+
+💳 **Claude:** [Max](https://www.anthropic.com/max) 5x/20x or [Enterprise](https://www.anthropic.com/enterprise) recommended
+
 Choose your installation method:
 
-**Option A: 🐳 Dev Container (Recommended - All Platforms)**
+**Option A: 🐳 Dev Container (Recommended)**
+
+Pre-configured, isolated environment with all tools ready. No system conflicts, consistent across machines, easy cleanup.
+
 - **Container Runtime** - [Docker Desktop](https://www.docker.com/products/docker-desktop) or compatible equivalent
 - **IDE with Dev Container Support** - Any IDE supporting the [Dev Container spec](https://containers.dev/):
   - VS Code and forks: [VS Code](https://code.visualstudio.com/), [Cursor](https://cursor.sh/), [Windsurf](https://windsurf.com/), [Antigravity](https://antigravity.google/) (with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers))
   - JetBrains IDEs: [IntelliJ IDEA](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html), WebStorm, PyCharm, GoLand, etc.
   - Cloud: [GitHub Codespaces](https://github.com/features/codespaces), [DevPod](https://devpod.sh/), [CodeSandbox](https://codesandbox.io/)
-- Works on **macOS**, **Linux**, and **Windows (with WSL2)**
 
-**Option B: 🍺 Local Installation (Only macOS/Linux)**
-- **macOS or Linux** - Homebrew-compatible system
-- **Homebrew** - Installed automatically if not present
+**Option B: 🍺 Local Installation**
 
-**Claude Subscription:** Claude Max 5x/20x or Enterprise recommended for best experience.
+Install directly on your system. Requires Homebrew (macOS/Linux/WSL2).
 
 ### 🔧 Installation
 
@@ -213,6 +217,6 @@ After your trial, choose the tier that fits your needs [here](https://license.cl
 | Tier | Includes |
 |:-----|:---------|
 | **Standard** | All features, continuous updates with latest learnings, GitHub support |
-| **Enterprise** | Standard + dedicated email support and optional training sessions |
+| **Enterprise** | Standard + dedicated email support and priority feature requests |
 
 See the [LICENSE](LICENSE) file for full terms.

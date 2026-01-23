@@ -38,11 +38,7 @@ YOUR RIGHTS
 SOURCE CODE
 --------------------------------------------------------------------------------
 
-Most of Claude CodePro's source code is open source under AGPL-3.0 (see below).
-
-The following components are proprietary and closed source:
-  - The CCP binary (.claude/bin/ccp) - license verification and advanced features
-  - Related license management code in the ccp/ directory
+Most of Claude CodePro's source code is open source under AGPL-3.0.
 
 The AGPL-3.0 license applies to the open source portions of the codebase.
 Using Claude CodePro (the complete product) requires a paid license after

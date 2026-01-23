@@ -73,7 +73,7 @@ const insideItems: InsideItem[] = [
       "Automated Dev Container setup",
       "Optional Python, TypeScript & Go support",
       "Shell integration with ccp alias",
-      "Works with any Dev Container-compatible IDE",
+      "macOS, Linux, Windows (WSL2)",
     ],
   },
 ];

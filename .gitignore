@@ -233,7 +233,7 @@ tmp/
 .claude/bin/
 .claude/installer/
 docs/plans
-docs/concepts
+docs/license
 
 # Kiro
 .kiro/
