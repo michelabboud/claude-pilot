@@ -151,7 +151,8 @@ def run_ruff_check(file_path: Path) -> tuple[bool, str]:
         )
         output = result.stdout + result.stderr
         lines = output.splitlines()
-        error_lines = [line for line in lines if line and line[0] in "FEWCBNSIDPLRU" and line[1:4].isdigit()]
+        error_pattern = re.compile(r":\d+:\d+: [A-Z]{1,3}\d+")
+        error_lines = [line for line in lines if error_pattern.search(line)]
         has_issues = len(error_lines) > 0
         return has_issues, output
     except Exception:

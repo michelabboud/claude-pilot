@@ -257,14 +257,14 @@ jobs:
           if [ -n "$PR_NUM" ]; then
             NOTES="Pre-release build from PR #${PR_NUM}
 
-          **Commit:** ${{ github.sha }}
+          **Commit:** ${{ steps.version.outputs.COMMIT_SHA }}
           **Branch:** ${{ github.head_ref }}
 
           This is a development pre-release for testing. Not for production use."
           else
             NOTES="Pre-release build (manual trigger)
 
-          **Commit:** ${{ github.sha }}
+          **Commit:** ${{ steps.version.outputs.COMMIT_SHA }}
 
           This is a development pre-release for testing. Not for production use."
           fi

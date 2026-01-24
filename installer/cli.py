@@ -258,6 +258,9 @@ def install(
     skip_typescript: bool = typer.Option(False, "--skip-typescript", help="Skip TypeScript support installation"),
     skip_golang: bool = typer.Option(False, "--skip-golang", help="Skip Go support installation"),
     local_system: bool = typer.Option(False, "--local-system", help="Local installation (not in container)"),
+    target_version: Optional[str] = typer.Option(
+        None, "--target-version", help="Target version/tag for downloads (e.g., dev-abc1234-20260124)"
+    ),
 ) -> None:
     """Install Claude CodePro."""
     console = Console(non_interactive=non_interactive, quiet=quiet)
@@ -435,6 +438,7 @@ def install(
         local_mode=local,
         local_repo_dir=effective_local_repo_dir,
         is_local_install=local_system,
+        target_version=target_version,
         ui=console,
     )
 
