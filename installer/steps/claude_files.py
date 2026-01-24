@@ -92,9 +92,16 @@ class ClaudeFilesStep(BaseStep):
         """Install all .claude files from repository."""
         ui = ctx.ui
 
+        repo_branch = "main"
+        if ctx.target_version:
+            if ctx.target_version.startswith("dev-"):
+                repo_branch = ctx.target_version
+            else:
+                repo_branch = f"v{ctx.target_version}"
+
         config = DownloadConfig(
             repo_url="https://github.com/maxritter/claude-codepro",
-            repo_branch="main",
+            repo_branch=repo_branch,
             local_mode=ctx.local_mode,
             local_repo_dir=ctx.local_repo_dir,
         )

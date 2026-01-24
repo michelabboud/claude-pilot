@@ -26,6 +26,17 @@ class TestInstallContext:
         assert ctx.local_repo_dir is None
         assert ctx.completed_steps == []
         assert ctx.config == {}
+        assert ctx.target_version is None
+
+    def test_context_accepts_target_version(self):
+        """InstallContext accepts target_version for dev installs."""
+        from installer.context import InstallContext
+
+        ctx = InstallContext(
+            project_dir=Path("/tmp/test"),
+            target_version="dev-abc1234-20260124",
+        )
+        assert ctx.target_version == "dev-abc1234-20260124"
 
     def test_mark_completed_adds_step(self):
         """mark_completed adds step to completed_steps."""

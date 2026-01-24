@@ -189,7 +189,10 @@ def _download_ccp_artifacts(version: str, bin_dir: Path, ui: Any = None) -> bool
     if not platform_suffix:
         return False
 
-    base_url = f"https://github.com/{GITHUB_REPO}/releases/download/v{version}"
+    if version.startswith("dev-"):
+        base_url = f"https://github.com/{GITHUB_REPO}/releases/download/{version}"
+    else:
+        base_url = f"https://github.com/{GITHUB_REPO}/releases/download/v{version}"
 
     so_url = f"{base_url}/ccp-{platform_suffix}.so"
     local_so_name = _get_local_so_name()

@@ -142,7 +142,8 @@ def run_context_monitor() -> int:
     if percentage >= THRESHOLD_WARN:
         print("", file=sys.stderr)
         print(
-            f"{YELLOW}Context: {percentage:.0f}% - Finish current task with full quality, then hand off{NC}",
+            f"{YELLOW}Context: {percentage:.0f}% - Finish current task with full quality or find a good place to wrap up, then hand off{NC}",
+            f"{YELLOW}IMPORTANT: NEVER rush to"
             file=sys.stderr,
         )
         return 2

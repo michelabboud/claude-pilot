@@ -283,12 +283,18 @@ run_installer() {
 
 	export PYTHONPATH="$installer_dir:${PYTHONPATH:-}"
 
+	# Pass target version for dev installs so installer downloads from correct tag
+	local version_arg=""
+	if [ -n "$VERSION" ] && [ "$VERSION" != "$DEFAULT_VERSION" ]; then
+		version_arg="--target-version $VERSION"
+	fi
+
 	if ! is_in_container && [ "$saved_mode" = "local" ]; then
 		uv run --python 3.12 --no-project --with rich --with httpx --with typer --with platformdirs \
-			python -m installer install --local-system "$@"
+			python -m installer install --local-system $version_arg "$@"
 	else
 		uv run --python 3.12 --no-project --with rich --with httpx --with typer --with platformdirs \
-			python -m installer install "$@"
+			python -m installer install $version_arg "$@"
 	fi
 }
 

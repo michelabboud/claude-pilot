@@ -150,7 +150,10 @@ def run_ruff_check(file_path: Path) -> tuple[bool, str]:
             check=False,
         )
         output = result.stdout + result.stderr
-        has_issues = bool(output and "All checks passed" not in output)
+        lines = output.splitlines()
+        error_pattern = re.compile(r":\d+:\d+: [A-Z]{1,3}\d+")
+        error_lines = [line for line in lines if error_pattern.search(line)]
+        has_issues = len(error_lines) > 0
         return has_issues, output
     except Exception:
         return False, ""
