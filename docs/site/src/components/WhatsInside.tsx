@@ -61,7 +61,7 @@ const insideItems: InsideItem[] = [
     title: "Quality Automation",
     items: [
       "TDD Enforcer - Pre-edit test requirement",
-      "Quality Hooks - Python, TypeScript, Go & QLTY",
+      "Quality Hooks - Python, TypeScript and Go",
       "Context Monitor - Usage tracking and handoffs",
       "Status Line - Live context, memory, and usage",
     ],

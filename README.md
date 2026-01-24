@@ -4,14 +4,15 @@
 
 ### Production-Grade Development Environment for Claude Code
 
-Quality automated. Continuously improved. TDD enforced. Ship with confidence. 🚀
+Quality automated. Context optimized. Testing enforced. Ship with confidence.</br>
+A shortcut to state-of-the-art Claude Code development, continuously improved.
 
 [![Version](https://img.shields.io/github/v/release/maxritter/claude-codepro?label=Version&color=orange)](https://github.com/maxritter/claude-codepro/releases)
 [![Stars](https://img.shields.io/github/stars/maxritter/claude-codepro?style=flat&color=yellow)](https://github.com/maxritter/claude-codepro/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/maxritter/claude-codepro?color=blue)](https://github.com/maxritter/claude-codepro/commits/main)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/maxritter/claude-codepro/pulls)
 
-#### ⭐ [Star this repository](https://github.com/maxritter/claude-codepro) · 🌐 [Visit the website](https://claude-code.pro) · 🔔 [Follow for updates](https://www.linkedin.com/in/rittermax/) · ✉️ [Get in touch](mailto:mail@maxritter.net)
+#### ⭐ [Star this repository](https://github.com/maxritter/claude-codepro) · 🌐 [Visit the website](https://claude-code.pro) · 🔔 [Follow for updates](https://www.linkedin.com/in/rittermax/)
 
 <br>
 
