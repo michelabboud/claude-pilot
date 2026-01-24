@@ -448,3 +448,74 @@ class TestCcpBinaryStepRetry:
         assert mock_download.call_count == 3
         assert ui.confirm.call_count == 2
         ui.success.assert_called_with("CCP binary updated to v5.1.2")
+
+
+class TestCcpBinaryStepTargetVersion:
+    """Tests for CcpBinaryStep target_version handling."""
+
+    def _make_context(
+        self, tmp_path: Path, target_version: str | None = None, ui: MagicMock | None = None
+    ) -> InstallContext:
+        return InstallContext(
+            project_dir=tmp_path,
+            ui=ui,
+            config={},
+            target_version=target_version,
+        )
+
+    @patch("installer.steps.ccp_binary.INSTALLER_VERSION", "5.1.2")
+    @patch("installer.steps.ccp_binary._download_ccp_artifacts")
+    @patch("installer.steps.ccp_binary._get_installed_version")
+    def test_target_version_takes_precedence_over_installer_version(
+        self, mock_version: MagicMock, mock_download: MagicMock, tmp_path: Path
+    ) -> None:
+        """ctx.target_version should take precedence over INSTALLER_VERSION."""
+        mock_version.return_value = None
+        mock_download.return_value = True
+
+        # Set target_version to dev version - should be used instead of 5.1.2
+        ctx = self._make_context(tmp_path, target_version="dev-e59320b-20260124")
+        step = CcpBinaryStep()
+        step.run(ctx)
+
+        mock_download.assert_called_once()
+        call_args = mock_download.call_args[0]
+        # Should use target_version, not INSTALLER_VERSION
+        assert call_args[0] == "dev-e59320b-20260124"
+
+    @patch("installer.steps.ccp_binary.INSTALLER_VERSION", "5.1.2")
+    @patch("installer.steps.ccp_binary._download_ccp_artifacts")
+    @patch("installer.steps.ccp_binary._get_installed_version")
+    def test_falls_back_to_installer_version_when_no_target_version(
+        self, mock_version: MagicMock, mock_download: MagicMock, tmp_path: Path
+    ) -> None:
+        """When target_version is None, should fall back to INSTALLER_VERSION."""
+        mock_version.return_value = None
+        mock_download.return_value = True
+
+        ctx = self._make_context(tmp_path, target_version=None)
+        step = CcpBinaryStep()
+        step.run(ctx)
+
+        mock_download.assert_called_once()
+        call_args = mock_download.call_args[0]
+        # Should use INSTALLER_VERSION
+        assert call_args[0] == "5.1.2"
+
+    @patch("installer.steps.ccp_binary.INSTALLER_VERSION", "5.1.2")
+    @patch("installer.steps.ccp_binary._get_installed_version")
+    def test_check_uses_target_version_for_comparison(
+        self, mock_version: MagicMock, tmp_path: Path
+    ) -> None:
+        """check() should compare against target_version when provided."""
+        ccp_path = tmp_path / ".claude" / "bin" / "ccp"
+        ccp_path.parent.mkdir(parents=True)
+        ccp_path.write_text("#!/bin/bash")
+        # Installed version matches target_version but not INSTALLER_VERSION
+        mock_version.return_value = "dev-e59320b-20260124"
+
+        ctx = self._make_context(tmp_path, target_version="dev-e59320b-20260124")
+        step = CcpBinaryStep()
+
+        # Should return True because installed version matches target_version
+        assert step.check(ctx) is True

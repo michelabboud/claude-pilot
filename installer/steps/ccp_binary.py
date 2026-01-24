@@ -256,7 +256,7 @@ class CcpBinaryStep(BaseStep):
             self._cached_version = None
             return False
 
-        target_version = INSTALLER_VERSION or ctx.config.get("target_version")
+        target_version = ctx.target_version or INSTALLER_VERSION
         if not target_version:
             return True
 
@@ -275,7 +275,7 @@ class CcpBinaryStep(BaseStep):
         bin_dir = ctx.project_dir / ".claude" / "bin"
         ccp_path = bin_dir / "ccp"
 
-        target_version = INSTALLER_VERSION or ctx.config.get("target_version")
+        target_version = ctx.target_version or INSTALLER_VERSION
         if not target_version:
             if ui:
                 ui.info("CCP binary version unknown, skipping update")
