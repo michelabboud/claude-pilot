@@ -57,6 +57,7 @@ jobs:
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
       version: ${{ steps.check.outputs.version }}
+      changelog: ${{ steps.check.outputs.changelog }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -86,6 +87,7 @@ jobs:
             echo "Manual trigger with version ${{ inputs.version }}"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
             echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "changelog=Manual release - no changelog generated" >> "$GITHUB_OUTPUT"
           else
             # Install semantic-release and plugins
             npm install -g semantic-release \
@@ -93,7 +95,7 @@ jobs:
               @semantic-release/changelog \
               @semantic-release/exec
 
-            # Run dry-run to check if release is needed
+            # Run dry-run to check if release is needed and capture changelog
             SR_OUT=/tmp/sr-output.txt
             if npx semantic-release --dry-run 2>&1 | tee $SR_OUT \
                 | grep -q "Published release"; then
@@ -103,13 +105,26 @@ jobs:
                 VERSION=$(grep -oP 'Published release \K\d+\.\d+\.\d+' \
                   $SR_OUT | head -1)
               fi
+
+              # Extract changelog/release notes from dry-run output
+              CHANGELOG=$(sed -n '/Release note/,/\[semantic-release\]/p' $SR_OUT \
+                | grep -v "semantic-release" | head -50 || echo "See commits for details")
+
               echo "Will release version: $VERSION"
               echo "should_release=true" >> "$GITHUB_OUTPUT"
               echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+              # Use delimiter for multiline output
+              {
+                echo "changelog<<EOF"
+                echo "$CHANGELOG"
+                echo "EOF"
+              } >> "$GITHUB_OUTPUT"
             else
               echo "No release needed"
               echo "should_release=false" >> "$GITHUB_OUTPUT"
               echo "version=" >> "$GITHUB_OUTPUT"
+              echo "changelog=" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -294,9 +309,9 @@ jobs:
           path: ccp/dist/ccp-darwin-arm64.so
           retention-days: 1
 
-  # Create release and upload all artifacts only after ALL builds succeed
-  publish-release:
-    name: Publish Release
+  # Manual approval gate - displays version and changelog, waits for approval
+  approve-release:
+    name: Approve Release
     runs-on: ubuntu-latest
     needs:
       - prepare-release
@@ -304,6 +319,40 @@ jobs:
       - build-ccp-arm64
       - build-ccp-darwin-x86
       - build-ccp-darwin-arm64
+    if: needs.prepare-release.outputs.should_release == 'true'
+    environment: production
+    steps:
+      - name: Display release details for approval
+        run: |
+          echo "## 🚀 Release Approval Required" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: v${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Proposed Changelog:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.prepare-release.outputs.changelog }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Artifacts Ready:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Linux x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Linux arm64" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Darwin x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Darwin arm64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Approve this deployment to publish the release.**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Release approved
+        run: |
+          echo "✅ Release v${{ needs.prepare-release.outputs.version }} approved!"
+          echo "Proceeding to publish..."
+
+  # Create release and upload all artifacts only after approval
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-release
+      - approve-release
     if: needs.prepare-release.outputs.should_release == 'true'
     steps:
       - name: Checkout
@@ -373,12 +422,3 @@ jobs:
           echo "Released version: ${{ needs.prepare-release.outputs.version }}"
           echo "All platform binaries are now available"
 
-  deploy-website:
-    name: Trigger Netlify Deploy
-    runs-on: ubuntu-latest
-    needs: publish-release
-    if: needs.prepare-release.outputs.should_release == 'true'
-    steps:
-      - name: Trigger Netlify build
-        run: |
-          curl -X POST -d {} "${{ secrets.NETLIFY_BUILD_HOOK }}"
