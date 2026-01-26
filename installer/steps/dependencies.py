@@ -238,7 +238,7 @@ def _migrate_legacy_plugins(ui: Any = None) -> None:
         try:
             data = json.loads(marketplaces_path.read_text())
             modified = False
-            for marketplace in ["thedotmack", "customable"]:
+            for marketplace in ["thedotmack", "customable", "claude-code-lsps"]:
                 if marketplace in data:
                     del data[marketplace]
                     removed_marketplaces.append(marketplace)
@@ -249,7 +249,7 @@ def _migrate_legacy_plugins(ui: Any = None) -> None:
             pass
 
     marketplaces_dir = Path.home() / ".claude" / "plugins" / "marketplaces"
-    for marketplace in ["thedotmack", "customable"]:
+    for marketplace in ["thedotmack", "customable", "claude-code-lsps"]:
         marketplace_dir = marketplaces_dir / marketplace
         if marketplace_dir.exists():
             shutil.rmtree(marketplace_dir, ignore_errors=True)

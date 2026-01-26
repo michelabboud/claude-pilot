@@ -254,6 +254,40 @@ class ClaudeFilesStep(BaseStep):
                     if ui:
                         ui.warning(f"Failed to remove scripts directory: {e}")
 
+            hooks_dir = ctx.project_dir / ".claude" / "hooks"
+            if hooks_dir.exists():
+                ccp_hooks = [
+                    "file_checker_python.py",
+                    "file_checker_ts.py",
+                    "file_checker_go.py",
+                    "tdd_enforcer.py",
+                    "context_monitor.py",
+                    "tool_redirect.py",
+                ]
+                for hook_file in ccp_hooks:
+                    hook_path = hooks_dir / hook_file
+                    if hook_path.exists():
+                        try:
+                            hook_path.unlink()
+                        except (OSError, IOError):
+                            pass
+
+            skills_dir = ctx.project_dir / ".claude" / "skills"
+            if skills_dir.exists():
+                for skill_dir in skills_dir.iterdir():
+                    if skill_dir.is_dir() and skill_dir.name.startswith("standards-"):
+                        try:
+                            shutil.rmtree(skill_dir)
+                        except (OSError, IOError):
+                            pass
+
+            old_statusline = ctx.project_dir / ".claude" / "statusline.json"
+            if old_statusline.exists():
+                try:
+                    old_statusline.unlink()
+                except (OSError, IOError):
+                    pass
+
         for category, file_infos in categories.items():
             if not file_infos:
                 continue
