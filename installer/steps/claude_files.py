@@ -354,6 +354,20 @@ class ClaudeFilesStep(BaseStep):
                 except (OSError, IOError):
                     pass
 
+        lsp_config_path = ctx.project_dir / ".claude" / "plugin" / ".lsp.json"
+        if lsp_config_path.exists():
+            try:
+                lsp_config = json.loads(lsp_config_path.read_text())
+                if not ctx.enable_python and "python" in lsp_config:
+                    del lsp_config["python"]
+                if not ctx.enable_typescript and "typescript" in lsp_config:
+                    del lsp_config["typescript"]
+                if not ctx.enable_golang and "go" in lsp_config:
+                    del lsp_config["go"]
+                lsp_config_path.write_text(json.dumps(lsp_config, indent=2) + "\n")
+            except (json.JSONDecodeError, OSError, IOError):
+                pass
+
         custom_dir = ctx.project_dir / ".claude" / "rules" / "custom"
         if not custom_dir.exists():
             custom_dir.mkdir(parents=True, exist_ok=True)
