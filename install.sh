@@ -162,7 +162,7 @@ show_macos_gatekeeper_warning() {
 confirm_local_install() {
 	echo ""
 	echo "  Local installation will:"
-	echo "    • Install Homebrew packages: python, node, nvm, pnpm, bun, uv, go, git, gh"
+	echo "    • Install Homebrew packages: python, node, nvm, pnpm, bun, uv, go, gopls, git, gh"
 	echo "    • Add 'ccp' command to your shell config (~/.bashrc, ~/.zshrc, fish)"
 	echo "    • Configure Claude Code (~/.claude.json) according to CCP best-practices"
 	echo ""

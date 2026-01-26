@@ -1,0 +1,12 @@
+{
+  "name": "Claude CodePro",
+  "version": "0.1.0",
+  "description": "Additional Modules for Claude CodePro served as plugin",
+  "author": {
+    "name": "Max Ritter",
+    "email": "mail@maxritter.net"
+  },
+  "repository": "https://github.com/maxritter/claude-codepro",
+  "license": "AGPL-3.0 / Paid",
+  "keywords": ["ccp", "claude-codepro"]
+}
