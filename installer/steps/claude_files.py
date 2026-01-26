@@ -151,6 +151,19 @@ class ClaudeFilesStep(BaseStep):
             if Path(file_path).name == ".gitignore":
                 continue
 
+            if "/node_modules/" in file_path:
+                continue
+            if "/dist/" in file_path:
+                continue
+            if "/.vite/" in file_path:
+                continue
+            if "/coverage/" in file_path:
+                continue
+            if "/.turbo/" in file_path:
+                continue
+            if file_path.endswith(".lock") or file_path.endswith("-lock.yaml"):
+                continue
+
             if "/rules/custom/" in file_path:
                 continue
 
