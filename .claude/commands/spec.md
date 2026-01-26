@@ -208,7 +208,7 @@ LOOP:
 After each major operation, check context:
 
 ```bash
-ccp check-context --json
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp check-context --json
 ```
 
 If response shows `"status": "CLEAR_NEEDED"` (context >= 90%):
@@ -237,7 +237,7 @@ Write to `/tmp/claude-continuation.md`:
 **Step 2: Trigger session clear**
 
 ```bash
-ccp send-clear <plan-path>
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear <plan-path>
 ```
 
 CCP will restart with `/spec --continue <plan-path>`

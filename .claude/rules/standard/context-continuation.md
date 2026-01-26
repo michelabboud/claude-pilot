@@ -122,10 +122,10 @@ Triggering session restart...
 
 ```bash
 # If active plan exists (PREFERRED - preserves plan context):
-ccp send-clear docs/plans/YYYY-MM-DD-name.md
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear docs/plans/YYYY-MM-DD-name.md
 
 # ONLY if NO active plan exists:
-ccp send-clear --general
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear --general
 ```
 
 This triggers session continuation in Endless Mode:
@@ -189,16 +189,16 @@ If you're in general development (no plan file):
 
 ```bash
 # Check context percentage
-ccp check-context --json
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp check-context --json
 
 # Trigger session continuation (no continuation prompt)
-ccp send-clear
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear
 
 # Trigger continuation WITH plan (PREFERRED when plan exists):
-ccp send-clear docs/plans/YYYY-MM-DD-name.md
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear docs/plans/YYYY-MM-DD-name.md
 
 # Trigger continuation WITHOUT plan (ONLY when no active plan):
-ccp send-clear --general
+$CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear --general
 ```
 
 **⚠️ ALWAYS check for active plans before using `--general`. See Step 2 above.**
