@@ -104,7 +104,6 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 
 ### 🧠 Enhanced Context Capabilities
 
-- **Zero API Keys** - Web search and scraping work out of the box, no external API keys needed
 - **Persistent Memory** - Cross-session memory system that automatically ingests context
 - **Semantic Search** - Local vector store based semantic code search for token-efficient retrieval
 - **External Context** - Library docs via Context7, web search and scraping via MCP tools
@@ -114,8 +113,7 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 
 - **TDD Enforcer** - Pre-edit hook that warns when modifying code without failing tests first
 - **Quality Hooks** - Language-specific hooks for Python, TypeScript and Go that auto-fix issues
-- **LSP Integration** - Language servers installed automatically for real-time diagnostics and go-to-definition
-- **Context Monitor** - Tracks context usage and triggers automatic session handoffs
+- **LSP Integration** - Language servers installed for real-time diagnostics and go-to-definitions
 - **Status Line** - Live display of context usage, memory status, usage limits, and license info
 
 ### 🛠️ One-Command Installer
