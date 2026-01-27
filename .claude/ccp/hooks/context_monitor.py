@@ -136,11 +136,11 @@ def run_context_monitor() -> int:
         )
         print(f"{RED}2. Write /tmp/claude-continuation.md (include Active Plan path if found){NC}", file=sys.stderr)
         print(
-            f"{YELLOW}/learn check: Non-obvious solution or repeatable workflow? If yes, invoke Skill(learn) before handoff.{NC}",
+            f"{RED}3. /learn check: Non-obvious solution or repeatable workflow? If yes, invoke Skill(learn) before handoff.{NC}",
             file=sys.stderr,
         )
         print(
-            f"{RED}3. Run: $CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear <plan-path>  (or --general if no active plan){NC}",
+            f"{RED}4. Run: $CLAUDE_PROJECT_ROOT/.claude/bin/ccp send-clear <plan-path>  (or --general if no active plan){NC}",
             file=sys.stderr,
         )
         return 2
