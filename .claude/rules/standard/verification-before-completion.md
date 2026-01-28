@@ -29,6 +29,7 @@ Before ANY claim of success, completion, or correctness:
 | "Regression test works" | Red-green cycle verified    | Test passes once            |
 | "Requirements met"      | Line-by-line checklist      | Tests passing               |
 | "Output is correct"     | Compare against source data | Logs look reasonable        |
+| "UI works"              | agent-browser snapshot shows correct state | "API returns 200" |
 
 ### ⛔ Output Correctness - Don't Trust Logs Alone
 
@@ -84,6 +85,10 @@ Run verification immediately if you're about to:
 **Requirements:**
 - ✅ Read plan → Check each item → Verify completion → Report status
 - ❌ "Tests pass, so requirements are met"
+
+**Frontend UI:**
+- ✅ `agent-browser open` → `snapshot -i` → See expected elements → "UI renders correctly"
+- ❌ "API works, so frontend should work"
 
 ### Why This Matters
 

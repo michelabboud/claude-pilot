@@ -684,9 +684,8 @@ class DependenciesStep(BaseStep):
         if _install_with_spinner(ui, "vtsls (TypeScript LSP server)", install_typescript_lsp):
             installed.append("typescript_lsp")
 
-        if ctx.enable_agent_browser:
-            if _install_agent_browser_with_ui(ui):
-                installed.append("agent_browser")
+        if _install_agent_browser_with_ui(ui):
+            installed.append("agent_browser")
 
         if _install_vexor_with_ui(ui):
             installed.append("vexor")

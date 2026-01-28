@@ -162,6 +162,28 @@ Run actual pipeline, verify:
 - Data quality checks pass
 - Logs show expected flow
 
+**For Frontend/UI (MANDATORY for web apps):**
+
+Use `agent-browser` to test actual UI rendering and user workflows:
+
+```bash
+agent-browser open http://localhost:3000
+agent-browser snapshot -i                    # Get interactive elements
+agent-browser fill @e1 "test@example.com"    # Fill form
+agent-browser click @e2                      # Submit
+agent-browser wait --load networkidle
+agent-browser snapshot -i                    # Verify result
+agent-browser close
+```
+
+Test assertions:
+- UI renders correctly after operations
+- Forms submit and show success/error states
+- Navigation works between pages
+- Data displays correctly after CRUD
+
+**Why:** API tests verify backend works. Agent Browser verifies **what the user sees**. See `agent-browser.md` for full command reference.
+
 ### ⛔ CRITICAL: Mandatory Mocking in Unit Tests
 
 **Unit tests MUST mock ALL external calls. No exceptions.**

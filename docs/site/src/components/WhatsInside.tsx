@@ -53,7 +53,7 @@ const insideItems: InsideItem[] = [
       "Zero API Keys - Everything works out of the box",
       "Persistent Memory - Cross-session context",
       "Semantic Search - Local vector store",
-      "Browser Automation - Headless testing",
+      "Browser Automation - E2E UI testing",
     ],
   },
   {

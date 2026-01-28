@@ -906,6 +906,14 @@ curl -X DELETE http://localhost:8000/api/resource/1
 
 **If failures:** Analyze failure → Check API endpoint → Fix implementation → Re-run → Continue until all pass
 
+#### For Frontend/UI: Agent Browser E2E Testing
+
+**⚠️ MANDATORY for any app with a user interface (web apps, dashboards, forms).**
+
+Use `agent-browser` to test the actual UI renders correctly and user workflows complete successfully. API tests verify the backend; Agent Browser verifies **what the user sees**.
+
+See `.claude/rules/standard/agent-browser.md` for commands and E2E testing patterns.
+
 ### Step 10: Final Verification
 
 **Run everything one more time:**

@@ -12,6 +12,7 @@ When you:
 - Add a provider/widget → RUN the module that uses it
 - Add file parsing → PARSE a real file
 - Add network calls → MAKE a real call (or verify mock is tested separately)
+- Add frontend UI → OPEN it with `agent-browser` and verify it renders
 
 **Example of what NOT to do:**
 ```
@@ -91,6 +92,23 @@ node dist/index.js
 # Or
 pip install dist/*.whl && run-command
 ```
+
+**Frontend/Web Apps:**
+```bash
+# Start the app
+npm run dev &
+
+# Open with agent-browser and verify UI
+agent-browser open http://localhost:3000
+agent-browser snapshot -i
+# Interact and verify workflows work
+agent-browser fill @e1 "test"
+agent-browser click @e2
+agent-browser snapshot -i  # Verify result rendered
+agent-browser close
+```
+
+**Verify:** UI renders, forms work, navigation functions, data displays correctly.
 
 ### Verification Checklist
 

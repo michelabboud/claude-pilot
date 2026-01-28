@@ -49,7 +49,6 @@ class TestRunInstallation:
                 non_interactive=True,
             )
 
-            # Create mock steps
             mock_step1 = MagicMock()
             mock_step1.name = "step1"
             mock_step1.check.return_value = False
@@ -62,7 +61,6 @@ class TestRunInstallation:
 
             run_installation(ctx)
 
-            # Both steps should be called
             mock_step1.run.assert_called_once_with(ctx)
             mock_step2.run.assert_called_once_with(ctx)
 
@@ -72,10 +70,8 @@ class TestBackupFeature:
 
     def test_ignore_special_files_skips_tmp_directory(self):
         """ignore_special_files function skips tmp directory."""
-        # Import the function by running the backup code path
         from pathlib import Path
 
-        # Simulate the ignore function logic
         def ignore_special_files(directory: str, files: list[str]) -> list[str]:
             ignored = []
             for f in files:
@@ -86,7 +82,6 @@ class TestBackupFeature:
                     ignored.append(f)
             return ignored
 
-        # Test that tmp is ignored
         result = ignore_special_files("/some/dir", ["commands", "hooks", "tmp", "scripts"])
         assert "tmp" in result
         assert "commands" not in result
@@ -99,7 +94,6 @@ class TestBackupFeature:
         from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create source directory with regular files and tmp subdirectory
             source = Path(tmpdir) / ".claude"
             source.mkdir()
             (source / "commands").mkdir()
@@ -107,7 +101,6 @@ class TestBackupFeature:
             (source / "tmp").mkdir()
             (source / "tmp" / "pipes").mkdir()
 
-            # Create backup with ignore function
             backup = Path(tmpdir) / ".claude.backup.test"
 
             def ignore_special_files(directory: str, files: list[str]) -> list[str]:
@@ -119,7 +112,6 @@ class TestBackupFeature:
 
             shutil.copytree(source, backup, ignore=ignore_special_files)
 
-            # Verify backup was created without tmp
             assert backup.exists()
             assert (backup / "commands" / "spec.md").exists()
             assert not (backup / "tmp").exists()
@@ -132,7 +124,7 @@ class TestMainEntry:
         """__main__ module exists."""
         import installer.__main__
 
-        assert hasattr(installer.__main__, "main") or True  # May not have main function
+        assert hasattr(installer.__main__, "main") or True
 
 
 class TestKeyboardInterrupt:
@@ -153,7 +145,6 @@ class TestKeyboardInterrupt:
                 non_interactive=True,
             )
 
-            # Create a step that raises KeyboardInterrupt
             failing_step = MagicMock()
             failing_step.name = "dependencies"
             failing_step.check.return_value = False
@@ -161,7 +152,6 @@ class TestKeyboardInterrupt:
 
             mock_get_all_steps.return_value = [failing_step]
 
-            # Should raise InstallationCancelled with step name
             with pytest.raises(InstallationCancelled) as exc_info:
                 run_installation(ctx)
 
@@ -189,7 +179,6 @@ class TestLicenseInfo:
             stderr="",
         )
 
-        # Create fake ccp binary
         bin_dir = tmp_path / ".claude" / "bin"
         bin_dir.mkdir(parents=True)
         (bin_dir / "ccp").touch()
@@ -209,7 +198,6 @@ class TestLicenseInfo:
             stderr='{"success": false, "error": "Trial expired", "tier": "trial"}',
         )
 
-        # Create fake ccp binary
         bin_dir = tmp_path / ".claude" / "bin"
         bin_dir.mkdir(parents=True)
         (bin_dir / "ccp").touch()
@@ -240,23 +228,20 @@ class TestPromptForFeatures:
             "enable_python": False,
             "enable_typescript": False,
             "enable_golang": False,
-            "enable_agent_browser": False,
         }
 
-        python, typescript, golang, browser = _prompt_for_features(
+        python, typescript, golang = _prompt_for_features(
             console,
             saved_config,
             skip_python=False,
             skip_typescript=False,
             skip_golang=False,
-            skip_prompts=True,  # Non-interactive mode
+            skip_prompts=True,
         )
 
-        # Saved config should be used even in non-interactive mode
         assert python is False
         assert typescript is False
         assert golang is False
-        assert browser is False
 
     def test_cli_flags_override_saved_config(self):
         """CLI flags (--skip-*) override saved config."""
@@ -270,16 +255,15 @@ class TestPromptForFeatures:
             "enable_golang": True,
         }
 
-        python, typescript, golang, _browser = _prompt_for_features(
+        python, typescript, golang = _prompt_for_features(
             console,
             saved_config,
-            skip_python=True,  # CLI flag overrides saved True
+            skip_python=True,
             skip_typescript=True,
             skip_golang=True,
             skip_prompts=True,
         )
 
-        # CLI flags should win over saved config
         assert python is False
         assert typescript is False
         assert golang is False
@@ -290,19 +274,17 @@ class TestPromptForFeatures:
         from installer.ui import Console
 
         console = Console(non_interactive=True, quiet=True)
-        saved_config = {}  # No saved preferences
+        saved_config = {}
 
-        python, typescript, golang, browser = _prompt_for_features(
+        python, typescript, golang = _prompt_for_features(
             console,
             saved_config,
             skip_python=False,
             skip_typescript=False,
             skip_golang=False,
-            skip_prompts=True,  # Non-interactive mode
+            skip_prompts=True,
         )
 
-        # Should default to True when no saved config
         assert python is True
         assert typescript is True
         assert golang is True
-        assert browser is True

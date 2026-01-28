@@ -1,5 +1,20 @@
 ## Browser Automation with agent-browser
 
+### When to Use Agent Browser
+
+**⚠️ MANDATORY for E2E testing of any app with a UI (web apps, dashboards, forms).**
+
+| Scenario | Use Agent Browser? |
+|----------|-------------------|
+| Full-stack app with frontend | **YES** - Test UI renders and workflows complete |
+| API-only backend | No - Use curl/httpie |
+| CLI tool | No - Use Bash |
+| React/Vue/Svelte app | **YES** - Verify components render correctly |
+| Admin dashboard | **YES** - Test CRUD operations in UI |
+| Auth flows (login/signup) | **YES** - Verify forms and redirects work |
+
+**Why this matters:** API tests verify the backend works. Agent Browser verifies **what the user actually sees**. A working API with broken frontend = broken app.
+
 ### Quick start
 
 ```bash
@@ -136,3 +151,38 @@ agent-browser open example.com --headed  # Show browser window
 agent-browser console                    # View console messages
 agent-browser errors                     # View page errors
 ```
+
+### E2E Testing Pattern
+
+**After implementing a feature with UI, always verify with Agent Browser:**
+
+```bash
+# 1. Start the app (if not running)
+# npm run dev &
+
+# 2. Open the app
+agent-browser open http://localhost:3000
+
+# 3. Get interactive elements
+agent-browser snapshot -i
+
+# 4. Test the user workflow
+agent-browser fill @e1 "test data"
+agent-browser click @e2
+agent-browser wait --load networkidle
+
+# 5. Verify the result
+agent-browser snapshot -i  # Check UI updated correctly
+agent-browser get text @e3  # Verify success message
+
+# 6. Clean up
+agent-browser close
+```
+
+**E2E Test Checklist:**
+- [ ] User can complete the main workflow
+- [ ] Forms validate and show errors correctly
+- [ ] Success states display after operations
+- [ ] Navigation works between pages
+- [ ] Data persists after refresh (if applicable)
+- [ ] Error states render properly

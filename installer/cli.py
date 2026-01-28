@@ -354,8 +354,8 @@ def _prompt_for_features(
     skip_typescript: bool,
     skip_golang: bool,
     skip_prompts: bool,
-) -> tuple[bool, bool, bool, bool]:
-    """Prompt for feature installation preferences. Returns (python, typescript, golang, browser).
+) -> tuple[bool, bool, bool]:
+    """Prompt for feature installation preferences. Returns (python, typescript, golang).
 
     Priority order for each feature:
     1. CLI flag (--skip-python etc) - explicit override, always wins
@@ -400,18 +400,7 @@ def _prompt_for_features(
             console.print("  This includes: Go quality hooks (gofmt, go vet, golangci-lint)")
             enable_golang = console.confirm("Install Go support?", default=True)
 
-    enable_agent_browser = True
-    if "enable_agent_browser" in saved_config:
-        enable_agent_browser = saved_config["enable_agent_browser"]
-        if not skip_prompts:
-            console.print(f"  [dim]Using saved preference: Agent browser = {enable_agent_browser}[/dim]")
-    elif not skip_prompts:
-        console.print()
-        console.print("  [bold]Do you want to install agent-browser?[/bold]")
-        console.print("  This includes: Headless Chromium browser for web automation and testing")
-        enable_agent_browser = console.confirm("Install agent-browser?", default=True)
-
-    return enable_python, enable_typescript, enable_golang, enable_agent_browser
+    return enable_python, enable_typescript, enable_golang
 
 
 def cmd_install(args: argparse.Namespace) -> int:
@@ -435,7 +424,7 @@ def cmd_install(args: argparse.Namespace) -> int:
         if exit_code is not None:
             return exit_code
 
-    enable_python, enable_typescript, enable_golang, enable_agent_browser = _prompt_for_features(
+    enable_python, enable_typescript, enable_golang = _prompt_for_features(
         console, saved_config, args.skip_python, args.skip_typescript, args.skip_golang, skip_prompts
     )
 
@@ -443,7 +432,6 @@ def cmd_install(args: argparse.Namespace) -> int:
         saved_config["enable_python"] = enable_python
         saved_config["enable_typescript"] = enable_typescript
         saved_config["enable_golang"] = enable_golang
-        saved_config["enable_agent_browser"] = enable_agent_browser
         save_config(project_dir, saved_config)
 
     ctx = InstallContext(
@@ -451,7 +439,6 @@ def cmd_install(args: argparse.Namespace) -> int:
         enable_python=enable_python,
         enable_typescript=enable_typescript,
         enable_golang=enable_golang,
-        enable_agent_browser=enable_agent_browser,
         non_interactive=args.non_interactive,
         skip_env=args.skip_env,
         local_mode=args.local,

@@ -131,9 +131,20 @@ class ClaudeFilesStep(BaseStep):
             "other": [],
         }
 
+        hooks_to_skip: list[str] = []
+        if not ctx.enable_python:
+            hooks_to_skip.append("file_checker_python.py")
+        if not ctx.enable_typescript:
+            hooks_to_skip.append("file_checker_ts.py")
+        if not ctx.enable_golang:
+            hooks_to_skip.append("file_checker_go.py")
+
         for file_info in claude_files:
             file_path = file_info.path
             if not file_path:
+                continue
+
+            if "/ccp/hooks/" in file_path and any(h in file_path for h in hooks_to_skip):
                 continue
 
             if "__pycache__" in file_path:
@@ -189,10 +200,6 @@ class ClaudeFilesStep(BaseStep):
                 if "file_checker_go.py" in file_path:
                     continue
                 if "golang-rules.md" in file_path:
-                    continue
-
-            if not ctx.enable_agent_browser:
-                if "agent-browser.md" in file_path:
                     continue
 
             if "/commands/" in file_path:
@@ -375,6 +382,30 @@ class ClaudeFilesStep(BaseStep):
                 lsp_config_path.write_text(json.dumps(lsp_config, indent=2) + "\n")
             except (json.JSONDecodeError, OSError, IOError):
                 pass
+
+        if not ctx.local_mode:
+            hooks_json_path = ctx.project_dir / ".claude" / "ccp" / "hooks" / "hooks.json"
+            if hooks_json_path.exists():
+                try:
+                    hooks_config = json.loads(hooks_json_path.read_text())
+                    files_to_remove: list[str] = []
+                    if not ctx.enable_python:
+                        files_to_remove.append("file_checker_python.py")
+                    if not ctx.enable_typescript:
+                        files_to_remove.append("file_checker_ts.py")
+                    if not ctx.enable_golang:
+                        files_to_remove.append("file_checker_go.py")
+                    if files_to_remove and "PostToolUse" in hooks_config:
+                        for hook_group in hooks_config["PostToolUse"]:
+                            if "hooks" in hook_group:
+                                hook_group["hooks"] = [
+                                    h
+                                    for h in hook_group["hooks"]
+                                    if not any(f in h.get("command", "") for f in files_to_remove)
+                                ]
+                        hooks_json_path.write_text(json.dumps(hooks_config, indent=2) + "\n")
+                except (json.JSONDecodeError, OSError, IOError):
+                    pass
 
         custom_dir = ctx.project_dir / ".claude" / "rules" / "custom"
         if not custom_dir.exists():

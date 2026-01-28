@@ -108,7 +108,7 @@ You'll be asked to choose between **Dev Container** or **Local Installation**.
 - **Persistent Memory** - Cross-session memory system that automatically ingests context
 - **Semantic Search** - Local vector store based semantic code search for token-efficient retrieval
 - **External Context** - Library docs via Context7, web search and scraping via MCP tools
-- **Browser Automation** - Headless browser automation and testing even within the Dev Container
+- **Browser Automation** - E2E UI testing with headless browser for frontend verification
 
 ### ✅ Quality Automation
 

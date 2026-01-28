@@ -17,7 +17,6 @@ class InstallContext:
     enable_python: bool = True
     enable_typescript: bool = True
     enable_golang: bool = True
-    enable_agent_browser: bool = True
     non_interactive: bool = False
     skip_env: bool = False
     local_mode: bool = False
