@@ -225,7 +225,7 @@ def run_context_monitor() -> int:
         if new_learn_shown:
             save_cache(total_tokens, session_id, new_learn_shown)
         print(f"{YELLOW}Context: {percentage:.0f}%{NC}", file=sys.stderr)
-        return 0
+        return 2
 
     if new_learn_shown:
         save_cache(total_tokens, session_id, new_learn_shown)
