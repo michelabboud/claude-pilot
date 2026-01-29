@@ -32,10 +32,7 @@ const PricingSection = () => {
               <div className="w-12 h-12 bg-cyan-500/15 rounded-xl flex items-center justify-center">
                 <Clock className="h-6 w-6 text-cyan-500" />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Trial</h3>
-                <p className="text-sm text-muted-foreground">7 days free</p>
-              </div>
+              <h3 className="text-xl font-bold text-foreground">Trial</h3>
             </div>
 
             <ul className="space-y-3 mb-6">
@@ -67,10 +64,7 @@ const PricingSection = () => {
               <div className="w-12 h-12 bg-primary/15 rounded-xl flex items-center justify-center">
                 <Check className="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Standard</h3>
-                <p className="text-sm text-muted-foreground">$15/month</p>
-              </div>
+              <h3 className="text-xl font-bold text-foreground">Standard</h3>
             </div>
 
             <ul className="space-y-3 mb-6">
@@ -103,10 +97,7 @@ const PricingSection = () => {
               <div className="w-12 h-12 bg-purple-500/15 rounded-xl flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-purple-500" />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Enterprise</h3>
-                <p className="text-sm text-muted-foreground">$29/month</p>
-              </div>
+              <h3 className="text-xl font-bold text-foreground">Enterprise</h3>
             </div>
 
             <ul className="space-y-3 mb-6">
