@@ -284,8 +284,19 @@ class ClaudeFilesStep(BaseStep):
                 except (OSError, IOError):
                     pass
 
-        for old_dir_name in ["pilot", "hooks", "skills", "scripts", "plugin", "ccp"]:
+        for old_dir_name in ["pilot", "hooks", "scripts", "plugin", "ccp"]:
             _clear_directory_safe(project_claude_dir / old_dir_name)
+
+        old_custom_rules = project_claude_dir / "rules" / "custom"
+        if old_custom_rules.exists() and old_custom_rules.is_dir():
+            try:
+                gitkeep = old_custom_rules / ".gitkeep"
+                if gitkeep.exists():
+                    gitkeep.unlink()
+                if not any(old_custom_rules.iterdir()):
+                    old_custom_rules.rmdir()
+            except (OSError, IOError):
+                pass
 
     def _install_categories(
         self,

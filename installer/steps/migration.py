@@ -179,16 +179,14 @@ def _migrate_custom_rules(project_dir: Path) -> int:
         except (OSError, IOError):
             pass
 
-    gitkeep = old_custom_dir / ".gitkeep"
-    if gitkeep.exists():
+    if old_custom_dir.exists():
         try:
-            gitkeep.unlink()
-        except (OSError, IOError):
-            pass
-
-    if old_custom_dir.exists() and not any(old_custom_dir.iterdir()):
-        try:
-            old_custom_dir.rmdir()
+            remaining_files = list(old_custom_dir.iterdir())
+            if all(f.name.startswith(".") for f in remaining_files):
+                for f in remaining_files:
+                    f.unlink()
+            if not any(old_custom_dir.iterdir()):
+                old_custom_dir.rmdir()
         except (OSError, IOError):
             pass
 

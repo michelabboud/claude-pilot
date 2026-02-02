@@ -804,6 +804,115 @@ class TestDirectoryClearing:
             assert not (old_plugin / "scripts").exists()
 
 
+class TestUserFoldersPreservation:
+    """Tests ensuring user-owned folders are never deleted."""
+
+    def test_skills_folder_is_preserved(self):
+        """ClaudeFilesStep NEVER deletes project .claude/skills folder."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home_dir = Path(tmpdir) / "home"
+            home_dir.mkdir()
+
+            source_dir = Path(tmpdir) / "source"
+            source_pilot = source_dir / "pilot"
+            source_pilot.mkdir(parents=True)
+            (source_pilot / "package.json").write_text('{"name": "pilot"}')
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_claude = dest_dir / ".claude"
+            dest_skills = dest_claude / "skills"
+            dest_skills.mkdir(parents=True)
+            (dest_skills / "my-custom-skill.md").write_text("# My Custom Skill")
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            with patch("installer.steps.claude_files.Path.home", return_value=home_dir):
+                step.run(ctx)
+
+            assert dest_skills.exists(), ".claude/skills folder was deleted!"
+            assert (dest_skills / "my-custom-skill.md").exists(), "User skill file was deleted!"
+            assert (dest_skills / "my-custom-skill.md").read_text() == "# My Custom Skill"
+
+    def test_rules_custom_empty_folder_is_removed(self):
+        """ClaudeFilesStep removes empty .claude/rules/custom folder."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home_dir = Path(tmpdir) / "home"
+            home_dir.mkdir()
+
+            source_dir = Path(tmpdir) / "source"
+            source_pilot = source_dir / "pilot"
+            source_pilot.mkdir(parents=True)
+            (source_pilot / "package.json").write_text('{"name": "pilot"}')
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_claude = dest_dir / ".claude"
+            old_custom = dest_claude / "rules" / "custom"
+            old_custom.mkdir(parents=True)
+            (old_custom / ".gitkeep").write_text("")
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            with patch("installer.steps.claude_files.Path.home", return_value=home_dir):
+                step.run(ctx)
+
+            assert not old_custom.exists(), ".claude/rules/custom folder was not removed"
+
+    def test_rules_custom_with_user_files_is_preserved(self):
+        """ClaudeFilesStep preserves .claude/rules/custom if it has user files."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home_dir = Path(tmpdir) / "home"
+            home_dir.mkdir()
+
+            source_dir = Path(tmpdir) / "source"
+            source_pilot = source_dir / "pilot"
+            source_pilot.mkdir(parents=True)
+            (source_pilot / "package.json").write_text('{"name": "pilot"}')
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_claude = dest_dir / ".claude"
+            old_custom = dest_claude / "rules" / "custom"
+            old_custom.mkdir(parents=True)
+            (old_custom / "my-rule.md").write_text("# My Rule")
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            with patch("installer.steps.claude_files.Path.home", return_value=home_dir):
+                step.run(ctx)
+
+            assert old_custom.exists(), ".claude/rules/custom was deleted but had user files!"
+            assert (old_custom / "my-rule.md").exists()
+
+
 class TestResolveRepoUrl:
     """Tests for _resolve_repo_url method."""
 
