@@ -411,8 +411,8 @@ class TestSetupClaudeMem:
                 assert config["CLAUDE_MEM_CONTEXT_FULL_COUNT"] == "10"
                 assert config["CLAUDE_MEM_CONTEXT_FULL_FIELD"] == "facts"
                 assert config["CLAUDE_MEM_CONTEXT_SESSION_COUNT"] == "10"
-                assert config["CLAUDE_MEM_CHROMA_ENABLED"] is False
-                assert config["CLAUDE_MEM_VECTOR_DB"] == "none"
+                assert config["CLAUDE_MEM_CHROMA_ENABLED"] is True
+                assert config["CLAUDE_MEM_VECTOR_DB"] == "chroma"
 
     def test_patch_claude_mem_config_merges_existing(self):
         """_patch_claude_mem_config merges with existing config."""
@@ -440,7 +440,7 @@ class TestSetupClaudeMem:
                 config = json.loads(config_path.read_text())
                 assert config["CLAUDE_MEM_MODEL"] == "haiku"
                 assert config["CUSTOM_SETTING"] == "custom_value"
-                assert config["CLAUDE_MEM_VECTOR_DB"] == "none"
+                assert config["CLAUDE_MEM_VECTOR_DB"] == "chroma"
 
     def test_patch_claude_mem_config_overwrites_incorrect_values(self):
         """_patch_claude_mem_config overwrites incorrect values."""
@@ -456,8 +456,8 @@ class TestSetupClaudeMem:
                 json.dumps(
                     {
                         "CLAUDE_MEM_MODEL": "opus",
-                        "CLAUDE_MEM_CHROMA_ENABLED": True,
-                        "CLAUDE_MEM_VECTOR_DB": "chroma",
+                        "CLAUDE_MEM_CHROMA_ENABLED": False,
+                        "CLAUDE_MEM_VECTOR_DB": "none",
                     }
                 )
             )
@@ -468,8 +468,8 @@ class TestSetupClaudeMem:
                 assert result is True
                 config = json.loads(config_path.read_text())
                 assert config["CLAUDE_MEM_MODEL"] == "haiku"
-                assert config["CLAUDE_MEM_CHROMA_ENABLED"] is False
-                assert config["CLAUDE_MEM_VECTOR_DB"] == "none"
+                assert config["CLAUDE_MEM_CHROMA_ENABLED"] is True
+                assert config["CLAUDE_MEM_VECTOR_DB"] == "chroma"
 
 
 class TestVexorInstall:
