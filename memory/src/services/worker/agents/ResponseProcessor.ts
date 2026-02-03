@@ -56,33 +56,24 @@ export async function processAgentResponse(
   agentName: string,
   projectRoot?: string
 ): Promise<void> {
-  // Add assistant response to shared conversation history for provider interop
   if (text) {
     session.conversationHistory.push({ role: 'assistant', content: text });
   }
 
-  // Parse observations and summary
   const observations = parseObservations(text, session.contentSessionId);
   const summary = parseSummary(text, session.sessionDbId);
 
-  // Convert nullable fields to empty strings for storeSummary (if summary exists)
   const summaryForStore = normalizeSummaryForStorage(summary);
 
-  // Get session store for atomic transaction
   const sessionStore = dbManager.getSessionStore();
 
-  // CRITICAL: Must use memorySessionId (not contentSessionId) for FK constraint
   if (!session.memorySessionId) {
     throw new Error('Cannot store observations: memorySessionId not yet captured');
   }
 
-  // Determine actual project from files touched in observations
-  // This fixes the case where user is in project A but editing files in project B
-  // projectRoot (lastCwd) is used to resolve relative file paths from LLM responses
   const allFilePaths = collectAllFilePaths(observations);
   const detectedProject = getProjectFromFiles(allFilePaths, session.project, projectRoot);
 
-  // Log if project differs from session default
   if (detectedProject !== session.project) {
     logger.info('PROJECT', `Detected project from files: ${detectedProject} (session: ${session.project})`, {
       detectedProject,
@@ -91,10 +82,8 @@ export async function processAgentResponse(
     });
   }
 
-  // Get git branch from project root (cwd)
   const gitBranch = getCurrentGitBranch(projectRoot);
 
-  // Log pre-storage with session ID chain for verification
   logger.info('DB', `STORING | sessionDbId=${session.sessionDbId} | memorySessionId=${session.memorySessionId} | project=${detectedProject} | obsCount=${observations.length} | hasSummary=${!!summaryForStore}`, {
     sessionId: session.sessionDbId,
     memorySessionId: session.memorySessionId,
@@ -102,26 +91,21 @@ export async function processAgentResponse(
     gitBranch
   });
 
-  // ATOMIC TRANSACTION: Store observations + summary ONCE
-  // Messages are already deleted from queue on claim, so no completion tracking needed
   const result = sessionStore.storeObservations(
     session.memorySessionId,
-    detectedProject,  // Use detected project instead of session.project
+    detectedProject,
     observations,
     summaryForStore,
     session.lastPromptNumber,
     discoveryTokens,
-    originalTimestamp ?? undefined,
-    gitBranch
+    originalTimestamp ?? undefined
   );
 
-  // Log storage result with IDs for end-to-end traceability
   logger.info('DB', `STORED | sessionDbId=${session.sessionDbId} | memorySessionId=${session.memorySessionId} | obsCount=${result.observationIds.length} | obsIds=[${result.observationIds.join(',')}] | summaryId=${result.summaryId || 'none'}`, {
     sessionId: session.sessionDbId,
     memorySessionId: session.memorySessionId
   });
 
-  // AFTER transaction commits - async operations (can fail safely without data loss)
   await syncAndBroadcastObservations(
     observations,
     result,
@@ -134,7 +118,6 @@ export async function processAgentResponse(
     projectRoot
   );
 
-  // Sync and broadcast summary if present
   await syncAndBroadcastSummary(
     summary,
     summaryForStore,
@@ -147,7 +130,6 @@ export async function processAgentResponse(
     agentName
   );
 
-  // Clean up session state
   cleanupProcessedMessages(session, worker);
 }
 
@@ -205,7 +187,6 @@ async function syncAndBroadcastObservations(
     const obs = observations[i];
     const syncStart = Date.now();
 
-    // Sync to vector database (fire-and-forget)
     dbManager.getVectorSync().syncObservation(
       obsId,
       session.contentSessionId,
@@ -230,7 +211,6 @@ async function syncAndBroadcastObservations(
       }, error);
     });
 
-    // Broadcast to SSE clients (for web UI)
     broadcastObservation(worker, {
       id: obsId,
       memory_session_id: session.memorySessionId,
@@ -238,7 +218,7 @@ async function syncAndBroadcastObservations(
       type: obs.type,
       title: obs.title,
       subtitle: obs.subtitle,
-      text: null,  // text field is not in ParsedObservation
+      text: null,
       narrative: obs.narrative || null,
       facts: JSON.stringify(obs.facts || []),
       concepts: JSON.stringify(obs.concepts || []),
@@ -250,8 +230,6 @@ async function syncAndBroadcastObservations(
     });
   }
 
-  // Update folder CLAUDE.md files for touched folders (fire-and-forget)
-  // This runs per-observation batch to ensure folders are updated as work happens
   const allFilePaths = collectAllFilePaths(observations);
 
   if (allFilePaths.length > 0) {
@@ -286,7 +264,6 @@ async function syncAndBroadcastSummary(
 
   const syncStart = Date.now();
 
-  // Sync to vector database (fire-and-forget)
   dbManager.getVectorSync().syncSummary(
     result.summaryId,
     session.contentSessionId,
@@ -309,7 +286,6 @@ async function syncAndBroadcastSummary(
     }, error);
   });
 
-  // Broadcast to SSE clients (for web UI)
   broadcastSummary(worker, {
     id: result.summaryId,
     session_id: session.contentSessionId,
@@ -324,7 +300,6 @@ async function syncAndBroadcastSummary(
     created_at_epoch: result.createdAtEpoch
   });
 
-  // Update Cursor context file for registered projects (fire-and-forget)
   updateCursorContextForProject(project, getWorkerPort()).catch(error => {
     logger.warn('CURSOR', 'Context update failed (non-critical)', { project }, error as Error);
   });

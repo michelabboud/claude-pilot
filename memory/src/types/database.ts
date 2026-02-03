@@ -70,7 +70,14 @@ export interface ObservationRecord {
   created_at: string;
   created_at_epoch: number;
   title?: string;
+  subtitle?: string;
+  facts?: string;
+  narrative?: string;
   concept?: string;
+  concepts?: string;
+  tags?: string;
+  files_read?: string;
+  files_modified?: string;
   source_files?: string;
   prompt_number?: number;
   discovery_tokens?: number;
@@ -88,6 +95,9 @@ export interface SessionSummaryRecord {
   learned: string | null;
   completed: string | null;
   next_steps: string | null;
+  files_read?: string | null;
+  files_edited?: string | null;
+  notes?: string | null;
   created_at: string;
   created_at_epoch: number;
   prompt_number?: number;
@@ -102,7 +112,7 @@ export interface UserPromptRecord {
   content_session_id: string;
   prompt_number: number;
   prompt_text: string;
-  project?: string;  // From JOIN with sdk_sessions
+  project?: string;
   created_at: string;
   created_at_epoch: number;
 }

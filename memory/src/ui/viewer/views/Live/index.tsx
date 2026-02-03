@@ -46,9 +46,8 @@ export function LiveView() {
         };
 
         setEvents((prev) => {
-          // Replace the last processing_status event instead of adding a new one
           if (data.type === 'processing_status') {
-            const lastProcessingIndex = prev.findLastIndex(e => e.type === 'processing_status');
+            const lastProcessingIndex = prev.findLastIndex((e: StreamEvent) => e.type === 'processing_status');
             if (lastProcessingIndex !== -1) {
               const updated = [...prev];
               updated[lastProcessingIndex] = { ...newEvent, id: prev[lastProcessingIndex].id };

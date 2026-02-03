@@ -8,7 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from installer.context import InstallContext
-from installer.downloads import DownloadConfig, FileInfo, download_file, get_repo_files
+from installer.downloads import (
+    DownloadConfig,
+    FileInfo,
+    download_file,
+    download_files_parallel,
+    get_repo_files,
+)
 from installer.steps.base import BaseStep
 
 SETTINGS_FILE = "settings.json"
@@ -345,11 +351,10 @@ class ClaudeFilesStep(BaseStep):
         failed: list[str] = []
 
         def install_files() -> None:
-            for file_info in file_infos:
-                file_path = file_info.path
-                dest_file = self._get_dest_path(category, file_path, ctx)
-
-                if category == "settings":
+            if category == "settings":
+                for file_info in file_infos:
+                    file_path = file_info.path
+                    dest_file = self._get_dest_path(category, file_path, ctx)
                     success = self._install_settings(
                         file_path,
                         dest_file,
@@ -358,13 +363,20 @@ class ClaudeFilesStep(BaseStep):
                         ctx.enable_typescript,
                         ctx.enable_golang,
                     )
-                else:
-                    success = download_file(file_info, dest_file, config)
+                    if success:
+                        installed.append(str(dest_file))
+                    else:
+                        failed.append(file_path)
+                return
 
+            dest_paths = [self._get_dest_path(category, fi.path, ctx) for fi in file_infos]
+            results = download_files_parallel(file_infos, dest_paths, config)
+
+            for file_info, dest_path, success in zip(file_infos, dest_paths, results):
                 if success:
-                    installed.append(str(dest_file))
+                    installed.append(str(dest_path))
                 else:
-                    failed.append(file_path)
+                    failed.append(file_info.path)
 
         if ui:
             with ui.spinner(f"Installing {category_display_name}..."):

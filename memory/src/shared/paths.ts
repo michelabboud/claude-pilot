@@ -6,16 +6,12 @@ import { fileURLToPath } from 'url';
 import { SettingsDefaultsManager } from './SettingsDefaultsManager.js';
 import { logger } from '../utils/logger.js';
 
-// Cache version to avoid repeated file reads
 let cachedVersion: string | null = null;
 
-// Get __dirname that works in both ESM (hooks) and CJS (worker) contexts
 function getDirname(): string {
-  // CJS context - __dirname exists
   if (typeof __dirname !== 'undefined') {
     return __dirname;
   }
-  // ESM context - use import.meta.url
   return dirname(fileURLToPath(import.meta.url));
 }
 
@@ -26,12 +22,10 @@ const _dirname = getDirname();
  * Standard paths based on Claude Code conventions
  */
 
-// Base directories
 export const DATA_DIR = SettingsDefaultsManager.get('CLAUDE_MEM_DATA_DIR');
 // Note: CLAUDE_CONFIG_DIR is a Claude Code setting, not claude-mem, so leave as env var
 export const CLAUDE_CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
 
-// Data subdirectories
 export const ARCHIVES_DIR = join(DATA_DIR, 'archives');
 export const LOGS_DIR = join(DATA_DIR, 'logs');
 export const TRASH_DIR = join(DATA_DIR, 'trash');
@@ -41,13 +35,11 @@ export const USER_SETTINGS_PATH = join(DATA_DIR, 'settings.json');
 export const DB_PATH = join(DATA_DIR, 'claude-mem.db');
 export const VECTOR_DB_DIR = join(DATA_DIR, 'vector-db');
 
-// Claude integration paths
 export const CLAUDE_SETTINGS_PATH = join(CLAUDE_CONFIG_DIR, 'settings.json');
 export const CLAUDE_COMMANDS_DIR = join(CLAUDE_CONFIG_DIR, 'commands');
 export const CLAUDE_MD_PATH = join(CLAUDE_CONFIG_DIR, 'CLAUDE.md');
 export const CLAUDE_CREDENTIALS_PATH = join(CLAUDE_CONFIG_DIR, '.credentials.json');
 
-// Plugin marketplace paths (respects CLAUDE_CONFIG_DIR)
 export const PLUGINS_DIR = join(CLAUDE_CONFIG_DIR, 'plugins');
 export const MARKETPLACE_ROOT = join(PLUGINS_DIR, 'marketplaces', 'customable');
 
@@ -161,7 +153,6 @@ export function getVersion(): string {
 
   const packageRoot = getPackageRoot();
 
-  // Try multiple locations for version info
   const versionPaths = [
     join(packageRoot, 'package.json'),
     join(packageRoot, '.claude-plugin', 'plugin.json'),
@@ -174,15 +165,13 @@ export function getVersion(): string {
         const content = JSON.parse(readFileSync(versionPath, 'utf-8'));
         if (content.version) {
           cachedVersion = content.version;
-          return cachedVersion;
+          return content.version;
         }
       }
     } catch {
-      // Continue to next path
     }
   }
 
-  // Fallback to timestamp-based version for cache-busting
   cachedVersion = `0.0.0-${Date.now()}`;
   return cachedVersion;
 }

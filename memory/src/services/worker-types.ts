@@ -4,9 +4,6 @@
 
 import type { Response } from 'express';
 
-// ============================================================================
-// Active Session Types
-// ============================================================================
 
 /**
  * Provider-agnostic conversation message for shared history
@@ -19,22 +16,22 @@ export interface ConversationMessage {
 
 export interface ActiveSession {
   sessionDbId: number;
-  contentSessionId: string;      // User's Claude Code session being observed
-  memorySessionId: string | null; // Memory agent's session ID for resume
+  contentSessionId: string;
+  memorySessionId: string | null;
   project: string;
   userPrompt: string;
-  pendingMessages: PendingMessage[];  // Deprecated: now using persistent store, kept for compatibility
+  pendingMessages: PendingMessage[];
   abortController: AbortController;
   generatorPromise: Promise<void> | null;
   lastPromptNumber: number;
   startTime: number;
-  lastActivityTime: number;         // Last activity timestamp for stale session detection
-  cumulativeInputTokens: number;   // Track input tokens for discovery cost
-  cumulativeOutputTokens: number;  // Track output tokens for discovery cost
-  earliestPendingTimestamp: number | null;  // Original timestamp of earliest pending message (for accurate observation timestamps)
-  conversationHistory: ConversationMessage[];  // Shared conversation history for provider switching
-  currentProvider: 'claude' | 'gemini' | 'openrouter' | 'mistral' | null;  // Track which provider is currently running
-  consecutiveRestarts: number;  // Track consecutive restart attempts to prevent infinite loops
+  lastActivityTime: number;
+  cumulativeInputTokens: number;
+  cumulativeOutputTokens: number;
+  earliestPendingTimestamp: number | null;
+  conversationHistory: ConversationMessage[];
+  currentProvider: 'claude' | 'gemini' | 'openrouter' | 'mistral' | 'openai' | null;
+  consecutiveRestarts: number;
 }
 
 export interface PendingMessage {
@@ -65,9 +62,6 @@ export interface ObservationData {
   cwd?: string;
 }
 
-// ============================================================================
-// SSE Types
-// ============================================================================
 
 export interface SSEEvent {
   type: string;
@@ -77,9 +71,6 @@ export interface SSEEvent {
 
 export type SSEClient = Response;
 
-// ============================================================================
-// Pagination Types
-// ============================================================================
 
 export interface PaginatedResult<T> {
   items: T[];
@@ -94,9 +85,6 @@ export interface PaginationParams {
   project?: string;
 }
 
-// ============================================================================
-// Settings Types
-// ============================================================================
 
 export interface ViewerSettings {
   sidebarOpen: boolean;
@@ -104,13 +92,10 @@ export interface ViewerSettings {
   theme: 'light' | 'dark' | 'system';
 }
 
-// ============================================================================
-// Database Record Types
-// ============================================================================
 
 export interface Observation {
   id: number;
-  memory_session_id: string;  // Renamed from sdk_session_id
+  memory_session_id: string;
   project: string;
   type: string;
   title: string;
@@ -128,7 +113,7 @@ export interface Observation {
 
 export interface Summary {
   id: number;
-  session_id: string; // content_session_id (from JOIN)
+  session_id: string;
   project: string;
   request: string | null;
   investigated: string | null;
@@ -142,8 +127,8 @@ export interface Summary {
 
 export interface UserPrompt {
   id: number;
-  content_session_id: string;  // Renamed from claude_session_id
-  project: string; // From JOIN with sdk_sessions
+  content_session_id: string;
+  project: string;
   prompt_number: number;
   prompt_text: string;
   created_at: string;
@@ -152,10 +137,10 @@ export interface UserPrompt {
 
 export interface DBSession {
   id: number;
-  content_session_id: string;    // Renamed from claude_session_id
+  content_session_id: string;
   project: string;
   user_prompt: string;
-  memory_session_id: string | null;  // Renamed from sdk_session_id
+  memory_session_id: string | null;
   status: 'active' | 'completed' | 'failed';
   started_at: string;
   started_at_epoch: number;
@@ -163,11 +148,7 @@ export interface DBSession {
   completed_at_epoch: number | null;
 }
 
-// ============================================================================
-// SDK Types
-// ============================================================================
 
-// Re-export the actual SDK type to ensure compatibility
 export type { SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 
 export interface ParsedObservation {
@@ -188,9 +169,6 @@ export interface ParsedSummary {
   notes: string | null;
 }
 
-// ============================================================================
-// Utility Types
-// ============================================================================
 
 export interface DatabaseStats {
   totalObservations: number;

@@ -16,7 +16,6 @@ export function useSSE() {
 
   useEffect(() => {
     const connect = () => {
-      // Clean up existing connection
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
@@ -27,7 +26,6 @@ export function useSSE() {
       eventSource.onopen = () => {
         console.log('[SSE] Connected');
         setIsConnected(true);
-        // Clear any pending reconnect
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
@@ -38,9 +36,8 @@ export function useSSE() {
         setIsConnected(false);
         eventSource.close();
 
-        // Reconnect after delay
         reconnectTimeoutRef.current = setTimeout(() => {
-          reconnectTimeoutRef.current = undefined; // Clear before reconnecting
+          reconnectTimeoutRef.current = undefined;
           console.log('[SSE] Attempting to reconnect...');
           connect();
         }, TIMING.SSE_RECONNECT_DELAY_MS);
@@ -54,14 +51,14 @@ export function useSSE() {
             console.log('[SSE] Initial load:', {
               projects: data.projects?.length || 0
             });
-            // Only load projects list - data will come via pagination
             setProjects(data.projects || []);
             break;
 
           case 'new_observation':
             if (data.observation) {
-              console.log('[SSE] New observation:', data.observation.id);
-              setObservations(prev => [data.observation, ...prev]);
+              const observation = data.observation;
+              console.log('[SSE] New observation:', observation.id);
+              setObservations(prev => [observation, ...prev]);
             }
             break;
 
@@ -94,7 +91,6 @@ export function useSSE() {
 
     connect();
 
-    // Cleanup on unmount
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();

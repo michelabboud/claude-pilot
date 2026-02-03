@@ -20,6 +20,7 @@ import {
   UserPromptSearchResult
 } from '../types.js';
 import { SessionSearch } from '../../../sqlite/SessionSearch.js';
+import { SearchOptions } from '../../../sqlite/types.js';
 import { logger } from '../../../../utils/logger.js';
 
 export class SQLiteSearchStrategy extends BaseSearchStrategy implements SearchStrategy {
@@ -30,8 +31,6 @@ export class SQLiteSearchStrategy extends BaseSearchStrategy implements SearchSt
   }
 
   canHandle(options: StrategySearchOptions): boolean {
-    // Can handle filter-only queries (no query text)
-    // Also used as fallback when Chroma is unavailable
     return !options.query || options.strategyHint === 'sqlite';
   }
 
@@ -68,7 +67,7 @@ export class SQLiteSearchStrategy extends BaseSearchStrategy implements SearchSt
       if (searchObservations) {
         const obsOptions = {
           ...baseOptions,
-          type: obsType,
+          type: obsType as SearchOptions['type'],
           concepts,
           files
         };

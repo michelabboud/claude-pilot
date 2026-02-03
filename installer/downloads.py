@@ -8,6 +8,7 @@ import json
 import shutil
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -126,6 +127,41 @@ def download_file(
         return True
     except (urllib.error.URLError, OSError, TimeoutError):
         return False
+
+
+def download_files_parallel(
+    file_infos: list[FileInfo],
+    dest_paths: list[Path],
+    config: DownloadConfig,
+    max_workers: int = 8,
+) -> list[bool]:
+    """Download multiple files in parallel using ThreadPoolExecutor.
+
+    Returns a list of booleans indicating success/failure for each file,
+    in the same order as the input lists.
+    """
+    if len(file_infos) != len(dest_paths):
+        raise ValueError("file_infos and dest_paths must have the same length")
+
+    if not file_infos:
+        return []
+
+    results: list[bool | None] = [None] * len(file_infos)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_index = {
+            executor.submit(download_file, file_info, dest_path, config): i
+            for i, (file_info, dest_path) in enumerate(zip(file_infos, dest_paths))
+        }
+
+        for future in as_completed(future_to_index):
+            index = future_to_index[future]
+            try:
+                results[index] = future.result()
+            except Exception:
+                results[index] = False
+
+    return [r if r is not None else False for r in results]
 
 
 def _files_from_cache(cached_files: list[dict], dir_path: str) -> list[FileInfo]:

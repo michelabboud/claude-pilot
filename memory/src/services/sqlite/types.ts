@@ -37,12 +37,11 @@ export interface MemoryRow {
   project: string;
   archive_basename?: string;
   origin: string;
-  // Hierarchical memory fields (v2)
   title?: string;
   subtitle?: string;
-  facts?: string; // JSON array of fact strings
-  concepts?: string; // JSON array of concept strings
-  files_touched?: string; // JSON array of file paths
+  facts?: string;
+  concepts?: string;
+  files_touched?: string;
 }
 
 export interface DiagnosticRow {
@@ -117,12 +116,11 @@ export interface MemoryInput {
   project: string;
   archive_basename?: string;
   origin?: string;
-  // Hierarchical memory fields (v2)
   title?: string;
   subtitle?: string;
-  facts?: string; // JSON array of fact strings
-  concepts?: string; // JSON array of concept strings
-  files_touched?: string; // JSON array of file paths
+  facts?: string;
+  concepts?: string;
+  files_touched?: string;
 }
 
 export interface DiagnosticInput {
@@ -156,18 +154,14 @@ export function normalizeTimestamp(timestamp: string | Date | number | undefined
   } else if (typeof timestamp === 'number') {
     date = new Date(timestamp);
   } else if (typeof timestamp === 'string') {
-    // Handle empty strings
     if (!timestamp.trim()) {
       date = new Date();
     } else {
       date = new Date(timestamp);
-      // If invalid date, try to parse it differently
       if (isNaN(date.getTime())) {
-        // Try common formats
         const cleaned = timestamp.replace(/\s+/g, 'T').replace(/T+/g, 'T');
         date = new Date(cleaned);
         
-        // Still invalid? Use current time
         if (isNaN(date.getTime())) {
           date = new Date();
         }
@@ -205,17 +199,18 @@ export interface ObservationRow {
   id: number;
   memory_session_id: string;
   project: string;
-  text: string | null;
+  text?: string | null;
   type: 'decision' | 'bugfix' | 'feature' | 'refactor' | 'discovery' | 'change';
-  title: string | null;
-  subtitle: string | null;
-  facts: string | null; // JSON array
-  narrative: string | null;
-  concepts: string | null; // JSON array
-  files_read: string | null; // JSON array
-  files_modified: string | null; // JSON array
-  prompt_number: number | null;
-  discovery_tokens: number; // ROI metrics: tokens spent discovering this observation
+  title?: string | null;
+  subtitle?: string | null;
+  facts?: string | null;
+  narrative?: string | null;
+  concepts?: string | null;
+  tags?: string | null;
+  files_read?: string | null;
+  files_modified?: string | null;
+  prompt_number?: number | null;
+  discovery_tokens?: number;
   created_at: string;
   created_at_epoch: number;
 }
@@ -224,16 +219,16 @@ export interface SessionSummaryRow {
   id: number;
   memory_session_id: string;
   project: string;
-  request: string | null;
-  investigated: string | null;
-  learned: string | null;
-  completed: string | null;
-  next_steps: string | null;
-  files_read: string | null; // JSON array
-  files_edited: string | null; // JSON array
-  notes: string | null;
-  prompt_number: number | null;
-  discovery_tokens: number; // ROI metrics: cumulative tokens spent in this session
+  request?: string | null;
+  investigated?: string | null;
+  learned?: string | null;
+  completed?: string | null;
+  next_steps?: string | null;
+  files_read?: string | null;
+  files_edited?: string | null;
+  notes?: string | null;
+  prompt_number?: number | null;
+  discovery_tokens?: number;
   created_at: string;
   created_at_epoch: number;
 }
@@ -251,8 +246,8 @@ export interface UserPromptRow {
  * Search and Filter Types
  */
 export interface DateRange {
-  start?: string | number; // ISO string or epoch
-  end?: string | number;   // ISO string or epoch
+  start?: string | number;
+  end?: string | number;
 }
 
 export interface SearchFilters {
@@ -272,16 +267,16 @@ export interface SearchOptions extends SearchFilters {
 }
 
 export interface ObservationSearchResult extends ObservationRow {
-  rank?: number; // FTS5 relevance score (lower is better)
-  score?: number; // Normalized score (higher is better, 0-1)
+  rank?: number;
+  score?: number;
 }
 
 export interface SessionSummarySearchResult extends SessionSummaryRow {
-  rank?: number; // FTS5 relevance score (lower is better)
-  score?: number; // Normalized score (higher is better, 0-1)
+  rank?: number;
+  score?: number;
 }
 
 export interface UserPromptSearchResult extends UserPromptRow {
-  rank?: number; // FTS5 relevance score (lower is better)
-  score?: number; // Normalized score (higher is better, 0-1)
+  rank?: number;
+  score?: number;
 }

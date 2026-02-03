@@ -11,7 +11,7 @@ import { logger } from '../utils/logger.js';
 /**
  * Parse JSON array string, returning empty array on failure
  */
-export function parseJsonArray(json: string | null): string[] {
+export function parseJsonArray(json: string | null | undefined): string[] {
   if (!json) return [];
   try {
     const parsed = JSON.parse(json);
@@ -81,17 +81,15 @@ export function toRelativePath(filePath: string, cwd: string): string {
  * Returns 'General' only if both are empty.
  */
 export function extractFirstFile(
-  filesModified: string | null,
+  filesModified: string | null | undefined,
   cwd: string,
-  filesRead?: string | null
+  filesRead?: string | null | undefined
 ): string {
-  // Try files_modified first
   const modified = parseJsonArray(filesModified);
   if (modified.length > 0) {
     return toRelativePath(modified[0], cwd);
   }
 
-  // Fall back to files_read
   if (filesRead) {
     const read = parseJsonArray(filesRead);
     if (read.length > 0) {
@@ -105,7 +103,7 @@ export function extractFirstFile(
 /**
  * Estimate token count for text (rough approximation: ~4 chars per token)
  */
-export function estimateTokens(text: string | null): number {
+export function estimateTokens(text: string | null | undefined): number {
   if (!text) return 0;
   return Math.ceil(text.length / 4);
 }
@@ -124,7 +122,6 @@ export function groupByDate<T>(
   items: T[],
   getDate: (item: T) => string
 ): Map<string, T[]> {
-  // Group by day
   const itemsByDay = new Map<string, T[]>();
   for (const item of items) {
     const itemDate = getDate(item);
@@ -135,7 +132,6 @@ export function groupByDate<T>(
     itemsByDay.get(day)!.push(item);
   }
 
-  // Sort days chronologically
   const sortedEntries = Array.from(itemsByDay.entries()).sort((a, b) => {
     const aDate = new Date(a[0]).getTime();
     const bDate = new Date(b[0]).getTime();

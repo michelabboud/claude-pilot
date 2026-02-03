@@ -93,11 +93,9 @@ export class PendingMessageStore {
       const msg = peekStmt.get(sessionId) as PersistentPendingMessage | null;
 
       if (msg) {
-        // Delete immediately - no "processing" state needed
         const deleteStmt = this.db.prepare('DELETE FROM pending_messages WHERE id = ?');
         deleteStmt.run(msg.id);
 
-        // Log claim with minimal info (avoid logging full payload)
         logger.info('QUEUE', `CLAIMED | sessionDbId=${sessionId} | messageId=${msg.id} | type=${msg.message_type}`, {
           sessionId: sessionId
         });
@@ -158,11 +156,16 @@ export class PendingMessageStore {
   /**
    * Retry a specific message (reset to pending)
    * Works for pending (re-queue), processing (reset stuck), and failed messages
+   * Fully resets all state fields for a clean retry
    */
   retryMessage(messageId: number): boolean {
     const stmt = this.db.prepare(`
       UPDATE pending_messages
-      SET status = 'pending', started_processing_at_epoch = NULL
+      SET status = 'pending',
+          retry_count = 0,
+          started_processing_at_epoch = NULL,
+          completed_at_epoch = NULL,
+          failed_at_epoch = NULL
       WHERE id = ? AND status IN ('pending', 'processing', 'failed')
     `);
     const result = stmt.run(messageId);
@@ -191,9 +194,7 @@ export class PendingMessageStore {
   markSessionMessagesFailed(sessionDbId: number): number {
     const now = Date.now();
 
-    // Atomic update - all processing messages for session → failed
     // Note: This bypasses retry logic since generator failures are session-level,
-    // not message-level. Individual message failures use markFailed() instead.
     const stmt = this.db.prepare(`
       UPDATE pending_messages
       SET status = 'failed', failed_at_epoch = ?
@@ -252,13 +253,11 @@ export class PendingMessageStore {
   markFailed(messageId: number): void {
     const now = Date.now();
 
-    // Get current retry count
     const msg = this.db.prepare('SELECT retry_count FROM pending_messages WHERE id = ?').get(messageId) as { retry_count: number } | undefined;
 
     if (!msg) return;
 
     if (msg.retry_count < this.maxRetries) {
-      // Move back to pending for retry
       const stmt = this.db.prepare(`
         UPDATE pending_messages
         SET status = 'pending', retry_count = retry_count + 1, started_processing_at_epoch = NULL
@@ -266,7 +265,6 @@ export class PendingMessageStore {
       `);
       stmt.run(messageId);
     } else {
-      // Max retries exceeded, mark as permanently failed
       const stmt = this.db.prepare(`
         UPDATE pending_messages
         SET status = 'failed', completed_at_epoch = ?
@@ -366,25 +364,6 @@ export class PendingMessageStore {
     `);
     const result = stmt.run();
     return result.changes;
-  }
-
-  /**
-   * Retry a failed message by resetting it to pending status
-   * @param messageId The ID of the message to retry
-   * @returns True if the message was found and reset, false otherwise
-   */
-  retryMessage(messageId: number): boolean {
-    const stmt = this.db.prepare(`
-      UPDATE pending_messages
-      SET status = 'pending',
-          retry_count = 0,
-          started_processing_at_epoch = NULL,
-          completed_at_epoch = NULL,
-          failed_at_epoch = NULL
-      WHERE id = ? AND status = 'failed'
-    `);
-    const result = stmt.run(messageId);
-    return result.changes > 0;
   }
 
   /**

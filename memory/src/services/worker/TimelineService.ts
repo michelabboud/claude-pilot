@@ -55,7 +55,6 @@ export class TimelineService {
       const sessionNum = parseInt(anchorId.slice(1), 10);
       anchorIndex = items.findIndex(item => item.type === 'session' && (item.data as SessionSummarySearchResult).id === sessionNum);
     } else {
-      // Timestamp anchor - find closest item
       anchorIndex = items.findIndex(item => item.epoch >= anchorEpoch);
       if (anchorIndex === -1) anchorIndex = items.length - 1;
     }
@@ -85,7 +84,6 @@ export class TimelineService {
 
     const lines: string[] = [];
 
-    // Header
     if (query && anchorId) {
       const anchorObs = items.find(item => item.type === 'observation' && (item.data as ObservationSearchResult).id === anchorId);
       const anchorTitle = anchorObs ? ((anchorObs.data as ObservationSearchResult).title || 'Untitled') : 'Unknown';
@@ -104,11 +102,9 @@ export class TimelineService {
     }
     lines.push('');
 
-    // Legend
     lines.push(`**Legend:** 🎯 session-request | 🔴 bugfix | 🟣 feature | 🔄 refactor | ✅ change | 🔵 discovery | 🧠 decision`);
     lines.push('');
 
-    // Group by day
     const dayMap = new Map<string, TimelineItem[]>();
     for (const item of items) {
       const day = this.formatDate(item.epoch);
@@ -118,14 +114,12 @@ export class TimelineService {
       dayMap.get(day)!.push(item);
     }
 
-    // Sort days chronologically
     const sortedDays = Array.from(dayMap.entries()).sort((a, b) => {
       const aDate = new Date(a[0]).getTime();
       const bDate = new Date(b[0]).getTime();
       return aDate - bDate;
     });
 
-    // Render each day
     for (const [day, dayItems] of sortedDays) {
       lines.push(`### ${day}`);
       lines.push('');
@@ -256,7 +250,7 @@ export class TimelineService {
   /**
    * Estimate tokens from text length (~4 chars per token)
    */
-  private estimateTokens(text: string | null): number {
+  private estimateTokens(text: string | null | undefined): number {
     if (!text) return 0;
     return Math.ceil(text.length / 4);
   }

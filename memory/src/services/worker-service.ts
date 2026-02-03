@@ -58,6 +58,7 @@ import { SearchManager } from './worker/SearchManager.js';
 import { FormattingService } from './worker/FormattingService.js';
 import { TimelineService } from './worker/TimelineService.js';
 import { SessionEventBroadcaster } from './worker/events/SessionEventBroadcaster.js';
+import type { WorkerRef } from './worker/agents/types.js';
 
 import { ViewerRoutes } from './worker/http/routes/ViewerRoutes.js';
 import { SessionRoutes } from './worker/http/routes/SessionRoutes.js';
@@ -285,7 +286,7 @@ export class WorkerService {
       const transport = new StdioClientTransport({
         command: 'node',
         args: [mcpServerPath],
-        env: process.env
+        env: process.env as Record<string, string>
       });
 
       const MCP_INIT_TIMEOUT_MS = 300000;
@@ -377,7 +378,7 @@ export class WorkerService {
 
     logger.info('SYSTEM', `Starting generator (${source}) using ${providerName}`, { sessionId: sid });
 
-    session.generatorPromise = agent.startSession(session, this)
+    session.generatorPromise = agent.startSession(session, this as unknown as WorkerRef)
       .catch(error => {
         logger.error('SDK', 'Session generator failed', {
           sessionId: session.sessionDbId,

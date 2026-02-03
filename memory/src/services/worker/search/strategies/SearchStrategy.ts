@@ -46,14 +46,14 @@ export abstract class BaseSearchStrategy implements SearchStrategy {
   /**
    * Create an empty search result
    */
-  protected emptyResult(strategy: 'chroma' | 'sqlite' | 'hybrid'): StrategySearchResult {
+  protected emptyResult(strategy: 'chroma' | 'sqlite' | 'hybrid' | 'vector'): StrategySearchResult {
     return {
       results: {
         observations: [],
         sessions: [],
         prompts: []
       },
-      usedChroma: strategy === 'chroma' || strategy === 'hybrid',
+      usedChroma: strategy === 'chroma' || strategy === 'hybrid' || strategy === 'vector',
       fellBack: false,
       strategy
     };

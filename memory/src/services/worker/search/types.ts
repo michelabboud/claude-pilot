@@ -5,7 +5,6 @@
 
 import type { ObservationSearchResult, SessionSummarySearchResult, UserPromptSearchResult, SearchOptions, DateRange } from '../../sqlite/types.js';
 
-// Re-export base types for convenience
 export type { ObservationSearchResult, SessionSummarySearchResult, UserPromptSearchResult, SearchOptions, DateRange };
 
 /**
@@ -84,7 +83,7 @@ export interface ExtendedSearchOptions extends SearchOptions {
 /**
  * Search strategy selection hint
  */
-export type SearchStrategyHint = 'chroma' | 'sqlite' | 'hybrid' | 'auto';
+export type SearchStrategyHint = 'chroma' | 'sqlite' | 'hybrid' | 'auto' | 'vector';
 
 /**
  * Options passed to search strategies

@@ -108,7 +108,6 @@ export class QdrantSync implements IVectorSync {
 
     logger.info('QDRANT_SYNC', 'Connecting to Qdrant server...', { project: this.project });
 
-    // Connect to local Qdrant Docker container
     // TODO: Make host/port configurable via settings
     this.client = new QdrantClient({
       host: 'localhost',
@@ -129,7 +128,6 @@ export class QdrantSync implements IVectorSync {
     if (!this.client) throw new Error('Qdrant client not initialized');
 
     try {
-      // Check if collection exists
       const collections = await this.client.getCollections();
       const exists = collections.collections.some(c => c.name === this.collectionName);
 
@@ -143,7 +141,6 @@ export class QdrantSync implements IVectorSync {
           }
         });
 
-        // Create payload indexes for filtering
         await this.client.createPayloadIndex(this.collectionName, {
           field_name: 'doc_type',
           field_schema: 'keyword'
@@ -179,7 +176,7 @@ export class QdrantSync implements IVectorSync {
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     return Math.abs(hash);
   }
@@ -214,7 +211,6 @@ export class QdrantSync implements IVectorSync {
       title: obs.title || 'Untitled'
     };
 
-    // Add optional metadata fields
     if (obs.subtitle) {
       baseMetadata.subtitle = obs.subtitle;
     }
@@ -228,7 +224,6 @@ export class QdrantSync implements IVectorSync {
       baseMetadata.files_modified = obs.files_modified.join(',');
     }
 
-    // Narrative as separate document
     if (obs.narrative) {
       documents.push({
         id: `obs_${obs.id}_narrative`,
@@ -237,7 +232,6 @@ export class QdrantSync implements IVectorSync {
       });
     }
 
-    // Text as separate document (legacy field)
     if (obs.text) {
       documents.push({
         id: `obs_${obs.id}_text`,
@@ -246,7 +240,6 @@ export class QdrantSync implements IVectorSync {
       });
     }
 
-    // Each fact as separate document
     obs.facts.forEach((fact: string, index: number) => {
       documents.push({
         id: `obs_${obs.id}_fact_${index}`,
@@ -285,7 +278,6 @@ export class QdrantSync implements IVectorSync {
       prompt_number: summary.prompt_number || 0
     };
 
-    // Each field becomes a separate document
     const fields = [
       { key: 'request', value: summary.request },
       { key: 'investigated', value: summary.investigated },
@@ -335,21 +327,18 @@ export class QdrantSync implements IVectorSync {
     await this.ensureCollection();
     if (!this.client) throw new Error('Qdrant client not initialized');
 
-    // Generate embeddings for all document texts
     const texts = documents.map(d => d.text);
     const embeddings = await this.embedder.embedBatch(texts);
 
-    // Prepare points for upsert
     const points = documents.map((doc, i) => ({
       id: this.stringToNumericId(doc.id),
       vector: embeddings[i],
       payload: {
         ...doc.metadata,
-        _doc_id: doc.id // Store original string ID in payload
+        _doc_id: doc.id
       }
     }));
 
-    // Upsert in batches
     for (let i = 0; i < points.length; i += this.BATCH_SIZE) {
       const batch = points.slice(i, i + this.BATCH_SIZE);
       await this.client.upsert(this.collectionName, {
@@ -502,8 +491,9 @@ export class QdrantSync implements IVectorSync {
         }
       }
 
-      offset = result.next_page_offset;
-      if (!offset) break;
+      const nextOffset = result.next_page_offset;
+      if (!nextOffset || typeof nextOffset === 'object') break;
+      offset = nextOffset;
     }
 
     logger.info('QDRANT_SYNC', 'Existing IDs fetched', {
@@ -521,19 +511,16 @@ export class QdrantSync implements IVectorSync {
 
     await this.ensureCollection();
 
-    // Fetch existing IDs from Qdrant
     const existing = await this.getExistingIds();
 
     const db = new SessionStore();
 
     try {
-      // Build exclusion list for observations
       const existingObsIds = Array.from(existing.observations);
       const obsExclusionClause = existingObsIds.length > 0
         ? `AND id NOT IN (${existingObsIds.join(',')})`
         : '';
 
-      // Get only observations missing from Qdrant
       const observations = db.db.prepare(`
         SELECT * FROM observations
         WHERE project = ? ${obsExclusionClause}
@@ -546,7 +533,6 @@ export class QdrantSync implements IVectorSync {
         existing: existing.observations.size
       });
 
-      // Format and sync all observation documents
       const allDocs: QdrantDocument[] = [];
       for (const obs of observations) {
         const facts = obs.facts ? JSON.parse(obs.facts) : [];
@@ -571,7 +557,6 @@ export class QdrantSync implements IVectorSync {
         }));
       }
 
-      // Sync observation documents in batches
       for (let i = 0; i < allDocs.length; i += this.BATCH_SIZE) {
         const batch = allDocs.slice(i, i + this.BATCH_SIZE);
         await this.addDocuments(batch);
@@ -581,13 +566,11 @@ export class QdrantSync implements IVectorSync {
         });
       }
 
-      // Build exclusion list for summaries
       const existingSummaryIds = Array.from(existing.summaries);
       const summaryExclusionClause = existingSummaryIds.length > 0
         ? `AND id NOT IN (${existingSummaryIds.join(',')})`
         : '';
 
-      // Get only summaries missing from Qdrant
       const summaries = db.db.prepare(`
         SELECT * FROM session_summaries
         WHERE project = ? ${summaryExclusionClause}
@@ -600,7 +583,6 @@ export class QdrantSync implements IVectorSync {
         existing: existing.summaries.size
       });
 
-      // Format and sync all summary documents
       const summaryDocs: QdrantDocument[] = [];
       for (const summary of summaries) {
         summaryDocs.push(...this.formatSummaryDocs({
@@ -618,19 +600,16 @@ export class QdrantSync implements IVectorSync {
         }));
       }
 
-      // Sync summary documents in batches
       for (let i = 0; i < summaryDocs.length; i += this.BATCH_SIZE) {
         const batch = summaryDocs.slice(i, i + this.BATCH_SIZE);
         await this.addDocuments(batch);
       }
 
-      // Build exclusion list for prompts
       const existingPromptIds = Array.from(existing.prompts);
       const promptExclusionClause = existingPromptIds.length > 0
         ? `AND up.id NOT IN (${existingPromptIds.join(',')})`
         : '';
 
-      // Get only user prompts missing from Qdrant
       const prompts = db.db.prepare(`
         SELECT
           up.*,
@@ -648,13 +627,11 @@ export class QdrantSync implements IVectorSync {
         existing: existing.prompts.size
       });
 
-      // Format and sync all prompt documents
       const promptDocs: QdrantDocument[] = [];
       for (const prompt of prompts) {
         promptDocs.push(this.formatUserPromptDoc(prompt));
       }
 
-      // Sync prompt documents in batches
       for (let i = 0; i < promptDocs.length; i += this.BATCH_SIZE) {
         const batch = promptDocs.slice(i, i + this.BATCH_SIZE);
         await this.addDocuments(batch);
@@ -685,10 +662,8 @@ export class QdrantSync implements IVectorSync {
     await this.ensureCollection();
     if (!this.client) throw new Error('Qdrant client not initialized');
 
-    // Generate query embedding
     const queryEmbedding = await this.embedder.embed(queryText);
 
-    // Build filter conditions
     const must: any[] = [];
     if (whereFilter) {
       for (const [key, value] of Object.entries(whereFilter)) {
@@ -699,24 +674,21 @@ export class QdrantSync implements IVectorSync {
       }
     }
 
-    // Search Qdrant
     const results = await this.client.search(this.collectionName, {
       vector: queryEmbedding,
-      limit: limit * 3, // Request more to account for deduplication
+      limit: limit * 3,
       filter: must.length > 0 ? { must } : undefined,
       with_payload: true
     });
 
-    // Extract unique SQLite IDs from results (deduplicate)
     const ids: number[] = [];
     const distances: number[] = [];
     const metadatas: VectorMetadata[] = [];
 
     for (const result of results) {
-      const payload = result.payload as VectorMetadata;
+      const payload = result.payload as unknown as VectorMetadata;
       const sqliteId = payload?.sqlite_id;
 
-      // Deduplicate by sqlite_id (multiple docs per observation)
       if (sqliteId && !ids.includes(sqliteId)) {
         ids.push(sqliteId);
         distances.push(result.score);
@@ -730,7 +702,6 @@ export class QdrantSync implements IVectorSync {
   }
 
   async close(): Promise<void> {
-    // Qdrant file-based client doesn't need explicit close
     logger.info('QDRANT_SYNC', 'Qdrant client closed', { project: this.project });
 
     this.connected = false;
@@ -743,7 +714,6 @@ export class QdrantSync implements IVectorSync {
       await this.ensureConnection();
       if (!this.client) return false;
 
-      // Try to list collections to verify connectivity
       await this.client.getCollections();
       return true;
     } catch {

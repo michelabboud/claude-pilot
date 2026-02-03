@@ -5,7 +5,6 @@ import { VectorDbStatus } from './VectorDbStatus';
 import { PlanStatus } from './PlanStatus';
 import { GitStatus } from './GitStatus';
 import { RecentActivity } from './RecentActivity';
-import { AnalyticsSection } from './AnalyticsSection';
 import { useStats } from '../../hooks/useStats';
 
 export function DashboardView() {
@@ -48,8 +47,6 @@ export function DashboardView() {
         <GitStatus gitInfo={gitInfo} />
         <RecentActivity items={recentActivity} />
       </div>
-
-      <AnalyticsSection />
     </div>
   );
 }

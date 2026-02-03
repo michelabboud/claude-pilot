@@ -52,6 +52,7 @@ export interface StreamEvent {
   summary?: Summary;
   prompt?: UserPrompt;
   isProcessing?: boolean;
+  queueDepth?: number;
 }
 
 export interface Settings {
@@ -59,44 +60,37 @@ export interface Settings {
   CLAUDE_MEM_CONTEXT_OBSERVATIONS: string;
   CLAUDE_MEM_WORKER_PORT: string;
   CLAUDE_MEM_WORKER_HOST: string;
-  CLAUDE_MEM_WORKER_BIND?: string;  // Server bind address (0.0.0.0 for network access)
+  CLAUDE_MEM_WORKER_BIND?: string;
 
-  // AI Provider Configuration
-  CLAUDE_MEM_PROVIDER?: string;  // 'claude' | 'gemini' | 'mistral' | 'openrouter'
+  CLAUDE_MEM_PROVIDER?: string;
   CLAUDE_MEM_GEMINI_API_KEY?: string;
-  CLAUDE_MEM_GEMINI_MODEL?: string;  // 'gemini-2.5-flash-lite' | 'gemini-2.5-flash' | 'gemini-3-flash'
-  CLAUDE_MEM_GEMINI_RATE_LIMITING_ENABLED?: string;  // 'true' | 'false'
+  CLAUDE_MEM_GEMINI_MODEL?: string;
+  CLAUDE_MEM_GEMINI_RATE_LIMITING_ENABLED?: string;
   CLAUDE_MEM_MISTRAL_API_KEY?: string;
-  CLAUDE_MEM_MISTRAL_MODEL?: string;  // 'mistral-small-latest' | 'mistral-medium-latest' | 'mistral-large-latest'
+  CLAUDE_MEM_MISTRAL_MODEL?: string;
   CLAUDE_MEM_OPENROUTER_API_KEY?: string;
   CLAUDE_MEM_OPENROUTER_MODEL?: string;
   CLAUDE_MEM_OPENROUTER_SITE_URL?: string;
   CLAUDE_MEM_OPENROUTER_APP_NAME?: string;
 
-  // Token Economics Display
   CLAUDE_MEM_CONTEXT_SHOW_READ_TOKENS?: string;
   CLAUDE_MEM_CONTEXT_SHOW_WORK_TOKENS?: string;
   CLAUDE_MEM_CONTEXT_SHOW_SAVINGS_AMOUNT?: string;
   CLAUDE_MEM_CONTEXT_SHOW_SAVINGS_PERCENT?: string;
 
-  // Observation Filtering
   CLAUDE_MEM_CONTEXT_OBSERVATION_TYPES?: string;
   CLAUDE_MEM_CONTEXT_OBSERVATION_CONCEPTS?: string;
 
-  // Display Configuration
   CLAUDE_MEM_CONTEXT_FULL_COUNT?: string;
   CLAUDE_MEM_CONTEXT_FULL_FIELD?: string;
   CLAUDE_MEM_CONTEXT_SESSION_COUNT?: string;
 
-  // Feature Toggles
   CLAUDE_MEM_CONTEXT_SHOW_LAST_SUMMARY?: string;
   CLAUDE_MEM_CONTEXT_SHOW_LAST_MESSAGE?: string;
 
-  // OpenRouter Advanced
   CLAUDE_MEM_OPENROUTER_MAX_CONTEXT_MESSAGES?: string;
   CLAUDE_MEM_OPENROUTER_MAX_TOKENS?: string;
 
-  // System Configuration
   CLAUDE_MEM_SKIP_TOOLS?: string;
   CLAUDE_MEM_LOG_LEVEL?: string;
   CLAUDE_MEM_MODE?: string;

@@ -611,7 +611,18 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(project, limit);
+    return stmt.all(project, limit) as Array<{
+      request: string | null;
+      investigated: string | null;
+      learned: string | null;
+      completed: string | null;
+      next_steps: string | null;
+      files_read: string | null;
+      files_edited: string | null;
+      notes: string | null;
+      prompt_number: number | null;
+      created_at: string;
+    }>;
   }
 
   /**
@@ -636,7 +647,15 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(project, limit);
+    return stmt.all(project, limit) as Array<{
+      memory_session_id: string;
+      request: string | null;
+      learned: string | null;
+      completed: string | null;
+      next_steps: string | null;
+      prompt_number: number | null;
+      created_at: string;
+    }>;
   }
 
   /**
@@ -656,7 +675,12 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(project, limit);
+    return stmt.all(project, limit) as Array<{
+      type: string;
+      text: string;
+      prompt_number: number | null;
+      created_at: string;
+    }>;
   }
 
   /**
@@ -680,7 +704,17 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(limit);
+    return stmt.all(limit) as Array<{
+      id: number;
+      type: string;
+      title: string | null;
+      subtitle: string | null;
+      text: string;
+      project: string;
+      prompt_number: number | null;
+      created_at: string;
+      created_at_epoch: number;
+    }>;
   }
 
   /**
@@ -710,7 +744,21 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(limit);
+    return stmt.all(limit) as Array<{
+      id: number;
+      request: string | null;
+      investigated: string | null;
+      learned: string | null;
+      completed: string | null;
+      next_steps: string | null;
+      files_read: string | null;
+      files_edited: string | null;
+      notes: string | null;
+      project: string;
+      prompt_number: number | null;
+      created_at: string;
+      created_at_epoch: number;
+    }>;
   }
 
   /**
@@ -740,7 +788,15 @@ export class SessionStore {
       LIMIT ?
     `);
 
-    return stmt.all(limit);
+    return stmt.all(limit) as Array<{
+      id: number;
+      content_session_id: string;
+      project: string;
+      prompt_number: number;
+      prompt_text: string;
+      created_at: string;
+      created_at_epoch: number;
+    }>;
   }
 
   /**
@@ -815,7 +871,13 @@ export class SessionStore {
       ORDER BY started_at_epoch ASC
     `);
 
-    return stmt.all(project, limit);
+    return stmt.all(project, limit) as Array<{
+      memory_session_id: string | null;
+      status: string;
+      started_at: string;
+      user_prompt: string | null;
+      has_summary: boolean;
+    }>;
   }
 
   /**
@@ -834,7 +896,12 @@ export class SessionStore {
       ORDER BY created_at_epoch ASC
     `);
 
-    return stmt.all(memorySessionId);
+    return stmt.all(memorySessionId) as Array<{
+      title: string;
+      subtitle: string;
+      type: string;
+      prompt_number: number | null;
+    }>;
   }
 
   /**
@@ -855,7 +922,7 @@ export class SessionStore {
    */
   getObservationsByIds(
     ids: number[],
-    options: { orderBy?: 'date_desc' | 'date_asc'; limit?: number; project?: string; type?: string | string[]; concepts?: string | string[]; files?: string | string[] } = {}
+    options: { orderBy?: 'date_desc' | 'date_asc' | 'relevance'; limit?: number; project?: string; type?: string | string[]; concepts?: string | string[]; files?: string | string[] } = {}
   ): ObservationRecord[] {
     if (ids.length === 0) return [];
 
@@ -968,7 +1035,19 @@ export class SessionStore {
       LIMIT 1
     `);
 
-    return stmt.get(memorySessionId) || null;
+    return (stmt.get(memorySessionId) as {
+      request: string | null;
+      investigated: string | null;
+      learned: string | null;
+      completed: string | null;
+      next_steps: string | null;
+      files_read: string | null;
+      files_edited: string | null;
+      notes: string | null;
+      prompt_number: number | null;
+      created_at: string;
+      created_at_epoch: number;
+    } | undefined) || null;
   }
 
   /**
@@ -1031,7 +1110,13 @@ export class SessionStore {
       LIMIT 1
     `);
 
-    return stmt.get(id) || null;
+    return (stmt.get(id) as {
+      id: number;
+      content_session_id: string;
+      memory_session_id: string | null;
+      project: string;
+      user_prompt: string;
+    } | undefined) || null;
   }
 
   /**
@@ -1505,7 +1590,7 @@ export class SessionStore {
    */
   getSessionSummariesByIds(
     ids: number[],
-    options: { orderBy?: 'date_desc' | 'date_asc'; limit?: number; project?: string } = {}
+    options: { orderBy?: 'date_desc' | 'date_asc' | 'relevance'; limit?: number; project?: string } = {}
   ): SessionSummaryRecord[] {
     if (ids.length === 0) return [];
 
@@ -1536,7 +1621,7 @@ export class SessionStore {
    */
   getUserPromptsByIds(
     ids: number[],
-    options: { orderBy?: 'date_desc' | 'date_asc'; limit?: number; project?: string } = {}
+    options: { orderBy?: 'date_desc' | 'date_asc' | 'relevance'; limit?: number; project?: string } = {}
   ): UserPromptRecord[] {
     if (ids.length === 0) return [];
 
@@ -1745,7 +1830,15 @@ export class SessionStore {
       LIMIT 1
     `);
 
-    return stmt.get(id) || null;
+    return (stmt.get(id) as {
+      id: number;
+      content_session_id: string;
+      prompt_number: number;
+      prompt_text: string;
+      project: string;
+      created_at: string;
+      created_at_epoch: number;
+    } | undefined) || null;
   }
 
   /**
@@ -1821,7 +1914,18 @@ export class SessionStore {
       LIMIT 1
     `);
 
-    return stmt.get(id) || null;
+    return (stmt.get(id) as {
+      id: number;
+      memory_session_id: string | null;
+      content_session_id: string;
+      project: string;
+      user_prompt: string;
+      request_summary: string | null;
+      learned_summary: string | null;
+      status: string;
+      created_at: string;
+      created_at_epoch: number;
+    } | undefined) || null;
   }
 
   /**
@@ -2059,7 +2163,6 @@ export class SessionStore {
     return { imported: true, id: result.lastInsertRowid as number };
   }
 
-  // ==================== TAG MANAGEMENT ====================
 
   /**
    * Get all tags with usage counts
@@ -2085,7 +2188,6 @@ export class SessionStore {
   getOrCreateTag(name: string, color?: string): { id: number; name: string; color: string; created: boolean } {
     const normalizedName = name.toLowerCase().trim();
 
-    // Check if tag exists
     const existing = this.db.prepare(`
       SELECT id, name, color FROM tags WHERE name = ?
     `).get(normalizedName) as { id: number; name: string; color: string } | undefined;
@@ -2094,7 +2196,6 @@ export class SessionStore {
       return { ...existing, created: false };
     }
 
-    // Create new tag
     const now = new Date();
     const stmt = this.db.prepare(`
       INSERT INTO tags (name, color, created_at, created_at_epoch)
@@ -2161,7 +2262,6 @@ export class SessionStore {
     const observation = this.getObservationById(observationId);
     if (!observation) return;
 
-    // Get current tags
     let currentTags: string[] = [];
     try {
       currentTags = observation.tags ? JSON.parse(observation.tags) : [];
@@ -2169,15 +2269,12 @@ export class SessionStore {
       currentTags = [];
     }
 
-    // Normalize and add new tags
     const normalizedNew = tagNames.map(t => t.toLowerCase().trim());
     const allTags = [...new Set([...currentTags, ...normalizedNew])];
 
-    // Update observation
     const stmt = this.db.prepare('UPDATE observations SET tags = ? WHERE id = ?');
     stmt.run(JSON.stringify(allTags), observationId);
 
-    // Ensure tags exist and update usage counts
     for (const tagName of normalizedNew) {
       if (!currentTags.includes(tagName)) {
         this.getOrCreateTag(tagName);
@@ -2193,7 +2290,6 @@ export class SessionStore {
     const observation = this.getObservationById(observationId);
     if (!observation) return;
 
-    // Get current tags
     let currentTags: string[] = [];
     try {
       currentTags = observation.tags ? JSON.parse(observation.tags) : [];
@@ -2201,15 +2297,12 @@ export class SessionStore {
       currentTags = [];
     }
 
-    // Remove specified tags
     const normalizedRemove = tagNames.map(t => t.toLowerCase().trim());
     const remainingTags = currentTags.filter(t => !normalizedRemove.includes(t));
 
-    // Update observation
     const stmt = this.db.prepare('UPDATE observations SET tags = ? WHERE id = ?');
     stmt.run(JSON.stringify(remainingTags), observationId);
 
-    // Decrement usage counts
     for (const tagName of normalizedRemove) {
       if (currentTags.includes(tagName)) {
         this.db.prepare('UPDATE tags SET usage_count = MAX(0, usage_count - 1) WHERE name = ?').run(tagName);
@@ -2245,14 +2338,12 @@ export class SessionStore {
     const params: any[] = [];
 
     if (matchAll) {
-      // All tags must be present
       const conditions = normalizedTags.map(() =>
         'EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)'
       ).join(' AND ');
       query = `SELECT * FROM observations WHERE tags IS NOT NULL AND ${conditions}`;
       params.push(...normalizedTags);
     } else {
-      // Any tag matches
       const conditions = normalizedTags.map(() =>
         'EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)'
       ).join(' OR ');
@@ -2294,29 +2385,24 @@ export class SessionStore {
 
     const suggestions: string[] = [];
 
-    // Suggest from concepts
     if (observation.concepts) {
       try {
         const concepts = JSON.parse(observation.concepts);
         suggestions.push(...concepts);
       } catch {
-        // Not JSON, might be comma-separated
         if (typeof observation.concepts === 'string') {
           suggestions.push(...observation.concepts.split(',').map(c => c.trim()));
         }
       }
     }
 
-    // Suggest from observation type
     if (observation.type) {
       suggestions.push(observation.type);
     }
 
-    // Get existing tags that match any of the suggestions
     const existingTags = this.getAllTags();
     const existingNames = new Set(existingTags.map(t => t.name));
 
-    // Return suggestions that either exist or are new
     return [...new Set(suggestions.map(s => s.toLowerCase().trim()))].filter(Boolean);
   }
 }

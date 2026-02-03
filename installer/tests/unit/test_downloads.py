@@ -207,3 +207,120 @@ class TestTreeCaching:
         assert len(files) == 1
         assert files[0].path == "pilot/test.py"
         assert files[0].sha == "abc123"
+
+
+class TestDownloadFilesParallel:
+    """Test parallel download functionality."""
+
+    def test_download_files_parallel_downloads_all_files(self):
+        """download_files_parallel downloads all files concurrently."""
+        from installer.downloads import (
+            DownloadConfig,
+            FileInfo,
+            download_files_parallel,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_dir = Path(tmpdir) / "source"
+            source_dir.mkdir()
+
+            for i in range(5):
+                (source_dir / f"file{i}.txt").write_text(f"content{i}")
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_dir.mkdir()
+
+            config = DownloadConfig(
+                repo_url="https://github.com/test/repo",
+                repo_branch="main",
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            file_infos = [FileInfo(path=f"file{i}.txt") for i in range(5)]
+            dest_paths = [dest_dir / f"file{i}.txt" for i in range(5)]
+
+            results = download_files_parallel(file_infos, dest_paths, config)
+
+            assert len(results) == 5
+            assert all(results)
+            for i in range(5):
+                assert dest_paths[i].exists()
+                assert dest_paths[i].read_text() == f"content{i}"
+
+    def test_download_files_parallel_returns_partial_results_on_failure(self):
+        """download_files_parallel returns False for failed downloads."""
+        from installer.downloads import (
+            DownloadConfig,
+            FileInfo,
+            download_files_parallel,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_dir = Path(tmpdir) / "source"
+            source_dir.mkdir()
+
+            (source_dir / "exists.txt").write_text("content")
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_dir.mkdir()
+
+            config = DownloadConfig(
+                repo_url="https://github.com/test/repo",
+                repo_branch="main",
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            file_infos = [
+                FileInfo(path="exists.txt"),
+                FileInfo(path="missing.txt"),
+            ]
+            dest_paths = [
+                dest_dir / "exists.txt",
+                dest_dir / "missing.txt",
+            ]
+
+            results = download_files_parallel(file_infos, dest_paths, config)
+
+            assert results[0] is True
+            assert results[1] is False
+
+    def test_download_files_parallel_empty_list(self):
+        """download_files_parallel handles empty input."""
+        from installer.downloads import (
+            DownloadConfig,
+            download_files_parallel,
+        )
+
+        config = DownloadConfig(
+            repo_url="https://github.com/test/repo",
+            repo_branch="main",
+            local_mode=True,
+            local_repo_dir=Path("/tmp"),
+        )
+
+        results = download_files_parallel([], [], config)
+        assert results == []
+
+    def test_download_files_parallel_mismatched_lengths_raises(self):
+        """download_files_parallel raises ValueError for mismatched input lengths."""
+        import pytest
+
+        from installer.downloads import (
+            DownloadConfig,
+            FileInfo,
+            download_files_parallel,
+        )
+
+        config = DownloadConfig(
+            repo_url="https://github.com/test/repo",
+            repo_branch="main",
+        )
+
+        with pytest.raises(ValueError, match="same length"):
+            download_files_parallel(
+                [FileInfo(path="a.txt"), FileInfo(path="b.txt")],
+                [Path("/tmp/a.txt")],
+                config,
+            )

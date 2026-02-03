@@ -1,8 +1,6 @@
 import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from 'bun:test';
 import { logger } from '../../../src/utils/logger.js';
 
-// Mock modules that cause import chain issues - MUST be before imports
-// Use full paths from test file location
 mock.module('../../../src/services/worker-service.js', () => ({
   updateCursorContextForProject: () => Promise.resolve(),
 }));
@@ -11,7 +9,6 @@ mock.module('../../../src/shared/worker-utils.js', () => ({
   getWorkerPort: () => 37777,
 }));
 
-// Mock the ModeManager
 mock.module('../../../src/services/domain/ModeManager.js', () => ({
   ModeManager: {
     getInstance: () => ({
@@ -29,18 +26,15 @@ mock.module('../../../src/services/domain/ModeManager.js', () => ({
   },
 }));
 
-// Import after mocks
 import { processAgentResponse } from '../../../src/services/worker/agents/ResponseProcessor.js';
 import type { WorkerRef, StorageResult } from '../../../src/services/worker/agents/types.js';
 import type { ActiveSession } from '../../../src/services/worker-types.js';
 import type { DatabaseManager } from '../../../src/services/worker/DatabaseManager.js';
 import type { SessionManager } from '../../../src/services/worker/SessionManager.js';
 
-// Spy on logger methods to suppress output during tests
 let loggerSpies: ReturnType<typeof spyOn>[] = [];
 
 describe('ResponseProcessor', () => {
-  // Mocks
   let mockStoreObservations: ReturnType<typeof mock>;
   let mockChromaSyncObservation: ReturnType<typeof mock>;
   let mockChromaSyncSummary: ReturnType<typeof mock>;
@@ -51,7 +45,6 @@ describe('ResponseProcessor', () => {
   let mockWorker: WorkerRef;
 
   beforeEach(() => {
-    // Spy on logger to suppress output
     loggerSpies = [
       spyOn(logger, 'info').mockImplementation(() => {}),
       spyOn(logger, 'debug').mockImplementation(() => {}),
@@ -59,7 +52,6 @@ describe('ResponseProcessor', () => {
       spyOn(logger, 'error').mockImplementation(() => {}),
     ];
 
-    // Create fresh mocks for each test
     mockStoreObservations = mock(() => ({
       observationIds: [1, 2],
       summaryId: 1,
@@ -110,7 +102,6 @@ describe('ResponseProcessor', () => {
     mock.restore();
   });
 
-  // Helper to create mock session
   function createMockSession(
     overrides: Partial<ActiveSession> = {}
   ): ActiveSession {
@@ -125,11 +116,13 @@ describe('ResponseProcessor', () => {
       generatorPromise: null,
       lastPromptNumber: 5,
       startTime: Date.now(),
+      lastActivityTime: Date.now(),
       cumulativeInputTokens: 100,
       cumulativeOutputTokens: 50,
       earliestPendingTimestamp: Date.now() - 10000,
       conversationHistory: [],
       currentProvider: 'claude',
+      consecutiveRestarts: 0,
       ...overrides,
     };
   }
@@ -265,7 +258,6 @@ describe('ResponseProcessor', () => {
         </observation>
       `;
 
-      // Mock to return result without summary
       mockStoreObservations = mock(() => ({
         observationIds: [1],
         summaryId: null,
@@ -323,10 +315,8 @@ describe('ResponseProcessor', () => {
         'TestAgent'
       );
 
-      // Verify storeObservations was called exactly once (atomic)
       expect(mockStoreObservations).toHaveBeenCalledTimes(1);
 
-      // Verify all parameters passed correctly
       const [
         memorySessionId,
         project,
@@ -363,7 +353,6 @@ describe('ResponseProcessor', () => {
         </observation>
       `;
 
-      // Mock returning single observation ID
       mockStoreObservations = mock(() => ({
         observationIds: [42],
         summaryId: null,
@@ -384,17 +373,15 @@ describe('ResponseProcessor', () => {
         'TestAgent'
       );
 
-      // Should broadcast observation
       expect(mockBroadcast).toHaveBeenCalled();
 
-      // Find the observation broadcast call
       const observationCall = mockBroadcast.mock.calls.find(
         (call: any[]) => call[0].type === 'new_observation'
       );
       expect(observationCall).toBeDefined();
-      expect(observationCall[0].observation.id).toBe(42);
-      expect(observationCall[0].observation.title).toBe('Broadcast Test');
-      expect(observationCall[0].observation.type).toBe('discovery');
+      expect(observationCall![0].observation.id).toBe(42);
+      expect(observationCall![0].observation.title).toBe('Broadcast Test');
+      expect(observationCall![0].observation.type).toBe('discovery');
     });
 
     it('should broadcast summary via SSE', async () => {
@@ -428,12 +415,11 @@ describe('ResponseProcessor', () => {
         'TestAgent'
       );
 
-      // Find the summary broadcast call
       const summaryCall = mockBroadcast.mock.calls.find(
         (call: any[]) => call[0].type === 'new_summary'
       );
       expect(summaryCall).toBeDefined();
-      expect(summaryCall[0].summary.request).toBe('Build feature');
+      expect(summaryCall![0].summary.request).toBe('Build feature');
     });
   });
 
@@ -442,7 +428,6 @@ describe('ResponseProcessor', () => {
       const session = createMockSession();
       const responseText = '';
 
-      // Mock to handle empty observations
       mockStoreObservations = mock(() => ({
         observationIds: [],
         summaryId: null,
@@ -463,7 +448,6 @@ describe('ResponseProcessor', () => {
         'TestAgent'
       );
 
-      // Should still call storeObservations with empty arrays
       expect(mockStoreObservations).toHaveBeenCalledTimes(1);
       const [, , observations, summary] = mockStoreObservations.mock.calls[0];
       expect(observations).toHaveLength(0);
@@ -621,7 +605,7 @@ describe('ResponseProcessor', () => {
   describe('error handling', () => {
     it('should throw error if memorySessionId is missing', async () => {
       const session = createMockSession({
-        memorySessionId: null, // Missing memory session ID
+        memorySessionId: null,
       });
       const responseText = '<observation><type>discovery</type></observation>';
 

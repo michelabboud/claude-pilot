@@ -32,12 +32,10 @@ export class DataRoutes extends BaseRouteHandler {
   }
 
   setupRoutes(app: express.Application): void {
-    // Pagination endpoints
     app.get('/api/observations', this.handleGetObservations.bind(this));
     app.get('/api/summaries', this.handleGetSummaries.bind(this));
     app.get('/api/prompts', this.handleGetPrompts.bind(this));
 
-    // Fetch by ID endpoints
     app.get('/api/observation/:id', this.handleGetObservationById.bind(this));
     app.post('/api/observations/batch', this.handleGetObservationsByIds.bind(this));
     app.get('/api/session/:id', this.handleGetSessionById.bind(this));
@@ -46,32 +44,25 @@ export class DataRoutes extends BaseRouteHandler {
     app.post('/api/sdk-sessions/batch', this.handleGetSdkSessionsByIds.bind(this));
     app.get('/api/prompt/:id', this.handleGetPromptById.bind(this));
 
-    // Metadata endpoints
     app.get('/api/stats', this.handleGetStats.bind(this));
     app.get('/api/projects', this.handleGetProjects.bind(this));
 
-    // Processing status endpoints
     app.get('/api/processing-status', this.handleGetProcessingStatus.bind(this));
     app.post('/api/processing', this.handleSetProcessing.bind(this));
 
-    // Pending queue management endpoints
     app.get('/api/pending-queue', this.handleGetPendingQueue.bind(this));
     app.post('/api/pending-queue/process', this.handleProcessPendingQueue.bind(this));
     app.post('/api/pending-queue/:id/retry', this.handleRetryMessage.bind(this));
     app.delete('/api/pending-queue/failed', this.handleClearFailedQueue.bind(this));
     app.delete('/api/pending-queue/all', this.handleClearAllQueue.bind(this));
 
-    // Import endpoint
     app.post('/api/import', this.handleImport.bind(this));
 
-    // Export endpoint
     app.get('/api/export', this.handleExport.bind(this));
 
-    // Delete endpoints
     app.delete('/api/observation/:id', this.handleDeleteObservation.bind(this));
     app.post('/api/observations/delete', this.handleBulkDeleteObservations.bind(this));
 
-    // Analytics endpoints
     app.get('/api/analytics/timeline', this.handleGetAnalyticsTimeline.bind(this));
     app.get('/api/analytics/types', this.handleGetAnalyticsTypes.bind(this));
     app.get('/api/analytics/projects', this.handleGetAnalyticsProjects.bind(this));
@@ -142,7 +133,6 @@ export class DataRoutes extends BaseRouteHandler {
       return;
     }
 
-    // Validate all IDs are numbers
     if (!ids.every(id => typeof id === 'number' && Number.isInteger(id))) {
       this.badRequest(res, 'All ids must be integers');
       return;
@@ -184,7 +174,6 @@ export class DataRoutes extends BaseRouteHandler {
 
     const db = this.dbManager.getSessionStore().db;
 
-    // Build query with observation counts
     let whereClause = '';
     const params: any[] = [];
 
@@ -193,7 +182,6 @@ export class DataRoutes extends BaseRouteHandler {
       params.push(project);
     }
 
-    // Get sessions with counts
     const query = `
       SELECT
         s.id,
@@ -220,7 +208,6 @@ export class DataRoutes extends BaseRouteHandler {
     const queryParams = project ? [project, project, limit, offset] : [limit, offset];
     const sessions = db.prepare(query).all(...queryParams);
 
-    // Get total count
     const countQuery = project
       ? `SELECT COUNT(DISTINCT s.id) as total FROM sdk_sessions s
          INNER JOIN observations o ON o.memory_session_id = s.memory_session_id WHERE o.project = ?`
@@ -247,14 +234,12 @@ export class DataRoutes extends BaseRouteHandler {
 
     const db = this.dbManager.getSessionStore().db;
 
-    // Get session info
     const session = db.prepare('SELECT * FROM sdk_sessions WHERE id = ?').get(id) as { memory_session_id: string; content_session_id: string } | undefined;
     if (!session) {
       this.notFound(res, `Session #${id} not found`);
       return;
     }
 
-    // Get observations for this session (by memory_session_id)
     const observations = db.prepare(`
       SELECT id, type, title, narrative, text, created_at, created_at_epoch, files_read, files_modified, concepts
       FROM observations
@@ -262,7 +247,6 @@ export class DataRoutes extends BaseRouteHandler {
       ORDER BY created_at_epoch ASC
     `).all(session.memory_session_id);
 
-    // Get prompts for this session (by content_session_id)
     const prompts = db.prepare(`
       SELECT id, prompt_text, prompt_number, created_at, created_at_epoch
       FROM user_prompts
@@ -270,7 +254,6 @@ export class DataRoutes extends BaseRouteHandler {
       ORDER BY created_at_epoch ASC
     `).all(session.content_session_id);
 
-    // Get summary for this session (by memory_session_id)
     const summary = db.prepare(`
       SELECT request, investigated, learned, completed, next_steps, created_at
       FROM session_summaries
@@ -279,10 +262,8 @@ export class DataRoutes extends BaseRouteHandler {
       LIMIT 1
     `).get(session.memory_session_id);
 
-    // Combine into timeline
     const timeline: any[] = [];
 
-    // Add prompts to timeline
     for (const prompt of prompts as any[]) {
       timeline.push({
         type: 'prompt',
@@ -292,7 +273,6 @@ export class DataRoutes extends BaseRouteHandler {
       });
     }
 
-    // Add observations to timeline
     for (const obs of observations as any[]) {
       timeline.push({
         type: 'observation',
@@ -302,7 +282,6 @@ export class DataRoutes extends BaseRouteHandler {
       });
     }
 
-    // Sort by timestamp
     timeline.sort((a, b) => a.timestamp - b.timestamp);
 
     res.json({
@@ -359,29 +338,24 @@ export class DataRoutes extends BaseRouteHandler {
   private handleGetStats = this.wrapHandler((req: Request, res: Response): void => {
     const db = this.dbManager.getSessionStore().db;
 
-    // Read version from package.json
     const packageRoot = getPackageRoot();
     const packageJsonPath = path.join(packageRoot, 'package.json');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     const version = packageJson.version;
 
-    // Get database stats
     const totalObservations = db.prepare('SELECT COUNT(*) as count FROM observations').get() as { count: number };
     const totalSessions = db.prepare('SELECT COUNT(*) as count FROM sdk_sessions').get() as { count: number };
     const totalSummaries = db.prepare('SELECT COUNT(*) as count FROM session_summaries').get() as { count: number };
 
-    // Get database file size and path
     const dbPath = path.join(homedir(), '.claude-mem', 'claude-mem.db');
     let dbSize = 0;
     if (existsSync(dbPath)) {
       dbSize = statSync(dbPath).size;
     }
 
-    // Worker metadata
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
     const sseClients = this.sseBroadcaster.getClientCount();
 
-    // Session stats for monitoring
     const sessionStats = this.sessionManager.getSessionStats();
 
     res.json({
@@ -431,7 +405,7 @@ export class DataRoutes extends BaseRouteHandler {
    */
   private handleGetProcessingStatus = this.wrapHandler((req: Request, res: Response): void => {
     const isProcessing = this.sessionManager.isAnySessionProcessing();
-    const queueDepth = this.sessionManager.getTotalActiveWork(); // Includes queued + actively processing
+    const queueDepth = this.sessionManager.getTotalActiveWork();
     res.json({ isProcessing, queueDepth });
   });
 
@@ -440,7 +414,6 @@ export class DataRoutes extends BaseRouteHandler {
    * NOTE: This now broadcasts computed status based on active processing (ignores input)
    */
   private handleSetProcessing = this.wrapHandler((req: Request, res: Response): void => {
-    // Broadcast current computed status (ignores manual input)
     this.workerService.broadcastProcessingStatus();
 
     const isProcessing = this.sessionManager.isAnySessionProcessing();
@@ -455,7 +428,7 @@ export class DataRoutes extends BaseRouteHandler {
    */
   private parsePaginationParams(req: Request): { offset: number; limit: number; project?: string } {
     const offset = parseInt(req.query.offset as string, 10) || 0;
-    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 100); // Max 100
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 100);
     const project = req.query.project as string | undefined;
 
     return { offset, limit, project };
@@ -482,7 +455,6 @@ export class DataRoutes extends BaseRouteHandler {
 
     const store = this.dbManager.getSessionStore();
 
-    // Import sessions first (dependency for everything else)
     if (Array.isArray(sessions)) {
       for (const session of sessions) {
         const result = store.importSdkSession(session);
@@ -494,7 +466,6 @@ export class DataRoutes extends BaseRouteHandler {
       }
     }
 
-    // Import summaries (depends on sessions)
     if (Array.isArray(summaries)) {
       for (const summary of summaries) {
         const result = store.importSessionSummary(summary);
@@ -506,7 +477,6 @@ export class DataRoutes extends BaseRouteHandler {
       }
     }
 
-    // Import observations (depends on sessions)
     if (Array.isArray(observations)) {
       for (const obs of observations) {
         const result = store.importObservation(obs);
@@ -518,7 +488,6 @@ export class DataRoutes extends BaseRouteHandler {
       }
     }
 
-    // Import prompts (depends on sessions)
     if (Array.isArray(prompts)) {
       for (const prompt of prompts) {
         const result = store.importUserPrompt(prompt);
@@ -549,23 +518,19 @@ export class DataRoutes extends BaseRouteHandler {
     const store = this.dbManager.getSessionStore();
     const db = store.db;
 
-    // Validate format
     if (!['json', 'csv', 'markdown', 'md'].includes(format)) {
       this.badRequest(res, 'Invalid format. Supported: json, csv, markdown');
       return;
     }
 
-    // Parse specific IDs if provided
     let specificIds: number[] | undefined;
     if (idsParam) {
       specificIds = idsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
     }
 
-    // Build WHERE clause for project filter
     const projectFilter = project ? 'WHERE project = ?' : '';
     const projectParam = project ? [project] : [];
 
-    // Export observations (main export target)
     let observations: any[];
     if (specificIds && specificIds.length > 0) {
       const placeholders = specificIds.map(() => '?').join(',');
@@ -574,10 +539,8 @@ export class DataRoutes extends BaseRouteHandler {
       observations = db.prepare(`SELECT * FROM observations ${projectFilter}`).all(...projectParam);
     }
 
-    // For JSON format, include full export with all related data
     if (format === 'json') {
-      // Export sessions - get all or filter by project via observations
-      let sessions;
+      let sessions: unknown[] = [];
       if (project) {
         const sessionIds = db.prepare(`
           SELECT DISTINCT s.id
@@ -599,7 +562,6 @@ export class DataRoutes extends BaseRouteHandler {
         sessions = db.prepare('SELECT * FROM sdk_sessions').all();
       }
 
-      // Export summaries
       let summaries;
       if (project) {
         summaries = db.prepare(`
@@ -613,7 +575,6 @@ export class DataRoutes extends BaseRouteHandler {
         summaries = db.prepare('SELECT * FROM session_summaries').all();
       }
 
-      // Export prompts
       let prompts;
       if (project) {
         prompts = db.prepare(`
@@ -652,7 +613,6 @@ export class DataRoutes extends BaseRouteHandler {
       return;
     }
 
-    // CSV format
     if (format === 'csv') {
       const headers = ['id', 'type', 'title', 'project', 'created_at', 'text', 'files_read', 'files_modified'];
       const csvRows = [headers.join(',')];
@@ -681,7 +641,6 @@ export class DataRoutes extends BaseRouteHandler {
       return;
     }
 
-    // Markdown format
     if (format === 'markdown' || format === 'md') {
       const lines: string[] = [
         `# Claude-Mem Export`,
@@ -747,16 +706,12 @@ export class DataRoutes extends BaseRouteHandler {
     const { PendingMessageStore } = require('../../../sqlite/PendingMessageStore.js');
     const pendingStore = new PendingMessageStore(this.dbManager.getSessionStore().db, 3);
 
-    // Get queue contents (pending, processing, failed)
     const queueMessages = pendingStore.getQueueMessages();
 
-    // Get recently processed (last 30 min, up to 20)
     const recentlyProcessed = pendingStore.getRecentlyProcessed(20, 30);
 
-    // Get stuck message count (processing > 5 min)
     const stuckCount = pendingStore.getStuckCount(5 * 60 * 1000);
 
-    // Get sessions with pending work
     const sessionsWithPending = pendingStore.getSessionsWithPendingMessages();
 
     res.json({
@@ -781,7 +736,7 @@ export class DataRoutes extends BaseRouteHandler {
   private handleProcessPendingQueue = this.wrapHandler(async (req: Request, res: Response): Promise<void> => {
     const sessionLimit = Math.min(
       Math.max(parseInt(req.body.sessionLimit, 10) || 10, 1),
-      100 // Max 100 sessions at once
+      100
     );
 
     const result = await this.workerService.processPendingQueues(sessionLimit);
@@ -892,7 +847,6 @@ export class DataRoutes extends BaseRouteHandler {
       return;
     }
 
-    // Validate all IDs are numbers
     if (!ids.every(id => typeof id === 'number' && Number.isInteger(id))) {
       this.badRequest(res, 'All ids must be integers');
       return;
@@ -916,15 +870,13 @@ export class DataRoutes extends BaseRouteHandler {
     const project = req.query.project as string | undefined;
     const db = this.dbManager.getSessionStore().db;
 
-    // Calculate date range
     let daysBack = 30;
     if (range === '7d') daysBack = 7;
     else if (range === '90d') daysBack = 90;
-    else if (range === 'all') daysBack = 365 * 10; // 10 years = "all"
+    else if (range === 'all') daysBack = 365 * 10;
 
     const startDate = Date.now() - (daysBack * 24 * 60 * 60 * 1000);
 
-    // Build query with optional project filter
     const projectFilter = project ? 'AND project = ?' : '';
     const params = project ? [startDate, project] : [startDate];
 
@@ -955,7 +907,6 @@ export class DataRoutes extends BaseRouteHandler {
     const project = req.query.project as string | undefined;
     const db = this.dbManager.getSessionStore().db;
 
-    // Calculate date range
     let daysBack = 30;
     if (range === '7d') daysBack = 7;
     else if (range === '90d') daysBack = 90;
@@ -963,7 +914,6 @@ export class DataRoutes extends BaseRouteHandler {
 
     const startDate = Date.now() - (daysBack * 24 * 60 * 60 * 1000);
 
-    // Build query with optional project filter
     const projectFilter = project ? 'AND project = ?' : '';
     const params = project ? [startDate, project] : [startDate];
 
@@ -977,14 +927,13 @@ export class DataRoutes extends BaseRouteHandler {
       ORDER BY count DESC
     `).all(...params) as Array<{ type: string; count: number }>;
 
-    // Add colors for each type
     const typeColors: Record<string, string> = {
-      bugfix: '#ef4444',    // red
-      feature: '#8b5cf6',   // purple
-      discovery: '#3b82f6', // blue
-      refactor: '#f59e0b',  // amber
-      decision: '#10b981',  // emerald
-      change: '#6b7280'     // gray
+      bugfix: '#ef4444',
+      feature: '#8b5cf6',
+      discovery: '#3b82f6',
+      refactor: '#f59e0b',
+      decision: '#10b981',
+      change: '#6b7280'
     };
 
     const data = rows.map(row => ({
@@ -1009,7 +958,6 @@ export class DataRoutes extends BaseRouteHandler {
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 50);
     const db = this.dbManager.getSessionStore().db;
 
-    // Calculate date range
     let daysBack = 30;
     if (range === '7d') daysBack = 7;
     else if (range === '90d') daysBack = 90;
@@ -1048,7 +996,6 @@ export class DataRoutes extends BaseRouteHandler {
     const project = req.query.project as string | undefined;
     const db = this.dbManager.getSessionStore().db;
 
-    // Calculate date range
     let daysBack = 30;
     if (range === '7d') daysBack = 7;
     else if (range === '90d') daysBack = 90;
@@ -1056,11 +1003,9 @@ export class DataRoutes extends BaseRouteHandler {
 
     const startDate = Date.now() - (daysBack * 24 * 60 * 60 * 1000);
 
-    // Build query with optional project filter
     const projectFilter = project ? 'AND project = ?' : '';
     const params = project ? [startDate, project] : [startDate];
 
-    // Get total tokens and daily breakdown
     const totals = db.prepare(`
       SELECT
         SUM(COALESCE(discovery_tokens, 0)) as totalTokens,
@@ -1070,7 +1015,6 @@ export class DataRoutes extends BaseRouteHandler {
       WHERE created_at_epoch >= ? ${projectFilter}
     `).get(...params) as { totalTokens: number; avgTokens: number; totalObservations: number };
 
-    // Daily token usage
     const daily = db.prepare(`
       SELECT
         date(created_at_epoch / 1000, 'unixepoch', 'localtime') as date,
@@ -1082,7 +1026,6 @@ export class DataRoutes extends BaseRouteHandler {
       ORDER BY date ASC
     `).all(...params) as Array<{ date: string; tokens: number; observations: number }>;
 
-    // Tokens by type
     const byType = db.prepare(`
       SELECT
         type,

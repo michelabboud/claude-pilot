@@ -9,6 +9,7 @@ interface BadgeProps {
   size?: BadgeSize;
   outline?: boolean;
   className?: string;
+  onClick?: () => void;
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
