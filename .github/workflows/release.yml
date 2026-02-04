@@ -178,7 +178,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --unreleased --tag v${{ steps.check.outputs.version }}
+          args: v6.0.0.. --unreleased --tag v${{ steps.check.outputs.version }}
         env:
           OUTPUT: CHANGES.md
           GITHUB_REPO: ${{ github.repository }}
@@ -463,14 +463,13 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Generate full CHANGELOG.md with git-cliff
+      - name: Prepend new release to CHANGELOG.md with git-cliff
         if: ${{ github.event.inputs.changelog == '' }}
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --tag v${{ needs.prepare-release.outputs.version }}
+          args: --unreleased --tag v${{ needs.prepare-release.outputs.version }} --prepend CHANGELOG.md
         env:
-          OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
       - name: Use custom changelog if provided
