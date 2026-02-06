@@ -101,8 +101,17 @@ Tasks 3 and 4 won't show as ready until Task 2 completes.
 
 ### No Sub-Agents (Except Verification Steps)
 **NEVER use the Task tool to spawn sub-agents during planning exploration or implementation.**
-- Use `Read`, `Grep`, `Glob`, `Bash` directly for exploration
+- Use `Read`, `Grep`, `Glob`, `Bash` directly for targeted lookups
+- Use `vexor search` for semantic/intent-based codebase exploration (replaces Explore agent)
 - Sub-agents lose context and make mistakes during implementation
+
+**⛔ Explore agent is BANNED.** It produces low-quality results compared to `vexor search`. For codebase exploration:
+
+| Need | Use | NOT |
+|------|-----|-----|
+| Semantic questions ("where is X implemented?") | `vexor search "query" --mode code` | Task/Explore |
+| Exact text/pattern match | `Grep` or `Glob` | Task/Explore |
+| Specific file content | `Read` | Task/Explore |
 
 **Exception: Verification steps in /spec workflow.**
 

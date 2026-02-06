@@ -4,7 +4,8 @@
 Blocks or redirects tools to better alternatives:
 - WebSearch/WebFetch → MCP web tools (full content, no truncation)
 - Grep (semantic) → vexor (intent-based search)
-- Task (sub-agents) → Direct tool calls (sub-agents lose context)
+- Task/Explore → vexor (semantic search with better results)
+- Task (other sub-agents) → Direct tool calls (sub-agents lose context)
 - EnterPlanMode/ExitPlanMode → /spec workflow (project-specific planning)
 
 Pilot Core MCP servers available:
@@ -81,6 +82,12 @@ def is_semantic_pattern(pattern: str) -> bool:
     return any(phrase in pattern_lower for phrase in SEMANTIC_PHRASES)
 
 
+EXPLORE_REDIRECT = {
+    "message": "Task/Explore agent is BANNED (low-quality results)",
+    "alternative": "Use `vexor search` for semantic codebase search, or Grep/Glob for exact patterns",
+    "example": 'vexor search "where is config loaded" --mode code --top 5',
+}
+
 REDIRECTS = {
     "WebSearch": {
         "message": "WebSearch is blocked",
@@ -142,6 +149,10 @@ def run_tool_redirect() -> int:
         return 0
 
     tool_name = hook_data.get("tool_name", "")
+    tool_input = hook_data.get("tool_input", {}) if isinstance(hook_data.get("tool_input"), dict) else {}
+
+    if tool_name == "Task" and tool_input.get("subagent_type") == "Explore":
+        return block(EXPLORE_REDIRECT)
 
     if tool_name in REDIRECTS:
         redirect = REDIRECTS[tool_name]

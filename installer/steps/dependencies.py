@@ -189,9 +189,35 @@ def _get_forced_claude_version(project_dir: Path) -> str | None:
     return None
 
 
+def _clean_npm_stale_dirs() -> None:
+    """Remove stale .claude-code-* temp dirs that cause npm ENOTEMPTY errors."""
+    import shutil
+
+    try:
+        result = subprocess.run(
+            ["npm", "prefix", "-g"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return
+
+        npm_prefix = Path(result.stdout.strip())
+        anthropic_dir = npm_prefix / "lib" / "node_modules" / "@anthropic-ai"
+        if not anthropic_dir.exists():
+            return
+
+        for stale_dir in anthropic_dir.glob(".claude-code-*"):
+            if stale_dir.is_dir():
+                shutil.rmtree(stale_dir, ignore_errors=True)
+    except Exception:
+        pass
+
+
 def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
     """Install/upgrade Claude Code CLI via npm and configure defaults."""
     _remove_native_claude_binaries()
+    _clean_npm_stale_dirs()
 
     forced_version = _get_forced_claude_version(project_dir)
     version = forced_version if forced_version else "latest"
@@ -206,6 +232,9 @@ def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
             ui.status("Installing Claude Code...")
 
     if not _run_bash_with_retry(npm_cmd):
+        if command_exists("claude"):
+            _configure_claude_defaults()
+            return True, version
         return False, version
 
     _configure_claude_defaults()
