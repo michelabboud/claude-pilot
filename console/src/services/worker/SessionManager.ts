@@ -369,7 +369,14 @@ export class SessionManager {
 
     const processor = new SessionQueueProcessor(this.getPendingStore(), emitter);
 
-    for await (const message of processor.createIterator(sessionDbId, session.abortController.signal)) {
+    for await (const message of processor.createIterator({
+      sessionDbId,
+      signal: session.abortController.signal,
+      onIdleTimeout: () => {
+        logger.info("SESSION", "Idle timeout reached, aborting session", { sessionId: sessionDbId });
+        session.abortController.abort();
+      },
+    })) {
       if (session.earliestPendingTimestamp === null) {
         session.earliestPendingTimestamp = message._originalTimestamp;
       } else {
@@ -377,6 +384,44 @@ export class SessionManager {
       }
 
       yield message;
+    }
+  }
+
+  /**
+   * Get batch message iterator for SDKAgent to consume (event-driven, no polling)
+   * Yields arrays of messages for batch processing, reducing SDK API calls.
+   */
+  async *getMessageBatchIterator(sessionDbId: number, maxBatchSize?: number): AsyncIterableIterator<PendingMessageWithId[]> {
+    let session = this.sessions.get(sessionDbId);
+    if (!session) {
+      session = this.initializeSession(sessionDbId);
+    }
+
+    const emitter = this.sessionQueues.get(sessionDbId);
+    if (!emitter) {
+      throw new Error(`No emitter for session ${sessionDbId}`);
+    }
+
+    const processor = new SessionQueueProcessor(this.getPendingStore(), emitter);
+
+    for await (const batch of processor.createBatchIterator({
+      sessionDbId,
+      signal: session.abortController.signal,
+      maxBatchSize,
+      onIdleTimeout: () => {
+        logger.info("SESSION", "Idle timeout reached, aborting session", { sessionId: sessionDbId });
+        session.abortController.abort();
+      },
+    })) {
+      for (const message of batch) {
+        if (session.earliestPendingTimestamp === null) {
+          session.earliestPendingTimestamp = message._originalTimestamp;
+        } else {
+          session.earliestPendingTimestamp = Math.min(session.earliestPendingTimestamp, message._originalTimestamp);
+        }
+      }
+
+      yield batch;
     }
   }
 

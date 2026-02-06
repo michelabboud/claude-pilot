@@ -87,54 +87,31 @@ def test_install_sh_uses_python_312():
     assert "--no-project" in content, "Must use --no-project to avoid modifying user's venv"
 
 
-def test_install_sh_has_get_saved_install_mode():
-    """Verify install.sh can read saved install mode preference."""
+def test_install_sh_auto_detects_devcontainer():
+    """Verify install.sh detects .devcontainer directory for container mode."""
     install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
     content = install_sh.read_text()
 
-    assert "get_saved_install_mode()" in content, "Must have get_saved_install_mode function"
-
-    assert ".pilot/config.json" in content, "Must read from ~/.pilot/config.json"
-    assert '"install_mode"' in content, "Must read install_mode field"
-
-    assert '[ -f "$config_file" ]' in content, "Must check if config file exists"
+    assert '[ -d ".devcontainer" ]' in content, "Must check for .devcontainer directory"
+    assert "Detected .devcontainer" in content, "Must inform user about detected .devcontainer"
 
 
-def test_install_sh_has_save_install_mode():
-    """Verify install.sh can save install mode preference."""
+def test_install_sh_skips_prompt_on_restart():
+    """Verify install.sh skips install mode prompt during auto-updates."""
     install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
     content = install_sh.read_text()
 
-    assert "save_install_mode()" in content, "Must have save_install_mode function"
-
-    assert 'mkdir -p "$(dirname "$config_file")"' in content, "Must create config directory"
-
-    assert "echo " in content and ".pilot/config.json" in content, "Must write to config file"
+    assert 'RESTART_PILOT" = true' in content, "Must check RESTART_PILOT flag"
+    assert "Updating local installation" in content, "Must show update message"
 
 
-def test_install_sh_uses_saved_preference():
-    """Verify install.sh checks for and uses saved install mode preference."""
+def test_install_sh_no_global_install_mode():
+    """Verify install.sh does not store install_mode in global config."""
     install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
     content = install_sh.read_text()
 
-    assert "saved_mode=$(get_saved_install_mode)" in content, "Must get saved mode"
-
-    assert 'saved_mode" = "local"' in content, "Must check for local mode"
-    assert 'saved_mode" = "container"' in content, "Must check for container mode"
-
-    assert "Using saved preference" in content, "Must inform user about saved preference"
-
-
-def test_install_sh_saves_user_choice():
-    """Verify install.sh saves user's install mode choice."""
-    install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
-    content = install_sh.read_text()
-
-    assert 'save_install_mode "local"' in content, "Must save local mode choice"
-
-    assert 'save_install_mode "container"' in content, "Must save container mode choice"
-
-    assert "preference saved" in content, "Must indicate preference was saved"
+    assert "save_install_mode" not in content, "Must not save install_mode globally"
+    assert "get_saved_install_mode" not in content, "Must not read global install_mode"
 
 
 def test_install_sh_replaces_devcontainer_project_name():

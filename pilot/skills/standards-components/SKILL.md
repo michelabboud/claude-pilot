@@ -1,6 +1,6 @@
 ---
 name: standards-components
-description: Design reusable, composable UI components following single responsibility principle with clear interfaces, encapsulation, and minimal props. Use this skill when creating or modifying frontend components in any framework (React, Vue, Svelte, web components) or component files. Apply when working with .jsx, .tsx, .vue, .svelte files in component directories (components/, src/components/, ui/, lib/), defining component props and interfaces, implementing component composition patterns, managing component-level state, creating reusable UI elements (buttons, forms, cards, modals), documenting component APIs, or refactoring components for better reusability and maintainability.
+description: Design reusable, composable UI components with single responsibility, clear prop interfaces, and encapsulation. Apply when creating or modifying React, Vue, Svelte, or web components.
 ---
 
 # Components Standards

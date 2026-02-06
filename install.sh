@@ -84,43 +84,6 @@ is_in_container() {
 	[ -f "/.dockerenv" ] || [ -f "/run/.containerenv" ]
 }
 
-get_saved_install_mode() {
-	local config_file="$HOME/.pilot/config.json"
-	if [ -f "$config_file" ]; then
-		sed -n 's/.*"install_mode"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file" 2>/dev/null
-	fi
-}
-
-save_install_mode() {
-	local mode="$1"
-	local config_file="$HOME/.pilot/config.json"
-	mkdir -p "$(dirname "$config_file")"
-
-	if command -v python3 >/dev/null 2>&1; then
-		python3 -c "
-import json
-import os
-
-config_file = os.path.expanduser('$config_file')
-config = {}
-
-if os.path.exists(config_file):
-    try:
-        with open(config_file) as f:
-            config = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        pass
-
-config['install_mode'] = '$mode'
-
-with open(config_file, 'w') as f:
-    json.dump(config, f, indent=2)
-"
-	else
-		echo "{\"install_mode\": \"$mode\"}" >"$config_file"
-	fi
-}
-
 download_file() {
 	local path="$1"
 	local dest="$2"
@@ -413,8 +376,6 @@ download_pilot_binary() {
 
 run_installer() {
 	local installer_dir="$HOME/.pilot/installer"
-	local saved_mode
-	saved_mode=$(get_saved_install_mode)
 
 	echo ""
 
@@ -426,7 +387,7 @@ run_installer() {
 		local_arg="--local --local-repo-dir $(pwd)"
 	fi
 
-	if ! is_in_container && [ "$saved_mode" = "local" ]; then
+	if ! is_in_container && [ ! -d ".devcontainer" ]; then
 		uv run --python 3.12 --no-project --with rich \
 			python -m installer install --local-system $version_arg $local_arg "$@"
 	else
@@ -444,18 +405,13 @@ if ! is_in_container; then
 	echo "  Current project folder: $(pwd)"
 	echo ""
 
-	saved_mode=$(get_saved_install_mode)
-	if [ "$saved_mode" = "local" ]; then
-		echo "  Using saved preference: Local Installation"
-		echo ""
-	elif [ "$saved_mode" = "container" ]; then
-		echo "  Using saved preference: Dev Container"
+	if [ -d ".devcontainer" ]; then
+		echo "  Detected .devcontainer - using Dev Container mode."
 		echo ""
 		setup_devcontainer
-	elif [ -d ".devcontainer" ]; then
-		echo "  Detected existing .devcontainer - using Dev Container mode."
+	elif [ "$RESTART_PILOT" = true ]; then
+		echo "  Updating local installation..."
 		echo ""
-		setup_devcontainer
 	else
 		echo "  Choose installation method:"
 		echo ""
@@ -477,13 +433,11 @@ if ! is_in_container; then
 
 		case $choice in
 		2)
-			save_install_mode "container"
 			setup_devcontainer
 			;;
 		*)
-			save_install_mode "local"
 			echo ""
-			echo "  Local Installation selected (preference saved)"
+			echo "  Local Installation selected"
 			echo ""
 			confirm_local_install
 			;;

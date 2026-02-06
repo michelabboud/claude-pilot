@@ -1,11 +1,10 @@
 /**
- * Remote Worker Endpoint Configuration
+ * Worker Endpoint Configuration
  *
  * Provides resolved endpoint configuration for hooks and services.
  */
 
 import type { WorkerEndpointConfig } from "../types/remote/index.js";
-import { getRemoteConfig, getWorkerMode } from "./remote-config.js";
 import { getWorkerHost, getWorkerPort } from "./worker-utils.js";
 import { HOOK_TIMEOUTS, getTimeout } from "./hook-constants.js";
 
@@ -32,34 +31,15 @@ export function getWorkerEndpointConfig(): WorkerEndpointConfig {
     return cachedEndpoint;
   }
 
-  const mode = getWorkerMode();
-  const remoteConfig = getRemoteConfig();
-
-  if (mode === "remote") {
-    const authHeaders: Record<string, string> = {};
-    if (remoteConfig.token) {
-      authHeaders["Authorization"] = `Bearer ${remoteConfig.token}`;
-    }
-    authHeaders["X-Pilot-Memory-Client"] = "local-hooks";
-
-    cachedEndpoint = {
-      mode: "remote",
-      baseUrl: remoteConfig.url.replace(/\/$/, ""),
-      authHeaders,
-      timeoutMs: remoteConfig.timeoutMs,
-      verifySsl: remoteConfig.verifySsl,
-    };
-  } else {
-    const host = getWorkerHost();
-    const port = getWorkerPort();
-    cachedEndpoint = {
-      mode: "local",
-      baseUrl: `http://${formatHostForUrl(host)}:${port}`,
-      authHeaders: {},
-      timeoutMs: getTimeout(HOOK_TIMEOUTS.DEFAULT),
-      verifySsl: true,
-    };
-  }
+  const host = getWorkerHost();
+  const port = getWorkerPort();
+  cachedEndpoint = {
+    mode: "local",
+    baseUrl: `http://${formatHostForUrl(host)}:${port}`,
+    authHeaders: {},
+    timeoutMs: getTimeout(HOOK_TIMEOUTS.DEFAULT),
+    verifySsl: true,
+  };
 
   return cachedEndpoint;
 }

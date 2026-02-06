@@ -107,6 +107,39 @@ export class PendingMessageStore {
   }
 
   /**
+   * Atomically claim and DELETE up to `limit` pending messages for a session.
+   * Returns all claimed messages ordered by creation time (oldest first).
+   * Uses a single transaction to prevent race conditions.
+   */
+  claimAndDeleteBatch(sessionDbId: number, limit: number): PersistentPendingMessage[] {
+    const claimTx = this.db.transaction((sessionId: number, batchLimit: number) => {
+      const peekStmt = this.db.prepare(`
+        SELECT * FROM pending_messages
+        WHERE session_db_id = ? AND status = 'pending'
+        ORDER BY id ASC
+        LIMIT ?
+      `);
+      const messages = peekStmt.all(sessionId, batchLimit) as PersistentPendingMessage[];
+
+      if (messages.length > 0) {
+        const ids = messages.map((m) => m.id);
+        const placeholders = ids.map(() => "?").join(",");
+        const deleteStmt = this.db.prepare(`DELETE FROM pending_messages WHERE id IN (${placeholders})`);
+        deleteStmt.run(...ids);
+
+        logger.info(
+          "QUEUE",
+          `BATCH_CLAIMED | sessionDbId=${sessionId} | count=${messages.length} | ids=[${ids.join(",")}]`,
+          { sessionId },
+        );
+      }
+      return messages;
+    });
+
+    return claimTx(sessionDbId, limit) as PersistentPendingMessage[];
+  }
+
+  /**
    * Get all pending messages for session (ordered by creation time)
    */
   getAllPending(sessionDbId: number): PersistentPendingMessage[] {

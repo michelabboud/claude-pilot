@@ -1,6 +1,6 @@
 ---
 name: standards-tests
-description: Write focused tests for core user flows and critical paths with clear test names, behavior-focused assertions, mocked external dependencies, and fast execution, deferring edge case testing until explicitly required. Use this skill when creating or modifying test files, writing unit tests, integration tests, or test cases for any feature. Apply when writing test files (test/, __tests__/, spec/, .test.js, .spec.ts, test_*.py), implementing tests for core user workflows, testing critical business logic, mocking external dependencies (databases, APIs, file systems), writing descriptive test names, creating fast-running unit tests, or adding tests at logical completion points of feature development. Use for any task involving test creation, test coverage, test strategy, or test-driven development.
+description: Write focused tests for core user flows with clear names, behavior-focused assertions, and mocked external dependencies. Apply when creating unit tests, integration tests, or implementing TDD.
 ---
 
 # Tests Standards

@@ -1,7 +1,6 @@
 import React from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { ThemePreference } from '../hooks/useTheme';
-import { useSpinningFavicon } from '../hooks/useSpinningFavicon';
 import { Icon } from './ui';
 
 interface HeaderProps {
@@ -29,13 +28,11 @@ export function Header({
   onContextPreviewToggle,
   onSystemSettingsToggle
 }: HeaderProps) {
-  useSpinningFavicon(isProcessing);
-
   return (
     <div className="header">
       <h1>
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src="favicon.jpg" alt="" className={`logomark ${isProcessing ? 'spinning' : ''}`} />
+          <span className={`logomark ${isProcessing ? 'spinning' : ''}`} style={{ fontSize: '24px' }}>🔵</span>
           {queueDepth > 0 && (
             <div className="queue-bubble">
               {queueDepth}

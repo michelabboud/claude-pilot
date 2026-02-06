@@ -9,6 +9,7 @@ Returns exit code 2 to show TDD reminders to Claude.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -146,6 +147,55 @@ def has_typescript_test_file(impl_path: str) -> bool:
     return False
 
 
+def _is_import_line(line: str) -> bool:
+    """Check if a line is part of an import statement."""
+    if line.startswith(("import ", "from ")):
+        return True
+    if line in (")", "("):
+        return True
+    if re.match(r"^[A-Za-z_][A-Za-z_0-9]*,?$", line):
+        return True
+    return False
+
+
+def _is_subsequence(shorter: list[str], longer: list[str]) -> bool:
+    """Check if shorter is an ordered subsequence of longer."""
+    it = iter(longer)
+    return all(line in it for line in shorter)
+
+
+def is_trivial_edit(tool_name: str, tool_input: dict) -> bool:
+    """Check if an Edit is trivial (imports, constants, removals) and doesn't need a failing test."""
+    if tool_name != "Edit":
+        return False
+
+    old_string = tool_input.get("old_string", "")
+    new_string = tool_input.get("new_string", "")
+
+    if not old_string or not new_string:
+        return False
+
+    old_lines = [line.strip() for line in old_string.strip().splitlines() if line.strip()]
+    new_lines = [line.strip() for line in new_string.strip().splitlines() if line.strip()]
+
+    if not old_lines and not new_lines:
+        return False
+
+    all_lines = old_lines + new_lines
+    if all_lines and all(_is_import_line(line) for line in all_lines):
+        return True
+
+    if new_lines and len(new_lines) < len(old_lines) and _is_subsequence(new_lines, old_lines):
+        return True
+
+    added = [line for line in new_lines if line not in old_lines]
+    removed = [line for line in old_lines if line not in new_lines]
+    if added and not removed and all(re.match(r"^[A-Z][A-Z_0-9]*\s*=\s*", line) for line in added):
+        return True
+
+    return False
+
+
 def warn(message: str, suggestion: str) -> int:
     """Show warning and return exit code 2 (blocking)."""
     print("", file=sys.stderr)
@@ -174,6 +224,9 @@ def run_tdd_enforcer() -> int:
         return 0
 
     if is_test_file(file_path):
+        return 0
+
+    if is_trivial_edit(tool_name, tool_input):
         return 0
 
     if file_path.endswith(".py"):

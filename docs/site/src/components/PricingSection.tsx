@@ -70,9 +70,6 @@ const PricingSection = () => {
               hover:-translate-y-2 transition-all duration-300 scale-[1.02]
               ${cardsInView ? "animate-fade-in-up animation-delay-100" : "opacity-0"}`}
           >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
-              Most Popular
-            </div>
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center

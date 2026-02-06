@@ -4,9 +4,11 @@ Semantic file discovery via `vexor`. Use whenever locating where something is im
 
 ### When to Use Vexor
 
+- **Replaces the Explore agent** — vexor delivers higher-quality results with semantic ranking
 - Use `vexor` first for intent-based file discovery
 - Prefer over Grep/Glob when searching by meaning, not exact text
 - Great for: "where is X implemented?", "how does Y work?", "find config loading"
+- Use `Grep`/`Glob` for exact text/pattern matching; use `vexor` for everything else
 
 ### Command
 

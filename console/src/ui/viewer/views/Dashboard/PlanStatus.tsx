@@ -1,5 +1,4 @@
-import React from 'react';
-import { Card, CardBody, CardTitle, Badge, Icon } from '../../components/ui';
+import { Card, CardBody, CardTitle, Badge } from '../../components/ui';
 
 interface PlanInfo {
   name: string;
@@ -9,26 +8,53 @@ interface PlanInfo {
   phase: 'plan' | 'implement' | 'verify';
   iterations: number;
   approved: boolean;
+  filePath?: string;
 }
 
-interface PlanStatusProps {
-  active: boolean;
-  plan: PlanInfo | null;
+export interface PlanStatusProps {
+  plans: PlanInfo[];
 }
 
 const phaseConfig = {
-  plan: { label: 'Planning', color: 'info', icon: 'lucide:file-text' },
-  implement: { label: 'Implementing', color: 'warning', icon: 'lucide:code' },
-  verify: { label: 'Verifying', color: 'accent', icon: 'lucide:check-circle' },
+  plan: { label: 'Planning', color: 'info', border: 'border-l-info' },
+  implement: { label: 'Implementing', color: 'warning', border: 'border-l-warning' },
+  verify: { label: 'Verifying', color: 'accent', border: 'border-l-accent' },
 } as const;
 
-export function PlanStatus({ active, plan }: PlanStatusProps) {
-  if (!active || !plan) {
+function PlanRow({ plan }: { plan: PlanInfo }) {
+  const config = phaseConfig[plan.phase];
+  const progressPct = plan.total > 0 ? (plan.completed / plan.total) * 100 : 0;
+
+  return (
+    <div className={`border-l-4 ${config.border} pl-3 py-2`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium text-sm truncate" title={plan.name}>{plan.name}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant={config.color as 'info' | 'warning' | 'accent'} size="xs">
+            {config.label}
+          </Badge>
+          <span className="text-xs font-mono text-base-content/60">{plan.completed}/{plan.total}</span>
+        </div>
+      </div>
+      <div className="w-full bg-base-300 rounded-full h-1.5 mt-1.5">
+        <div
+          className={`h-1.5 rounded-full transition-all duration-300 ${
+            progressPct === 100 ? 'bg-success' : 'bg-primary'
+          }`}
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function PlanStatus({ plans }: PlanStatusProps) {
+  if (plans.length === 0) {
     return (
       <Card>
         <CardBody>
           <div className="flex items-center justify-between mb-4">
-            <CardTitle>Spec Status</CardTitle>
+            <CardTitle>Specification Status</CardTitle>
             <Badge variant="ghost">Quick Mode</Badge>
           </div>
           <div className="text-sm text-base-content/60">
@@ -40,57 +66,17 @@ export function PlanStatus({ active, plan }: PlanStatusProps) {
     );
   }
 
-  const config = phaseConfig[plan.phase];
-  const progressPct = plan.total > 0 ? (plan.completed / plan.total) * 100 : 0;
-
   return (
     <Card>
       <CardBody>
         <div className="flex items-center justify-between mb-4">
-          <CardTitle>Spec Status</CardTitle>
-          <Badge variant={config.color as 'info' | 'warning' | 'accent'}>
-            {config.label}
-          </Badge>
+          <CardTitle>Specification Status</CardTitle>
+          <Badge variant="info">{plans.length} active</Badge>
         </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Icon icon="lucide:file-text" size={16} className="text-base-content/50" />
-            <span className="text-base-content/70">Plan:</span>
-            <span className="font-medium truncate" title={plan.name}>{plan.name}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <Icon icon={config.icon} size={16} className="text-base-content/50" />
-            <span className="text-base-content/70">Phase:</span>
-            <span className={`font-medium text-${config.color}`}>{config.label}</span>
-            {!plan.approved && plan.phase === 'plan' && (
-              <Badge variant="warning" size="xs">Awaiting Approval</Badge>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-base-content/70">Progress:</span>
-              <span className="font-mono">{plan.completed}/{plan.total} tasks</span>
-            </div>
-            <div className="w-full bg-base-300 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  progressPct === 100 ? 'bg-success' : 'bg-primary'
-                }`}
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </div>
-
-          {plan.iterations > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <Icon icon="lucide:repeat" size={16} className="text-base-content/50" />
-              <span className="text-base-content/70">Iterations:</span>
-              <span>{plan.iterations}</span>
-            </div>
-          )}
+        <div className="space-y-2">
+          {plans.map((plan, idx) => (
+            <PlanRow key={plan.filePath ?? `${plan.name}-${idx}`} plan={plan} />
+          ))}
         </div>
       </CardBody>
     </Card>

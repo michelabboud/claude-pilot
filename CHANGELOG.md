@@ -141,9 +141,7 @@ All notable changes to Claude Pilot will be documented in this file.
 - Update documentation to use claude command instead of pilot alias
 - Improve installer location and sync workflow
 - Make SEO descriptions consistent with new messaging
-- Remove Umami analytics
 - Update favicon to local file and fix remaining old messaging in index.html
-- Rebrand messaging to "Claude Code, Done Right"
 - Address PR review findings for installer robustness
 - Unquote multi-argument variables in install.sh
 - Add multi-pass verification with spec-verifier agent

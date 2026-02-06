@@ -12,7 +12,6 @@ VALID_CONFIG_KEYS = frozenset(
     {
         "auto_update",
         "declined_version",
-        "install_mode",
         "enable_python",
         "enable_typescript",
         "enable_golang",

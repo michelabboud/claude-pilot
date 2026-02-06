@@ -1,19 +1,26 @@
-import React from "react";
 import { Summary } from "../types";
+import { Icon } from "./ui";
 import { formatDate } from "../utils/formatters";
 
 interface SummaryCardProps {
   summary: Summary;
 }
 
+const SECTION_ICONS: Record<string, string> = {
+  investigated: "lucide:search",
+  learned: "lucide:lightbulb",
+  completed: "lucide:check-circle",
+  next_steps: "lucide:arrow-right-circle",
+};
+
 export function SummaryCard({ summary }: SummaryCardProps) {
   const date = formatDate(summary.created_at_epoch);
 
   const sections = [
-    { key: "investigated", label: "Investigated", content: summary.investigated, icon: "/icon-thick-investigated.svg" },
-    { key: "learned", label: "Learned", content: summary.learned, icon: "/icon-thick-learned.svg" },
-    { key: "completed", label: "Completed", content: summary.completed, icon: "/icon-thick-completed.svg" },
-    { key: "next_steps", label: "Next Steps", content: summary.next_steps, icon: "/icon-thick-next-steps.svg" },
+    { key: "investigated", label: "Investigated", content: summary.investigated },
+    { key: "learned", label: "Learned", content: summary.learned },
+    { key: "completed", label: "Completed", content: summary.completed },
+    { key: "next_steps", label: "Next Steps", content: summary.next_steps },
   ].filter((section) => section.content);
 
   return (
@@ -36,9 +43,9 @@ export function SummaryCard({ summary }: SummaryCardProps) {
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="summary-section-header">
-              <img
-                src={section.icon}
-                alt={section.label}
+              <Icon
+                icon={SECTION_ICONS[section.key]}
+                size={18}
                 className={`summary-section-icon summary-section-icon--${section.key}`}
               />
               <h3 className="summary-section-label">{section.label}</h3>

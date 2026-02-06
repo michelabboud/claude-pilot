@@ -1,6 +1,6 @@
 ---
 name: standards-css
-description: Write consistent, maintainable CSS following the project's methodology (Tailwind, BEM, utility classes, CSS modules) with design system adherence and performance optimization. Use this skill when writing or modifying styles, CSS files, utility classes, CSS-in-JS, styled components, or any styling code. Apply when working with .css, .scss, .module.css files, Tailwind utility classes, styled-components, CSS modules, design tokens (colors, spacing, typography), framework-specific styling approaches, optimizing CSS for production, implementing CSS purging or tree-shaking, or avoiding style overrides. Use for any task involving visual styling, layout styling, design system implementation, or CSS organization.
+description: Write consistent CSS following the project's methodology (Tailwind, BEM, CSS modules) with design tokens and performance optimization. Apply when writing or modifying styles, utility classes, CSS-in-JS, or any styling code.
 ---
 
 # CSS Standards

@@ -17,6 +17,7 @@ import { logger } from "../../utils/logger.js";
 import {
   buildInitPrompt,
   buildObservationPrompt,
+  buildBatchObservationPrompt,
   buildSummaryPrompt,
   buildContinuationPrompt,
 } from "../../sdk/prompts.js";
@@ -96,29 +97,43 @@ export class SDKAgent {
 
       await this.processStreamResponse(sdkSession, session, worker, lastCwd);
 
-      for await (const message of this.sessionManager.getMessageIterator(session.sessionDbId)) {
+      for await (const batch of this.sessionManager.getMessageBatchIterator(session.sessionDbId)) {
         if (session.abortController.signal.aborted) {
           logger.warn("SDK", "Session aborted", { sessionId: session.sessionDbId });
           break;
         }
 
-        if (message.cwd) {
-          lastCwd = message.cwd;
+        const observations = batch.filter((m) => m.type === "observation");
+        const summarizes = batch.filter((m) => m.type === "summarize");
+
+        if (batch.length > 1) {
+          logger.info("SDK", "Processing batch", {
+            sessionId: session.sessionDbId,
+            total: batch.length,
+            observations: observations.length,
+            summarizes: summarizes.length,
+          });
         }
 
-        if (message.type === "observation") {
-          if (message.prompt_number !== undefined) {
-            session.lastPromptNumber = message.prompt_number;
+        if (observations.length > 0) {
+          for (const msg of observations) {
+            if (msg.cwd) lastCwd = msg.cwd;
+            if (msg.prompt_number !== undefined) session.lastPromptNumber = msg.prompt_number;
           }
 
-          const obsPrompt = buildObservationPrompt({
+          const obsPromptData = observations.map((msg) => ({
             id: 0,
-            tool_name: message.tool_name!,
-            tool_input: JSON.stringify(message.tool_input),
-            tool_output: JSON.stringify(message.tool_response),
-            created_at_epoch: message._originalTimestamp ?? Date.now(),
-            cwd: message.cwd,
-          });
+            tool_name: msg.tool_name!,
+            tool_input: JSON.stringify(msg.tool_input),
+            tool_output: JSON.stringify(msg.tool_response),
+            created_at_epoch: msg._originalTimestamp ?? Date.now(),
+            cwd: msg.cwd,
+          }));
+
+          const obsPrompt =
+            observations.length === 1
+              ? buildObservationPrompt(obsPromptData[0])
+              : buildBatchObservationPrompt(obsPromptData);
 
           session.conversationHistory.push({ role: "user", content: obsPrompt });
 
@@ -142,7 +157,11 @@ export class SDKAgent {
             worker,
             lastCwd,
           );
-        } else if (message.type === "summarize") {
+        }
+
+        for (const message of summarizes) {
+          if (session.abortController.signal.aborted) break;
+
           const summaryPrompt = buildSummaryPrompt(
             {
               id: session.sessionDbId,

@@ -11,4 +11,7 @@ export const TIMING = {
 
   /** Duration to display save status message before clearing */
   SAVE_STATUS_DISPLAY_DURATION_MS: 3000,
+
+  /** Spec view polling interval */
+  SPEC_REFRESH_INTERVAL_MS: 5000,
 } as const;

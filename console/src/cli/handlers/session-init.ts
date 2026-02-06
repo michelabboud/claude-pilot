@@ -5,9 +5,7 @@
  */
 
 import type { EventHandler, NormalizedHookInput, HookResult } from "../types.js";
-import { tryEnsureWorkerRunning } from "../../shared/worker-utils.js";
 import { getWorkerEndpointConfig } from "../../shared/remote-endpoint.js";
-import { isRemoteMode } from "../../shared/remote-config.js";
 import { fetchWithAuth } from "../../shared/fetch-with-auth.js";
 import { isProjectExcluded, isMemoryDisabledByProjectConfig } from "../../shared/project-exclusion.js";
 import { getProjectName } from "../../utils/project-name.js";
@@ -16,17 +14,6 @@ import { logger } from "../../utils/logger.js";
 export const sessionInitHandler: EventHandler = {
   async execute(input: NormalizedHookInput): Promise<HookResult> {
     const endpointConfig = getWorkerEndpointConfig();
-
-    if (!isRemoteMode()) {
-      const workerStatus = await tryEnsureWorkerRunning(3000);
-      if (!workerStatus.ready) {
-        logger.info("HOOK", "session-init: Worker not ready, memory features disabled for this session", {
-          waited: workerStatus.waited,
-        });
-        return { continue: true, suppressOutput: true };
-      }
-    }
-
     const { sessionId, cwd, prompt } = input;
 
     if (!prompt) {

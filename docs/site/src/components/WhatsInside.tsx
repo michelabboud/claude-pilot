@@ -25,7 +25,7 @@ const insideItems: InsideItem[] = [
       "Seamless continuity across sessions",
       "Automatic handoffs at context limits",
       "Persistent memory bridges sessions",
-      "Zero manual intervention required",
+      "Multi-session parallel support",
     ],
   },
   {

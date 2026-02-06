@@ -179,7 +179,7 @@ export class PaginationHelper {
     params.push(limit + 1, offset);
 
     const stmt = db.prepare(query);
-    const results = stmt.all(...params) as T[];
+    const results = stmt.all(...params) as unknown as T[];
 
     return {
       items: results.slice(0, limit),

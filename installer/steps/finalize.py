@@ -89,7 +89,7 @@ class FinalizeStep(BaseStep):
 
         steps.extend(
             [
-                ("Start Claude Pilot", "Run: claude (in your project folder)"),
+                ("Start Claude Pilot", "Run: pilot (in your project folder)"),
                 ("Connect IDE", "Run: /ide → Enables real-time diagnostics"),
             ]
         )
@@ -128,6 +128,10 @@ class FinalizeStep(BaseStep):
                 (
                     "Quick Mode",
                     "Just chat → For bug fixes and small changes without a spec",
+                ),
+                (
+                    "Multi-Session",
+                    "Run multiple pilot sessions in the same project — each session is isolated",
                 ),
                 (
                     "Team Vault (Optional)",

@@ -59,7 +59,7 @@ const Index = () => {
       "name": "Max Ritter",
       "url": "https://maxritter.net/"
     },
-    "license": "https://www.gnu.org/licenses/agpl-3.0",
+    "license": "https://github.com/maxritter/claude-pilot/blob/main/LICENSE",
     "url": "https://github.com/maxritter/claude-pilot",
     "downloadUrl": "https://github.com/maxritter/claude-pilot"
   };

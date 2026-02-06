@@ -44,6 +44,7 @@ export class SessionStore {
     this.renameSessionIdColumns();
     this.repairSessionIdColumnRename();
     this.addFailedAtEpochColumn();
+    this.ensureSessionPlansTable();
   }
 
   /**
@@ -634,6 +635,30 @@ export class SessionStore {
     this.db
       .prepare("INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)")
       .run(20, new Date().toISOString());
+  }
+
+  /** Ensure session_plans table exists (version 21, also created by migration010). */
+  private ensureSessionPlansTable(): void {
+    const applied = this.db.prepare("SELECT version FROM schema_versions WHERE version = ?").get(21) as
+      | SchemaVersion
+      | undefined;
+    if (applied) return;
+
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS session_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_db_id INTEGER NOT NULL UNIQUE,
+        plan_path TEXT NOT NULL,
+        plan_status TEXT DEFAULT 'PENDING',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (session_db_id) REFERENCES sdk_sessions(id) ON DELETE CASCADE
+      )
+    `);
+
+    this.db
+      .prepare("INSERT OR IGNORE INTO schema_versions (version, applied_at) VALUES (?, ?)")
+      .run(21, new Date().toISOString());
   }
 
   /**

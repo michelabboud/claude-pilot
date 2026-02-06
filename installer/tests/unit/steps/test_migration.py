@@ -7,8 +7,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 
 class TestDetectCodeproInstallation:
     """Test _detect_codepro_installation function."""
@@ -136,14 +134,14 @@ class TestMigrateProjectConfig:
                 project_dir.mkdir()
                 config_dir = project_dir / ".claude" / "config"
                 config_dir.mkdir(parents=True)
-                (config_dir / "ccp-config.json").write_text('{"install_mode": "local"}')
+                (config_dir / "ccp-config.json").write_text('{"enable_python": true}')
 
                 result = _migrate_project_config(project_dir)
 
                 assert result is not None
                 new_config = Path(tmpdir) / ".pilot" / "config.json"
                 assert new_config.exists()
-                assert "install_mode" in json.loads(new_config.read_text())
+                assert "enable_python" in json.loads(new_config.read_text())
 
 
 class TestCleanupOldFolders:

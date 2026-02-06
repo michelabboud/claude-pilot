@@ -11,6 +11,7 @@ Only allows stopping when:
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import time
@@ -18,32 +19,81 @@ from pathlib import Path
 
 RED = "\033[0;31m"
 YELLOW = "\033[0;33m"
+CYAN = "\033[0;36m"
 NC = "\033[0m"
 
-STATE_FILE = Path("/tmp/claude-spec-stop-guard")
 COOLDOWN_SECONDS = 60
 
 
-def find_active_plan() -> tuple[Path | None, str | None]:
-    """Find an active plan file (PENDING or COMPLETE status)."""
-    plans_dir = Path("docs/plans")
-    if not plans_dir.exists():
-        return None, None
+def _sessions_base() -> Path:
+    """Get base sessions directory."""
+    return Path.home() / ".pilot" / "sessions"
 
-    plan_files = sorted(plans_dir.glob("*.md"), reverse=True)
 
-    for plan_file in plan_files:
-        try:
-            content = plan_file.read_text()
-            status_match = re.search(r"^Status:\s*(\w+)", content, re.MULTILINE)
-            if status_match:
-                status = status_match.group(1).upper()
-                if status in ("PENDING", "COMPLETE"):
-                    return plan_file, status
-        except OSError:
-            continue
+def get_stop_guard_path() -> Path:
+    """Get session-scoped stop guard state path."""
+    session_id = os.environ.get("PILOT_SESSION_ID", "").strip() or "default"
+    guard_dir = _sessions_base() / session_id
+    guard_dir.mkdir(parents=True, exist_ok=True)
+    return guard_dir / "spec-stop-guard"
 
-    return None, None
+
+def _get_session_plan_path() -> Path:
+    """Get session-scoped active plan JSON path."""
+    session_id = os.environ.get("PILOT_SESSION_ID", "").strip() or "default"
+    return _sessions_base() / session_id / "active_plan.json"
+
+
+def find_active_plan() -> tuple[Path | None, str | None, bool]:
+    """Find the active plan for THIS session via session-scoped active_plan.json."""
+    plan_json = _get_session_plan_path()
+    if not plan_json.exists():
+        return None, None, False
+
+    try:
+        data = json.loads(plan_json.read_text())
+        plan_path_str = data.get("plan_path", "")
+    except (json.JSONDecodeError, OSError):
+        return None, None, False
+
+    if not plan_path_str:
+        return None, None, False
+
+    plan_file = Path(plan_path_str)
+    if not plan_file.is_absolute():
+        project_root = os.environ.get("CLAUDE_PROJECT_ROOT", str(Path.cwd()))
+        plan_file = Path(project_root) / plan_file
+    if not plan_file.exists():
+        return None, None, False
+
+    try:
+        content = plan_file.read_text()
+        status_match = re.search(r"^Status:\s*(\w+)", content, re.MULTILINE)
+        if not status_match:
+            return None, None, False
+        status = status_match.group(1).upper()
+        if status not in ("PENDING", "COMPLETE"):
+            return None, None, False
+        approved_match = re.search(
+            r"^Approved:\s*(Yes|No)", content, re.MULTILINE | re.IGNORECASE
+        )
+        approved = bool(
+            approved_match and approved_match.group(1).lower() == "yes"
+        )
+        return plan_file, status, approved
+    except OSError:
+        return None, None, False
+
+
+def get_next_phase(status: str, approved: bool) -> str:
+    """Determine which phase skill should run next."""
+    if status == "PENDING" and not approved:
+        return "spec-plan"
+    if status == "PENDING" and approved:
+        return "spec-implement"
+    if status == "COMPLETE":
+        return "spec-verify"
+    return "spec"
 
 
 def is_waiting_for_user_input(transcript_path: str) -> bool:
@@ -53,7 +103,6 @@ def is_waiting_for_user_input(transcript_path: str) -> bool:
         if not transcript.exists():
             return False
 
-        # Read transcript and find last assistant message
         last_assistant_msg = None
         with transcript.open() as f:
             for line in f:
@@ -67,7 +116,6 @@ def is_waiting_for_user_input(transcript_path: str) -> bool:
         if not last_assistant_msg:
             return False
 
-        # Check if assistant used AskUserQuestion tool
         message = last_assistant_msg.get("message", {})
         if not isinstance(message, dict):
             return False
@@ -76,7 +124,6 @@ def is_waiting_for_user_input(transcript_path: str) -> bool:
         if not isinstance(content, list):
             return False
 
-        # Look for tool_use blocks with AskUserQuestion
         for block in content:
             if isinstance(block, dict) and block.get("type") == "tool_use":
                 if block.get("name") == "AskUserQuestion":
@@ -95,61 +142,101 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
-    # Prevent infinite loops
     if input_data.get("stop_hook_active", False):
         return 0
 
-    # Check for active plan
-    plan_path, status = find_active_plan()
-    if plan_path is None:
+    plan_path, status, approved = find_active_plan()
+    if plan_path is None or status is None:
         return 0
 
-    # Allow stopping if waiting for user input (AskUserQuestion)
     transcript_path = input_data.get("transcript_path", "")
     if transcript_path and is_waiting_for_user_input(transcript_path):
         return 0
 
-    # Check cooldown - if user already tried to stop recently, let them escape
     now = time.time()
-    if STATE_FILE.exists():
+    state_file = get_stop_guard_path()
+    if state_file.exists():
         try:
-            last_block = float(STATE_FILE.read_text().strip())
+            last_block = float(state_file.read_text().strip())
             if now - last_block < COOLDOWN_SECONDS:
-                # User stopped again within cooldown - allow escape
-                STATE_FILE.unlink(missing_ok=True)
+                state_file.unlink(missing_ok=True)
                 return 0
         except (ValueError, OSError):
             pass
 
-    # Record this block attempt for cooldown
     try:
-        STATE_FILE.write_text(str(now))
+        state_file.write_text(str(now))
     except OSError:
         pass
 
-    # Block stopping - active plan and not waiting for user
-    print(f"{RED}⛔ /spec workflow active - cannot stop without user interaction{NC}", file=sys.stderr)
-    print(f"{YELLOW}Active plan: {plan_path} (Status: {status}){NC}", file=sys.stderr)
-    print(f"{YELLOW}💡 Stop again within 60s to force exit{NC}", file=sys.stderr)
+    next_phase = get_next_phase(status, approved)
+
+    print(
+        f"{RED}⛔ /spec workflow active - cannot stop without user interaction{NC}",
+        file=sys.stderr,
+    )
+    print(
+        f"{YELLOW}Active plan: {plan_path} (Status: {status}){NC}", file=sys.stderr
+    )
+    print(
+        f"{YELLOW}💡 Stop again within 60s to force exit{NC}", file=sys.stderr
+    )
     print("", file=sys.stderr)
     print("You may only stop when:", file=sys.stderr)
-    print("  • Asking user for plan approval (use AskUserQuestion)", file=sys.stderr)
-    print("  • Asking user for an important decision (use AskUserQuestion)", file=sys.stderr)
+    print(
+        "  • Asking user for plan approval (use AskUserQuestion)", file=sys.stderr
+    )
+    print(
+        "  • Asking user for an important decision (use AskUserQuestion)",
+        file=sys.stderr,
+    )
     print("", file=sys.stderr)
 
-    if status == "PENDING":
-        print("Status is PENDING. Either:", file=sys.stderr)
-        print("  1. Ask user for plan approval with AskUserQuestion", file=sys.stderr)
-        print("  2. Continue implementing tasks", file=sys.stderr)
-        print("  3. If blocked, ask user for decision with AskUserQuestion", file=sys.stderr)
+    if status == "PENDING" and not approved:
+        print("Status is PENDING (not approved). Either:", file=sys.stderr)
+        print(
+            "  1. Ask user for plan approval with AskUserQuestion", file=sys.stderr
+        )
+        print(
+            "  2. If blocked, ask user for decision with AskUserQuestion",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        print(
+            f"{CYAN}Next: Skill(skill='{next_phase}', args='{plan_path}'){NC}",
+            file=sys.stderr,
+        )
+    elif status == "PENDING" and approved:
+        print("Status is PENDING (approved). You must:", file=sys.stderr)
+        print("  1. Continue implementing tasks", file=sys.stderr)
+        print(
+            "  2. If blocked, ask user for decision with AskUserQuestion",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        print(
+            f"{CYAN}Next: Skill(skill='{next_phase}', args='{plan_path}'){NC}",
+            file=sys.stderr,
+        )
     elif status == "COMPLETE":
         print("Status is COMPLETE. You must:", file=sys.stderr)
-        print("  1. Run PHASE 3: VERIFICATION", file=sys.stderr)
+        print("  1. Run verification phase", file=sys.stderr)
         print("  2. Update status to VERIFIED when done", file=sys.stderr)
-        print("  3. If issues found, fix them or ask user with AskUserQuestion", file=sys.stderr)
+        print(
+            "  3. If issues found, fix them or ask user with AskUserQuestion",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        print(
+            f"{CYAN}Next: Skill(skill='{next_phase}', args='{plan_path}'){NC}",
+            file=sys.stderr,
+        )
 
     print("", file=sys.stderr)
-    print(f"Continue the workflow or use AskUserQuestion if user input is needed.", file=sys.stderr)
+    print(
+        "Continue the workflow or use AskUserQuestion if user input is needed.",
+        file=sys.stderr,
+    )
 
     return 2
 

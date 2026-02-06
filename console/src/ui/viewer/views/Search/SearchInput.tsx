@@ -4,9 +4,10 @@ import { Icon, Button } from '../../components/ui';
 interface SearchInputProps {
   onSearch: (query: string) => void;
   isSearching: boolean;
+  placeholder?: string;
 }
 
-export function SearchInput({ onSearch, isSearching }: SearchInputProps) {
+export function SearchInput({ onSearch, isSearching, placeholder = 'Search your memories semantically...' }: SearchInputProps) {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -26,7 +27,7 @@ export function SearchInput({ onSearch, isSearching }: SearchInputProps) {
         />
         <input
           type="text"
-          placeholder="Search your memories semantically..."
+          placeholder={placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="input input-bordered w-full pl-12 pr-4"

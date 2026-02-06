@@ -10,9 +10,8 @@ import { sessionInitHandler } from "./session-init.js";
 import { observationHandler } from "./observation.js";
 import { summarizeHandler } from "./summarize.js";
 import { userMessageHandler } from "./user-message.js";
-import { fileEditHandler } from "./file-edit.js";
 
-export type EventType = "context" | "session-init" | "observation" | "summarize" | "user-message" | "file-edit";
+export type EventType = "context" | "session-init" | "observation" | "summarize" | "user-message";
 
 const handlers: Record<EventType, EventHandler> = {
   context: contextHandler,
@@ -20,7 +19,6 @@ const handlers: Record<EventType, EventHandler> = {
   observation: observationHandler,
   summarize: summarizeHandler,
   "user-message": userMessageHandler,
-  "file-edit": fileEditHandler,
 };
 
 /**
@@ -43,4 +41,3 @@ export { sessionInitHandler } from "./session-init.js";
 export { observationHandler } from "./observation.js";
 export { summarizeHandler } from "./summarize.js";
 export { userMessageHandler } from "./user-message.js";
-export { fileEditHandler } from "./file-edit.js";

@@ -5,10 +5,11 @@
  * Returns context as hookSpecificOutput for Claude Code to inject.
  */
 
+import { existsSync, readFileSync } from "fs";
+import path from "path";
+import { homedir } from "os";
 import type { EventHandler, NormalizedHookInput, HookResult } from "../types.js";
-import { tryEnsureWorkerRunning } from "../../shared/worker-utils.js";
 import { getWorkerEndpointConfig } from "../../shared/remote-endpoint.js";
-import { isRemoteMode } from "../../shared/remote-config.js";
 import { fetchWithAuth } from "../../shared/fetch-with-auth.js";
 import { getProjectContext } from "../../utils/project-name.js";
 import { logger } from "../../utils/logger.js";
@@ -25,27 +26,26 @@ export const contextHandler: EventHandler = {
     }
 
     const endpointConfig = getWorkerEndpointConfig();
-
-    if (!isRemoteMode()) {
-      const workerStatus = await tryEnsureWorkerRunning(3000);
-      if (!workerStatus.ready) {
-        logger.info("HOOK", "context: Worker not ready, proceeding without memory context", {
-          waited: workerStatus.waited,
-        });
-        return {
-          hookSpecificOutput: {
-            hookEventName: "SessionStart",
-            additionalContext: "",
-          },
-        };
-      }
-    }
-
     const cwd = input.cwd ?? process.cwd();
     const context = getProjectContext(cwd);
 
     const projectsParam = context.allProjects.join(",");
-    const url = `${endpointConfig.baseUrl}/api/context/inject?projects=${encodeURIComponent(projectsParam)}`;
+    let url = `${endpointConfig.baseUrl}/api/context/inject?projects=${encodeURIComponent(projectsParam)}`;
+
+    const pilotSessionId = process.env.PILOT_SESSION_ID;
+    if (pilotSessionId) {
+      const planFilePath = path.join(homedir(), ".pilot", "sessions", pilotSessionId, "active_plan.json");
+      try {
+        if (existsSync(planFilePath)) {
+          const planData = JSON.parse(readFileSync(planFilePath, "utf-8"));
+          if (planData.plan_path) {
+            url += `&planPath=${encodeURIComponent(planData.plan_path)}`;
+          }
+        }
+      } catch (err) {
+        logger.debug("HOOK", "Failed to read active plan file", { planFilePath }, err as Error);
+      }
+    }
 
     const response = await fetchWithAuth(url, undefined, { endpointConfig });
 

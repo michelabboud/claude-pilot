@@ -55,6 +55,7 @@ def remove_old_alias(config_file: Path) -> bool:
         or "function ccp" in content
         or "function claude" in content
         or "function pilot" in content
+        or 'PATH="$HOME/.bun/bin' in content
     )
     if not has_old:
         return False
@@ -78,6 +79,9 @@ def remove_old_alias(config_file: Path) -> bool:
             or stripped.startswith("alias claude ")
             or stripped.startswith("alias pilot ")
         ):
+            continue
+
+        if stripped == 'export PATH="$HOME/.bun/bin:$PATH"' or stripped == 'set -gx PATH "$HOME/.bun/bin" $PATH':
             continue
 
         if stripped.startswith("ccp()") or stripped == "ccp () {":

@@ -523,7 +523,10 @@ export const migration009: Migration = {
 };
 
 /**
- * All migrations in order
+ * All migrations in order.
+ * Note: session_plans table is created by SessionStore.ensureSessionPlansTable()
+ * (version 21) since SessionStore is the authoritative schema owner and tests
+ * instantiate it directly without MigrationRunner.
  */
 export const migrations: Migration[] = [
   migration001,

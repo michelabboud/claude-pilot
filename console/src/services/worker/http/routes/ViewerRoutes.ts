@@ -14,6 +14,7 @@ import { SSEBroadcaster } from "../../SSEBroadcaster.js";
 import { DatabaseManager } from "../../DatabaseManager.js";
 import { SessionManager } from "../../SessionManager.js";
 import { BaseRouteHandler } from "../BaseRouteHandler.js";
+import { getDashboardSessions } from "../../../sqlite/plans/store.js";
 
 export class ViewerRoutes extends BaseRouteHandler {
   constructor(
@@ -49,6 +50,7 @@ export class ViewerRoutes extends BaseRouteHandler {
     app.get("/api/health", this.handleHealth.bind(this));
     app.get("/api/version", this.handleVersion.bind(this));
     app.post("/api/restart", this.handleRestart.bind(this));
+    app.get("/api/dashboard/sessions", this.handleDashboardSessions.bind(this));
     app.get("/", this.handleViewerUI.bind(this));
     app.get("/stream", this.handleSSEStream.bind(this));
   }
@@ -117,6 +119,15 @@ export class ViewerRoutes extends BaseRouteHandler {
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
     res.send(html);
+  });
+
+  /**
+   * Dashboard sessions endpoint - returns active sessions with plan associations
+   */
+  private handleDashboardSessions = this.wrapHandler((_req: Request, res: Response): void => {
+    const db = this.dbManager.getSessionStore().db;
+    const sessions = getDashboardSessions(db);
+    res.json({ sessions });
   });
 
   /**

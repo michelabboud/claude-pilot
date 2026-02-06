@@ -1,6 +1,6 @@
 ---
 name: standards-testing
-description: Prevent common testing anti-patterns that undermine test effectiveness and code quality by ensuring tests verify real behavior rather than mock behavior, keeping production code free from test-only pollution, and enforcing thoughtful mocking strategies. Use this skill when writing or modifying any test files (.test.ts, .test.js, .spec.ts, _test.py, test_*.py, *_test.go, *_spec.rb), when adding mock objects, stubs, spies, or test doubles to test suites, when considering adding methods or properties to production classes that are only called from test code, when setting up complex test fixtures or test data, when tests are failing and you're tempted to adjust mocks to make them pass, when deciding how to isolate code under test from external dependencies, when implementing dependency injection or test seams, during code reviews when reviewing test implementation and mocking strategies, when refactoring tests that have become brittle or hard to maintain, when test setup code is becoming longer than the actual test assertions, or when choosing between integration tests with real components versus unit tests with mocks.
+description: Prevent testing anti-patterns by ensuring tests verify real behavior, keeping production code free from test-only pollution, and enforcing thoughtful mocking strategies. Apply when writing test files, adding mocks or test doubles, or reviewing test implementation patterns.
 ---
 
 # Testing Standards

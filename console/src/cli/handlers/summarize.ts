@@ -7,9 +7,7 @@
  */
 
 import type { EventHandler, NormalizedHookInput, HookResult } from "../types.js";
-import { tryEnsureWorkerRunning } from "../../shared/worker-utils.js";
 import { getWorkerEndpointConfig } from "../../shared/remote-endpoint.js";
-import { isRemoteMode } from "../../shared/remote-config.js";
 import { fetchWithAuth } from "../../shared/fetch-with-auth.js";
 import { isProjectExcluded, isMemoryDisabledByProjectConfig } from "../../shared/project-exclusion.js";
 import { getProjectName } from "../../utils/project-name.js";
@@ -19,17 +17,6 @@ import { extractLastMessage } from "../../shared/transcript-parser.js";
 export const summarizeHandler: EventHandler = {
   async execute(input: NormalizedHookInput): Promise<HookResult> {
     const endpointConfig = getWorkerEndpointConfig();
-
-    if (!isRemoteMode()) {
-      const workerStatus = await tryEnsureWorkerRunning(2000);
-      if (!workerStatus.ready) {
-        logger.debug("HOOK", "summarize: Worker not ready, skipping summary", {
-          waited: workerStatus.waited,
-        });
-        return { continue: true, suppressOutput: true };
-      }
-    }
-
     const { sessionId, cwd, transcriptPath } = input;
 
     if (isMemoryDisabledByProjectConfig(cwd)) {

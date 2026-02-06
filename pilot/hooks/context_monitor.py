@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import time
@@ -11,10 +12,24 @@ from pathlib import Path
 
 THRESHOLD_WARN = 80
 THRESHOLD_STOP = 90
+THRESHOLD_CRITICAL = 95
 LEARN_THRESHOLDS = [40, 60, 80]
 
-CACHE_FILE = Path("/tmp/.claude_context_cache.json")
-CACHE_TTL = 30
+CACHE_TTL = 15
+
+
+def _sessions_base() -> Path:
+    """Get base sessions directory."""
+    return Path.home() / ".pilot" / "sessions"
+
+
+def get_session_cache_path() -> Path:
+    """Get session-scoped context cache path."""
+    session_id = os.environ.get("PILOT_SESSION_ID", "").strip() or "default"
+    cache_dir = _sessions_base() / session_id
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / "context-cache.json"
+
 
 RED = "\033[0;31m"
 YELLOW = "\033[0;33m"
@@ -23,24 +38,44 @@ MAGENTA = "\033[0;35m"
 NC = "\033[0m"
 
 
+def _get_session_plan_path() -> Path:
+    """Get session-scoped active plan JSON path."""
+    session_id = os.environ.get("PILOT_SESSION_ID", "").strip() or "default"
+    return _sessions_base() / session_id / "active_plan.json"
+
+
 def find_active_spec() -> tuple[Path | None, str | None]:
-    """Find an active spec file (PENDING or COMPLETE status)."""
-    plans_dir = Path("docs/plans")
-    if not plans_dir.exists():
+    """Find the active spec for THIS session via session-scoped active_plan.json."""
+    plan_json = _get_session_plan_path()
+    if not plan_json.exists():
         return None, None
 
-    plan_files = sorted(plans_dir.glob("*.md"), reverse=True)
+    try:
+        data = json.loads(plan_json.read_text())
+        plan_path_str = data.get("plan_path", "")
+    except (json.JSONDecodeError, OSError):
+        return None, None
 
-    for plan_file in plan_files:
-        try:
-            content = plan_file.read_text()
-            status_match = re.search(r"^Status:\s*(\w+)", content, re.MULTILINE)
-            if status_match:
-                status = status_match.group(1).upper()
-                if status in ("PENDING", "COMPLETE"):
-                    return plan_file, status
-        except OSError:
-            continue
+    if not plan_path_str:
+        return None, None
+
+    plan_file = Path(plan_path_str)
+    if not plan_file.is_absolute():
+        project_root = os.environ.get("CLAUDE_PROJECT_ROOT", str(Path.cwd()))
+        plan_file = Path(project_root) / plan_file
+    if not plan_file.exists():
+        return None, None
+
+    try:
+        content = plan_file.read_text()
+        status_match = re.search(r"^Status:\s*(\w+)", content, re.MULTILINE)
+        if not status_match:
+            return None, None
+        status = status_match.group(1).upper()
+        if status in ("PENDING", "COMPLETE"):
+            return plan_file, status
+    except OSError:
+        pass
 
     return None, None
 
@@ -135,9 +170,9 @@ def get_cached_context(session_id: str) -> tuple[int, bool, list[int], bool]:
 
     Returns: (tokens, is_cached, shown_learn_thresholds, shown_80_warn)
     """
-    if CACHE_FILE.exists():
+    if get_session_cache_path().exists():
         try:
-            with CACHE_FILE.open() as f:
+            with get_session_cache_path().open() as f:
                 cache = json.load(f)
                 if cache.get("session_id") == session_id and time.time() - cache.get("timestamp", 0) < CACHE_TTL:
                     return cache.get("tokens", 0), True, cache.get("shown_learn", []), cache.get("shown_80_warn", False)
@@ -148,9 +183,9 @@ def get_cached_context(session_id: str) -> tuple[int, bool, list[int], bool]:
 
 def get_session_flags(session_id: str) -> tuple[list[int], bool]:
     """Get shown flags for this session (learn thresholds, 80% warning)."""
-    if CACHE_FILE.exists():
+    if get_session_cache_path().exists():
         try:
-            with CACHE_FILE.open() as f:
+            with get_session_cache_path().open() as f:
                 cache = json.load(f)
                 if cache.get("session_id") == session_id:
                     return cache.get("shown_learn", []), cache.get("shown_80_warn", False)
@@ -165,9 +200,9 @@ def save_cache(
     """Save context calculation to cache with session ID."""
     existing_shown: list[int] = []
     existing_80_warn = False
-    if CACHE_FILE.exists():
+    if get_session_cache_path().exists():
         try:
-            with CACHE_FILE.open() as f:
+            with get_session_cache_path().open() as f:
                 cache = json.load(f)
                 if cache.get("session_id") == session_id:
                     existing_shown = cache.get("shown_learn", [])
@@ -181,7 +216,7 @@ def save_cache(
         existing_80_warn = True
 
     try:
-        with CACHE_FILE.open("w") as f:
+        with get_session_cache_path().open("w") as f:
             json.dump(
                 {
                     "tokens": tokens,
@@ -194,6 +229,12 @@ def save_cache(
             )
     except OSError:
         pass
+
+
+def _get_continuation_path() -> str:
+    """Get the absolute continuation file path for the current Pilot session."""
+    pilot_session_id = os.environ.get("PILOT_SESSION_ID", "").strip() or "default"
+    return str(Path.home() / ".pilot" / "sessions" / pilot_session_id / "continuation.md")
 
 
 def run_context_monitor() -> int:
@@ -254,6 +295,21 @@ def run_context_monitor() -> int:
             new_learn_shown.append(threshold)
             break
 
+    continuation_path = _get_continuation_path()
+
+    if percentage >= THRESHOLD_CRITICAL:
+        save_cache(total_tokens, session_id, new_learn_shown if new_learn_shown else None)
+        print("", file=sys.stderr)
+        print(f"{RED}🚨 CONTEXT {percentage:.0f}% - CRITICAL: HANDOFF NOW IN THIS TURN{NC}", file=sys.stderr)
+        print(f"{RED}Do NOT write code, fix errors, or run commands.{NC}", file=sys.stderr)
+        print(f"{RED}Execute BOTH steps below in THIS SINGLE TURN (no stopping between):{NC}", file=sys.stderr)
+        print(f"{RED}  1. Write {continuation_path}{NC}", file=sys.stderr)
+        print(f"{RED}  2. Run: ~/.pilot/bin/pilot send-clear [plan-path|--general]{NC}", file=sys.stderr)
+        print(
+            f"{RED}Do NOT output a summary and stop. Do NOT wait for user. Execute send-clear NOW.{NC}", file=sys.stderr
+        )
+        return 2
+
     if percentage >= THRESHOLD_STOP:
         save_cache(total_tokens, session_id, new_learn_shown if new_learn_shown else None)
         print("", file=sys.stderr)
@@ -264,20 +320,12 @@ def run_context_monitor() -> int:
             if spec_status == "COMPLETE":
                 return 2
 
-        print(f"{RED}⚠️  CONTEXT {percentage:.0f}% - HANDOFF NOW (not optional){NC}", file=sys.stderr)
-        print(f"{RED}STOP current work. Your NEXT actions must be:{NC}", file=sys.stderr)
+        print(f"{RED}⚠️  CONTEXT {percentage:.0f}% - MANDATORY HANDOFF{NC}", file=sys.stderr)
+        print(f"{RED}Do NOT start new tasks or fix cycles. Execute handoff in a SINGLE TURN:{NC}", file=sys.stderr)
+        print(f"{RED}  1. Write {continuation_path}{NC}", file=sys.stderr)
+        print(f"{RED}  2. Run: ~/.pilot/bin/pilot send-clear [plan-path|--general]{NC}", file=sys.stderr)
         print(
-            f"{RED}1. Check for active plan: grep -l '^Status: PENDING\\|^Status: COMPLETE' docs/plans/*.md 2>/dev/null | head -1{NC}",
-            file=sys.stderr,
-        )
-        print(f"{RED}2. Write /tmp/claude-continuation.md (include Active Plan path if found){NC}", file=sys.stderr)
-        print(
-            f"{RED}3. /learn check: Reusable pattern discovered? Invoke Skill(learn) automatically.{NC}",
-            file=sys.stderr,
-        )
-        print(
-            f"{RED}4. Run: ~/.pilot/bin/pilot send-clear <plan-path>  (or --general if no active plan){NC}",
-            file=sys.stderr,
+            f"{RED}Do NOT summarize and stop. The send-clear command triggers automatic restart.{NC}", file=sys.stderr
         )
         return 2
 

@@ -31,10 +31,6 @@ CONTAINER_EXTENSIONS = [
     "tamasfe.even-better-toml",
 ]
 
-LOCAL_EXTENSIONS = [
-    "dkodr.claudeboard",
-]
-
 
 def _get_ide_cli() -> str | None:
     """Find a working IDE CLI command."""
@@ -115,7 +111,6 @@ class VSCodeExtensionsStep(BaseStep):
                 ui.success(f"All {len(already_installed)} recommended extensions already installed")
             ctx.config["installed_extensions"] = 0
             ctx.config["failed_extensions"] = []
-            ctx.config["local_extensions"] = LOCAL_EXTENSIONS
             return
 
         if ui:
@@ -138,4 +133,3 @@ class VSCodeExtensionsStep(BaseStep):
 
         ctx.config["installed_extensions"] = installed_count
         ctx.config["failed_extensions"] = failed
-        ctx.config["local_extensions"] = LOCAL_EXTENSIONS

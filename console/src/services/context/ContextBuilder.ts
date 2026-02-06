@@ -18,8 +18,12 @@ import { calculateTokenEconomics } from "./TokenCalculator.js";
 import {
   queryObservations,
   queryObservationsMulti,
+  queryObservationsExcludingOtherPlans,
+  queryObservationsMultiExcludingOtherPlans,
   querySummaries,
   querySummariesMulti,
+  querySummariesExcludingOtherPlans,
+  querySummariesMultiExcludingOtherPlans,
   getPriorSessionMessages,
   prepareSummariesForTimeline,
   buildTimeline,
@@ -128,10 +132,25 @@ export async function generateContext(input?: ContextInput, useColors: boolean =
   }
 
   try {
-    const observations =
-      projects.length > 1 ? queryObservationsMulti(db, projects, config) : queryObservations(db, project, config);
-    const summaries =
-      projects.length > 1 ? querySummariesMulti(db, projects, config) : querySummaries(db, project, config);
+    const planPath = input?.planPath;
+    let observations;
+    let summaries;
+
+    if (planPath) {
+      observations =
+        projects.length > 1
+          ? queryObservationsMultiExcludingOtherPlans(db, projects, config, planPath)
+          : queryObservationsExcludingOtherPlans(db, project, config, planPath);
+      summaries =
+        projects.length > 1
+          ? querySummariesMultiExcludingOtherPlans(db, projects, config, planPath)
+          : querySummariesExcludingOtherPlans(db, project, config, planPath);
+    } else {
+      observations =
+        projects.length > 1 ? queryObservationsMulti(db, projects, config) : queryObservations(db, project, config);
+      summaries =
+        projects.length > 1 ? querySummariesMulti(db, projects, config) : querySummaries(db, project, config);
+    }
 
     if (observations.length === 0 && summaries.length === 0) {
       return renderEmptyState(project, useColors);

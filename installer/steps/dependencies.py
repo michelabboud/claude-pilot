@@ -189,9 +189,53 @@ def _get_forced_claude_version(project_dir: Path) -> str | None:
     return None
 
 
+def _clean_npm_stale_dirs() -> None:
+    """Remove stale .claude-code-* temp dirs that cause npm ENOTEMPTY errors."""
+    import shutil
+
+    if not command_exists("npm"):
+        return
+
+    try:
+        result = subprocess.run(
+            ["npm", "root", "-g"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return
+
+        node_modules_dir = Path(result.stdout.strip())
+        anthropic_dir = node_modules_dir / "@anthropic-ai"
+        if not anthropic_dir.exists():
+            return
+
+        for stale_dir in anthropic_dir.glob(".claude-code-*"):
+            if stale_dir.is_dir():
+                shutil.rmtree(stale_dir, ignore_errors=True)
+    except Exception:
+        pass
+
+
+def _get_installed_claude_version() -> str | None:
+    """Probe the actual installed Claude Code version via claude --version."""
+    try:
+        result = subprocess.run(
+            ["claude", "--version"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return None
+
+
 def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
     """Install/upgrade Claude Code CLI via npm and configure defaults."""
     _remove_native_claude_binaries()
+    _clean_npm_stale_dirs()
 
     forced_version = _get_forced_claude_version(project_dir)
     version = forced_version if forced_version else "latest"
@@ -206,6 +250,10 @@ def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
             ui.status("Installing Claude Code...")
 
     if not _run_bash_with_retry(npm_cmd):
+        if command_exists("claude"):
+            _configure_claude_defaults()
+            actual_version = _get_installed_claude_version()
+            return True, actual_version or version
         return False, version
 
     _configure_claude_defaults()
@@ -357,7 +405,6 @@ def install_mcp_cli() -> bool:
 def install_sx() -> bool:
     """Install sx (sleuth.io skills exchange) for team skill sharing."""
     if command_exists("sx"):
-        _run_bash_with_retry("sx update")
         return True
 
     return _run_bash_with_retry("curl -fsSL https://raw.githubusercontent.com/sleuth-io/sx/main/install.sh | bash")
@@ -383,28 +430,33 @@ def install_typescript_lsp() -> bool:
     return _run_bash_with_retry("npm install -g @vtsls/language-server typescript")
 
 
+def _get_playwright_cache_dirs() -> list[Path]:
+    """Get possible Playwright cache directories for the current platform."""
+    import platform
+
+    dirs = []
+    if platform.system() == "Darwin":
+        dirs.append(Path.home() / "Library" / "Caches" / "ms-playwright")
+    dirs.append(Path.home() / ".cache" / "ms-playwright")
+    return dirs
+
+
 def _is_agent_browser_ready() -> bool:
     """Check if agent-browser is installed and Chromium is available."""
     if not command_exists("agent-browser"):
         return False
 
-    cache_dir = Path.home() / ".cache" / "ms-playwright"
-    if not cache_dir.exists():
-        return False
+    for cache_dir in _get_playwright_cache_dirs():
+        if not cache_dir.exists():
+            continue
 
-    for chromium_dir in cache_dir.glob("chromium-*"):
-        if (chromium_dir / "chrome-linux" / "chrome").exists():
-            return True
-        if (chromium_dir / "chrome-mac" / "Chromium.app").exists():
-            return True
-        if (chromium_dir / "chrome-linux" / "headless_shell").exists():
-            return True
-        if (chromium_dir / "chrome-headless-shell-linux").exists():
-            return True
+        for chromium_dir in cache_dir.glob("chromium-*"):
+            if (chromium_dir / "INSTALLATION_COMPLETE").exists():
+                return True
 
-    for headless_dir in cache_dir.glob("chromium-headless-shell-*"):
-        if any(headless_dir.iterdir()):
-            return True
+        for chromium_dir in cache_dir.glob("chromium_headless_shell-*"):
+            if (chromium_dir / "INSTALLATION_COMPLETE").exists():
+                return True
 
     return False
 

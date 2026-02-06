@@ -8,6 +8,7 @@ Claude Code ships fast but breaks things — Pilot fixes that:</br>
 **Tests enforced. Context preserved. Quality automated.**
 
 [![Version](https://img.shields.io/github/v/release/maxritter/claude-pilot?label=Version&color=orange)](https://github.com/maxritter/claude-pilot/releases)
+[![Opus 4.6](https://img.shields.io/badge/Claude-Opus_4.6-blueviolet)](https://www.anthropic.com/claude/opus)
 [![Stars](https://img.shields.io/github/stars/maxritter/claude-pilot?style=flat&color=yellow)](https://github.com/maxritter/claude-pilot/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/maxritter/claude-pilot?color=blue)](https://github.com/maxritter/claude-pilot/commits/main)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/maxritter/claude-pilot/pulls)
@@ -194,8 +195,8 @@ Access the web-based Claude Pilot Console at **http://localhost:41777** to visua
 
 - **Seamless Continuity** - Work on complex features across multiple sessions without losing progress
 - **Automatic Handoffs** - Context Monitor detects limits and continues seamlessly in new sessions
+- **Multi-Session Parallel** - Run multiple Pilot sessions in the same project without interference
 - **Persistent Memory** - Relevant observations automatically carry across all sessions
-- **Works Everywhere** - Both `/spec` workflow and Quick Mode benefit from session continuity
 
 ### 📋 Spec-Driven Development
 

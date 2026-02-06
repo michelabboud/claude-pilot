@@ -2,9 +2,11 @@
 """Hook to redirect built-in tools to better MCP/CLI alternatives.
 
 Blocks or redirects tools to better alternatives:
+- Bash (background) → Synchronous execution (no run_in_background)
 - WebSearch/WebFetch → MCP web tools (full content, no truncation)
 - Grep (semantic) → vexor (intent-based search)
-- Task (sub-agents) → Direct tool calls (sub-agents lose context)
+- Task/Explore → vexor (semantic search with better results)
+- Task (other sub-agents) → Direct tool calls (sub-agents lose context)
 - EnterPlanMode/ExitPlanMode → /spec workflow (project-specific planning)
 
 Pilot Core MCP servers available:
@@ -81,7 +83,23 @@ def is_semantic_pattern(pattern: str) -> bool:
     return any(phrase in pattern_lower for phrase in SEMANTIC_PHRASES)
 
 
+EXPLORE_REDIRECT = {
+    "message": "Task/Explore agent is BANNED (low-quality results)",
+    "alternative": "Use `vexor search` for semantic codebase search, or Grep/Glob for exact patterns",
+    "example": 'vexor search "where is config loaded" --mode code --top 5',
+}
+
 REDIRECTS = {
+    "Bash": {
+        "message": "Background Bash tasks are BANNED",
+        "alternative": "Run commands synchronously (remove run_in_background). Use timeout parameter if needed (up to 600000ms)",
+        "example": "Bash(command='vexor search ...', timeout=60000)",
+        "condition": lambda data: (
+            data.get("tool_input", {}).get("run_in_background", False) is True
+            if isinstance(data.get("tool_input"), dict)
+            else False
+        ),
+    },
     "WebSearch": {
         "message": "WebSearch is blocked",
         "alternative": "Use ToolSearch to load mcp__web-search__search, then call it directly",
@@ -112,13 +130,13 @@ REDIRECTS = {
     },
     "EnterPlanMode": {
         "message": "EnterPlanMode is BANNED (project uses /spec workflow)",
-        "alternative": "Use Skill(skill='spec') for planning via /spec → /plan → /implement → /verify",
-        "example": "Skill(skill='spec', args='task description')",
+        "alternative": "Use Skill(skill='spec') for dispatch, or invoke phases directly: spec-plan, spec-implement, spec-verify",
+        "example": "Skill(skill='spec', args='task description') or Skill(skill='spec-plan', args='task description')",
     },
     "ExitPlanMode": {
         "message": "ExitPlanMode is BANNED (project uses /spec workflow)",
-        "alternative": "Use AskUserQuestion to get plan approval, not ExitPlanMode",
-        "example": "AskUserQuestion to confirm plan, then Skill(implement, plan-path)",
+        "alternative": "Use AskUserQuestion for plan approval, then Skill(skill='spec-implement', args='plan-path')",
+        "example": "AskUserQuestion to confirm plan, then Skill(skill='spec-implement', args='plan-path')",
     },
 }
 
@@ -142,6 +160,10 @@ def run_tool_redirect() -> int:
         return 0
 
     tool_name = hook_data.get("tool_name", "")
+    tool_input = hook_data.get("tool_input", {}) if isinstance(hook_data.get("tool_input"), dict) else {}
+
+    if tool_name == "Task" and tool_input.get("subagent_type") == "Explore":
+        return block(EXPLORE_REDIRECT)
 
     if tool_name in REDIRECTS:
         redirect = REDIRECTS[tool_name]

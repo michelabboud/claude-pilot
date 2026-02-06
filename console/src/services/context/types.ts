@@ -13,6 +13,8 @@ export interface ContextInput {
   source?: "startup" | "resume" | "clear" | "compact";
   /** Array of projects to query (for worktree support: [parent, worktree]) */
   projects?: string[];
+  /** Plan path to scope observations to (excludes observations from other plans) */
+  planPath?: string;
   [key: string]: any;
 }
 

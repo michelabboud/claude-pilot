@@ -1,14 +1,13 @@
-import React from 'react';
 import { StatsGrid } from './StatsGrid';
 import { WorkerStatus } from './WorkerStatus';
-import { VectorDbStatus } from './VectorDbStatus';
+import { VexorStatus } from './VexorStatus';
 import { PlanStatus } from './PlanStatus';
 import { GitStatus } from './GitStatus';
 import { RecentActivity } from './RecentActivity';
 import { useStats } from '../../hooks/useStats';
 
 export function DashboardView() {
-  const { stats, workerStatus, vectorDbStatus, recentActivity, planStatus, gitInfo, isLoading } = useStats();
+  const { stats, workerStatus, vexorStatus, recentActivity, planStatus, gitInfo, isLoading } = useStats();
 
   if (isLoading) {
     return (
@@ -29,8 +28,7 @@ export function DashboardView() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <PlanStatus
-          active={planStatus.active}
-          plan={planStatus.plan}
+          plans={planStatus.plans}
         />
         <WorkerStatus
           status={workerStatus.status}
@@ -38,11 +36,11 @@ export function DashboardView() {
           uptime={workerStatus.uptime}
           queueDepth={workerStatus.queueDepth}
         />
-        <VectorDbStatus
-          type={vectorDbStatus.type}
-          status={vectorDbStatus.status}
-          documentCount={vectorDbStatus.documentCount}
-          collectionCount={vectorDbStatus.collectionCount}
+        <VexorStatus
+          isIndexed={vexorStatus.isIndexed}
+          files={vexorStatus.files}
+          generatedAt={vexorStatus.generatedAt}
+          isReindexing={vexorStatus.isReindexing}
         />
         <GitStatus gitInfo={gitInfo} />
         <RecentActivity items={recentActivity} />

@@ -8,11 +8,9 @@ interface CommandPaletteProps {
   onNavigate: (path: string) => void;
   onToggleTheme: () => void;
   onToggleSidebar: () => void;
-  projects: { name: string }[];
-  onSelectProject: (project: string | null) => void;
 }
 
-type CommandCategory = 'navigation' | 'action' | 'theme' | 'project';
+type CommandCategory = 'navigation' | 'action' | 'theme';
 
 interface InternalCommand {
   id: string;
@@ -29,8 +27,6 @@ export function CommandPalette({
   onNavigate,
   onToggleTheme,
   onToggleSidebar,
-  projects,
-  onSelectProject,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -38,7 +34,7 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
 
   const commands = useMemo<InternalCommand[]>(() => {
-    const cmds: InternalCommand[] = [
+    return [
       {
         id: 'nav-dashboard',
         label: 'Go to Dashboard',
@@ -79,23 +75,8 @@ export function CommandPalette({
         icon: 'lucide:panel-left',
         action: onToggleSidebar,
       },
-      {
-        id: 'project-all',
-        label: 'All Projects',
-        category: 'project',
-        icon: 'lucide:folder',
-        action: () => onSelectProject(null),
-      },
-      ...projects.map((p) => ({
-        id: `project-${p.name}`,
-        label: p.name,
-        category: 'project' as CommandCategory,
-        icon: 'lucide:folder-open',
-        action: () => onSelectProject(p.name),
-      })),
     ];
-    return cmds;
-  }, [onNavigate, onToggleTheme, onToggleSidebar, projects, onSelectProject]);
+  }, [onNavigate, onToggleTheme, onToggleSidebar]);
 
   const filteredCommands = useMemo(() => {
     if (!query) return commands;
@@ -168,7 +149,6 @@ export function CommandPalette({
     navigation: 'Navigation',
     action: 'Actions',
     theme: 'Theme',
-    project: 'Projects',
   };
 
   let flatIndex = 0;

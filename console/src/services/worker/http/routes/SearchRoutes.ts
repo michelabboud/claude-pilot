@@ -228,11 +228,14 @@ export class SearchRoutes extends BaseRouteHandler {
     const primaryProject = projects[projects.length - 1];
     const cwd = `/context/${primaryProject}`;
 
+    const planPath = req.query.planPath as string | undefined;
+
     const contextText = await generateContext(
       {
         session_id: "context-inject-" + Date.now(),
         cwd: cwd,
         projects: projects,
+        planPath: planPath || undefined,
       },
       useColors,
     );

@@ -47,6 +47,10 @@ function createMockServer(): Express {
     res.json({ branch: 'main', staged: 0, unstaged: 0, untracked: 0 });
   });
 
+  app.get('/api/dashboard/sessions', (_, res) => {
+    res.json({ sessions: [] });
+  });
+
   return app;
 }
 
@@ -64,6 +68,7 @@ describe('UI Required Endpoints', () => {
     '/api/projects',
     '/api/plan',
     '/api/git',
+    '/api/dashboard/sessions',
   ];
 
   describe('useStats required endpoints', () => {
@@ -107,6 +112,7 @@ describe('UI Required Endpoints', () => {
         '/api/projects',
         '/api/plan',
         '/api/git',
+        '/api/dashboard/sessions',
       ]);
     });
 

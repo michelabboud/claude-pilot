@@ -1,6 +1,6 @@
 ---
 name: standards-typescript
-description: Apply TypeScript development standards including package manager detection (npm/yarn/pnpm/bun), explicit return types on exports, ESLint/Prettier code quality, one-line JSDoc, and self-documenting code practices. Use this skill when working with TypeScript or JavaScript code, managing dependencies, running tests, or ensuring code quality. Apply when installing packages, writing tests, formatting code, type checking, adding type annotations, organizing imports, or deciding whether to create new files vs. extending existing ones. Use for any TypeScript/JavaScript development task requiring adherence to tooling standards and best practices.
+description: Apply TypeScript standards including package manager detection (npm/yarn/pnpm/bun), strict types, no `any`, and explicit return types on exports. Apply when working with TypeScript/JavaScript code, managing dependencies, or ensuring type safety.
 ---
 
 # TypeScript Standards

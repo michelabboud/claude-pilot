@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardBody, Badge, Icon, Spinner, Progress } from '../../components/ui';
+import { Card, CardBody, Badge, Icon, Button, Spinner, Progress, Tooltip } from '../../components/ui';
 import { SpecContent } from './SpecContent';
+import { TIMING } from '../../constants/timing';
 
 interface PlanInfo {
   name: string;
@@ -71,6 +72,7 @@ export function SpecView() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadSpecs = useCallback(async () => {
     try {
@@ -79,7 +81,8 @@ export function SpecView() {
       setSpecs(data.specs || []);
 
       if (data.specs?.length > 0 && !selectedSpec) {
-        setSelectedSpec(data.specs[0].filePath);
+        const active = data.specs.find((s: PlanInfo) => s.status === 'PENDING' || s.status === 'COMPLETE');
+        setSelectedSpec(active ? active.filePath : data.specs[0].filePath);
       }
     } catch (err) {
       setError('Failed to load specs');
@@ -89,8 +92,10 @@ export function SpecView() {
     }
   }, [selectedSpec]);
 
-  const loadContent = useCallback(async (filePath: string) => {
-    setIsLoadingContent(true);
+  const loadContent = useCallback(async (filePath: string, background = false) => {
+    if (!background) {
+      setIsLoadingContent(true);
+    }
     setError(null);
     try {
       const res = await fetch(`/api/plan/content?path=${encodeURIComponent(filePath)}`);
@@ -103,13 +108,43 @@ export function SpecView() {
       setError('Failed to load spec content');
       console.error('Failed to load spec content:', err);
     } finally {
-      setIsLoadingContent(false);
+      if (!background) {
+        setIsLoadingContent(false);
+      }
     }
   }, []);
 
+  const deleteSpec = useCallback(async (filePath: string) => {
+    if (!confirm(`Delete spec "${filePath.split('/').pop()}"? This cannot be undone.`)) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/plan?path=${encodeURIComponent(filePath)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error('Failed to delete spec');
+      }
+      setSelectedSpec(null);
+      setContent(null);
+      await loadSpecs();
+    } catch (err) {
+      setError('Failed to delete spec');
+      console.error('Failed to delete spec:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [loadSpecs]);
+
   useEffect(() => {
     loadSpecs();
-  }, [loadSpecs]);
+    const interval = setInterval(() => {
+      loadSpecs();
+      if (selectedSpec) {
+        loadContent(selectedSpec, true);
+      }
+    }, TIMING.SPEC_REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [loadSpecs, loadContent, selectedSpec]);
 
   useEffect(() => {
     if (selectedSpec) {
@@ -128,11 +163,6 @@ export function SpecView() {
   if (specs.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Spec Viewer</h1>
-          <p className="text-base-content/60">View active spec-driven development plans</p>
-        </div>
-
         <Card>
           <CardBody>
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -148,6 +178,8 @@ export function SpecView() {
     );
   }
 
+  const activeSpecs = specs.filter(s => s.status === 'PENDING' || s.status === 'COMPLETE');
+  const archivedSpecs = specs.filter(s => s.status === 'VERIFIED');
   const currentSpec = specs.find(s => s.filePath === selectedSpec);
   const config = currentSpec ? statusConfig[currentSpec.status] : null;
   const parsed = content ? parsePlanContent(content.content) : null;
@@ -157,25 +189,77 @@ export function SpecView() {
 
   return (
     <div className="space-y-6">
-      {/* Header with spec selector */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Spec Viewer</h1>
-          <p className="text-base-content/60">View active spec-driven development plans</p>
-        </div>
+      {/* Spec selector: tabs for active, dropdown for archived */}
+      <div className="flex items-center gap-2">
+        {/* Active plan tabs */}
+        {activeSpecs.length > 0 && (
+          <div role="tablist" className="flex items-center gap-1.5 flex-shrink-0">
+            {activeSpecs.map((spec) => {
+              const isActive = selectedSpec === spec.filePath;
+              return (
+                <button
+                  key={spec.filePath}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-base-200/60 border-base-300/50 text-base-content/70 hover:bg-base-200'
+                  }`}
+                  onClick={() => setSelectedSpec(spec.filePath)}
+                >
+                  <Icon
+                    icon={statusConfig[spec.status].icon}
+                    size={12}
+                    className={spec.status === 'PENDING' ? 'text-warning' : 'text-info'}
+                  />
+                  <span className="truncate max-w-32">{spec.name}</span>
+                  {spec.total > 0 && (
+                    <span className="text-[10px] opacity-60">{spec.completed}/{spec.total}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-        {specs.length > 1 && (
+        {/* Archived plans dropdown */}
+        {archivedSpecs.length > 0 && (
           <select
-            className="select select-bordered select-sm"
-            value={selectedSpec || ''}
+            className="select select-bordered select-sm ml-auto"
+            value={currentSpec?.status === 'VERIFIED' ? selectedSpec || '' : ''}
             onChange={(e) => setSelectedSpec(e.target.value)}
           >
-            {specs.map((spec) => (
-              <option key={spec.filePath} value={spec.filePath}>
-                {spec.name} ({spec.status})
-              </option>
-            ))}
+            <option value="" disabled>
+              Archived ({archivedSpecs.length})
+            </option>
+            {archivedSpecs.map((spec) => {
+              const date = spec.modifiedAt ? new Date(spec.modifiedAt) : null;
+              const dateStr = date
+                ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                : '';
+              return (
+                <option key={spec.filePath} value={spec.filePath}>
+                  {spec.name}{dateStr ? ` - ${dateStr}` : ''}
+                </option>
+              );
+            })}
           </select>
+        )}
+
+        {/* Delete button */}
+        {selectedSpec && (
+          <Tooltip text="Delete spec" position="bottom">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteSpec(selectedSpec)}
+              disabled={isDeleting}
+              className={archivedSpecs.length === 0 ? 'ml-auto' : ''}
+            >
+              <Icon icon="lucide:trash-2" size={16} className="text-error" />
+            </Button>
+          </Tooltip>
         )}
       </div>
 
@@ -257,6 +341,14 @@ export function SpecView() {
                   )}
                   {!currentSpec.approved && currentSpec.status === 'PENDING' && (
                     <Badge variant="warning" size="xs">Awaiting Approval</Badge>
+                  )}
+                  {currentSpec.modifiedAt && (
+                    <div className="flex items-center gap-1">
+                      <Icon icon="lucide:calendar" size={12} />
+                      <span>{new Date(currentSpec.modifiedAt).toLocaleString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}</span>
+                    </div>
                   )}
                   <div className="flex items-center gap-1 ml-auto">
                     <Icon icon="lucide:file" size={12} />

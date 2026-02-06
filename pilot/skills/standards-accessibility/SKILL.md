@@ -1,6 +1,6 @@
 ---
 name: standards-accessibility
-description: Build accessible user interfaces using semantic HTML, proper ARIA attributes, keyboard navigation, color contrast, and screen reader compatibility. Use this skill when creating or modifying frontend components, HTML templates, React/Vue/Svelte components, forms, interactive elements, navigation menus, modals, or any UI elements. Apply when working with HTML files, JSX/TSX components, template files, ensuring keyboard accessibility, implementing focus management, adding alt text to images, creating form labels, testing with screen readers, managing ARIA attributes, maintaining color contrast ratios, or building heading hierarchies. Use for any task involving UI accessibility compliance, WCAG standards, or inclusive design patterns.
+description: Build accessible UIs with semantic HTML, ARIA attributes, keyboard navigation, color contrast, and screen reader support. Apply when creating or modifying frontend components, forms, interactive elements, or any UI that needs WCAG compliance.
 ---
 
 # Accessibility Standards
@@ -28,12 +28,13 @@ This Skill provides Claude Code with specific guidance on how to adhere to codin
 Use native HTML elements that convey meaning to assistive technologies.
 
 **Correct elements:**
+
 ```html
 <!-- Navigation -->
 <nav><a href="/about">About</a></nav>
 
 <!-- Buttons that perform actions -->
-<button onClick={handleSubmit}>Submit</button>
+<button onClick="{handleSubmit}">Submit</button>
 
 <!-- Links that navigate -->
 <a href="/profile">View Profile</a>
@@ -49,13 +50,15 @@ Use native HTML elements that convey meaning to assistive technologies.
 ```
 
 **Avoid:**
+
 ```html
 <!-- BAD - div/span without semantic meaning -->
-<div onClick={navigate}>Go to page</div>
-<span onClick={handleClick}>Submit</span>
+<div onClick="{navigate}">Go to page</div>
+<span onClick="{handleClick}">Submit</span>
 ```
 
 **When to use each element:**
+
 - `<button>`: Actions (submit, open modal, toggle)
 - `<a>`: Navigation to different pages/sections
 - `<nav>`: Navigation landmarks
@@ -68,6 +71,7 @@ Use native HTML elements that convey meaning to assistive technologies.
 All interactive elements must be keyboard accessible.
 
 **Requirements:**
+
 - Tab key moves focus through interactive elements
 - Enter/Space activates buttons and links
 - Escape closes modals and dialogs
@@ -75,6 +79,7 @@ All interactive elements must be keyboard accessible.
 - Focus indicators are clearly visible
 
 **Implementation:**
+
 ```jsx
 // Native elements are keyboard accessible by default
 <button onClick={handleClick}>Click me</button>
@@ -101,6 +106,7 @@ button:focus {
 ```
 
 **Never:**
+
 - Remove focus outlines without providing alternative indicators
 - Use `tabIndex` values other than 0 or -1
 - Create keyboard traps (user can't escape with keyboard)
@@ -110,6 +116,7 @@ button:focus {
 Every form input must have an associated label.
 
 **Correct patterns:**
+
 ```html
 <!-- Explicit label association -->
 <label for="username">Username</label>
@@ -128,15 +135,12 @@ Every form input must have an associated label.
 
 <!-- aria-describedby for help text -->
 <label for="password">Password</label>
-<input
-  id="password"
-  type="password"
-  aria-describedby="password-help"
-/>
+<input id="password" type="password" aria-describedby="password-help" />
 <span id="password-help">Must be at least 8 characters</span>
 ```
 
 **Required attributes:**
+
 - `id` on input, matching `for` on label
 - `type` attribute on inputs (text, email, password, etc.)
 - `aria-label` or `aria-labelledby` when visual label isn't present
@@ -147,6 +151,7 @@ Every form input must have an associated label.
 Provide descriptive alt text that conveys the image's purpose.
 
 **Guidelines:**
+
 ```jsx
 <!-- Informative images -->
 <img src="chart.png" alt="Sales increased 40% in Q4 2024" />
@@ -174,6 +179,7 @@ Provide descriptive alt text that conveys the image's purpose.
 ```
 
 **Alt text rules:**
+
 - Describe the content and function, not "image of"
 - Keep concise (under 150 characters when possible)
 - Use empty alt (`alt=""`) for purely decorative images
@@ -184,11 +190,13 @@ Provide descriptive alt text that conveys the image's purpose.
 Maintain sufficient contrast ratios for readability.
 
 **WCAG Requirements:**
+
 - Normal text (< 18pt): 4.5:1 contrast ratio
 - Large text (≥ 18pt or ≥ 14pt bold): 3:1 contrast ratio
 - UI components and graphics: 3:1 contrast ratio
 
 **Don't rely on color alone:**
+
 ```jsx
 // BAD - color only
 <span style={{color: 'red'}}>Error</span>
@@ -211,6 +219,7 @@ Maintain sufficient contrast ratios for readability.
 ```
 
 **Tools to verify contrast:**
+
 - Browser DevTools (Chrome, Firefox have built-in checkers)
 - WebAIM Contrast Checker
 - Axe DevTools extension
@@ -220,6 +229,7 @@ Maintain sufficient contrast ratios for readability.
 Use ARIA to enhance semantics when HTML alone isn't sufficient.
 
 **Common ARIA patterns:**
+
 ```jsx
 // Roles for custom components
 <div role="dialog" aria-modal="true">
@@ -243,12 +253,14 @@ Use ARIA to enhance semantics when HTML alone isn't sufficient.
 ```
 
 **ARIA rules:**
+
 1. Use semantic HTML first, ARIA second
 2. Don't override native semantics (`<button role="link">` is wrong)
 3. All interactive ARIA roles need keyboard support
 4. Test with actual screen readers
 
 **Common ARIA attributes:**
+
 - `aria-label`: Accessible name for element
 - `aria-labelledby`: References element(s) that label this one
 - `aria-describedby`: References element(s) that describe this one
@@ -261,26 +273,33 @@ Use ARIA to enhance semantics when HTML alone isn't sufficient.
 Use heading levels (h1-h6) in logical order to create document structure.
 
 **Correct structure:**
+
 ```html
 <h1>Page Title</h1>
-  <h2>Section 1</h2>
-    <h3>Subsection 1.1</h3>
-    <h3>Subsection 1.2</h3>
-  <h2>Section 2</h2>
-    <h3>Subsection 2.1</h3>
+<h2>Section 1</h2>
+<h3>Subsection 1.1</h3>
+<h3>Subsection 1.2</h3>
+<h2>Section 2</h2>
+<h3>Subsection 2.1</h3>
 ```
 
 **Rules:**
+
 - One `<h1>` per page (page title)
 - Don't skip levels (h2 → h4 is wrong)
 - Don't choose headings based on visual size (use CSS for styling)
 - Headings create an outline for screen reader navigation
 
 **Styling headings:**
+
 ```css
 /* Separate semantic level from visual appearance */
-h1 { font-size: 2rem; }
-h2 { font-size: 1.5rem; }
+h1 {
+  font-size: 2rem;
+}
+h2 {
+  font-size: 1.5rem;
+}
 
 /* If you need h3 to look like h1 */
 .h3-large {
@@ -293,6 +312,7 @@ h2 { font-size: 1.5rem; }
 Manage focus in dynamic interfaces to maintain keyboard navigation flow.
 
 **Modal dialogs:**
+
 ```jsx
 function Modal({ isOpen, onClose, children }) {
   const modalRef = useRef();
@@ -316,12 +336,7 @@ function Modal({ isOpen, onClose, children }) {
   }, [isOpen]);
 
   return (
-    <div
-      ref={modalRef}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-    >
+    <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1}>
       {children}
       <button onClick={onClose}>Close</button>
     </div>
@@ -330,17 +345,16 @@ function Modal({ isOpen, onClose, children }) {
 ```
 
 **Dynamic content:**
+
 ```jsx
 // Announce content changes to screen readers
-<div aria-live="polite">
-  {loading ? 'Loading...' : `Loaded ${items.length} items`}
-</div>
+<div aria-live="polite">{loading ? "Loading..." : `Loaded ${items.length} items`}</div>;
 
 // Move focus to new content after navigation
 function handlePageChange(newPage) {
   loadPage(newPage);
   // Focus the main heading of new content
-  document.querySelector('h1')?.focus();
+  document.querySelector("h1")?.focus();
 }
 ```
 
@@ -362,6 +376,7 @@ Before marking UI work complete:
 ## Common Mistakes to Avoid
 
 **Using divs/spans for buttons:**
+
 ```jsx
 // BAD
 <div onClick={handleClick}>Submit</div>
@@ -371,6 +386,7 @@ Before marking UI work complete:
 ```
 
 **Missing form labels:**
+
 ```jsx
 // BAD
 <input type="text" placeholder="Username" />
@@ -381,9 +397,12 @@ Before marking UI work complete:
 ```
 
 **Removing focus outlines:**
+
 ```css
 /* BAD */
-button:focus { outline: none; }
+button:focus {
+  outline: none;
+}
 
 /* GOOD - provide alternative indicator */
 button:focus {
@@ -393,6 +412,7 @@ button:focus {
 ```
 
 **Redundant ARIA:**
+
 ```jsx
 // BAD - button already has button role
 <button role="button">Click</button>
@@ -402,6 +422,7 @@ button:focus {
 ```
 
 **Inaccessible custom components:**
+
 ```jsx
 // BAD - no keyboard support
 <div onClick={handleClick}>Custom button</div>
@@ -425,6 +446,7 @@ button:focus {
 ## Testing Accessibility
 
 **Manual testing:**
+
 1. Navigate entire interface using only keyboard
 2. Verify all interactive elements are reachable and activatable
 3. Check focus indicators are visible
@@ -432,12 +454,14 @@ button:focus {
 5. Use browser DevTools accessibility inspector
 
 **Automated testing:**
+
 - Axe DevTools browser extension
 - Lighthouse accessibility audit
 - WAVE browser extension
 - eslint-plugin-jsx-a11y (for React)
 
 **Screen reader testing:**
+
 - macOS: VoiceOver (Cmd+F5)
 - Windows: NVDA (free) or JAWS
 - Test critical user flows with screen reader enabled

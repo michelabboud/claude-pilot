@@ -1,20 +1,10 @@
-import React from 'react';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
-import { SidebarProjects } from './SidebarProjects';
 import { SidebarFooter } from './SidebarFooter';
 import { Icon } from '../../components/ui';
 
-interface Project {
-  name: string;
-  observationCount: number;
-}
-
 interface SidebarProps {
   currentPath: string;
-  projects: Project[];
-  selectedProject: string | null;
-  onSelectProject: (name: string | null) => void;
   workerStatus: 'online' | 'offline' | 'processing';
   queueDepth?: number;
   collapsed: boolean;
@@ -23,9 +13,6 @@ interface SidebarProps {
 
 export function Sidebar({
   currentPath,
-  projects,
-  selectedProject,
-  onSelectProject,
   workerStatus,
   queueDepth,
   collapsed,
@@ -49,20 +36,9 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* Navigation - fixed height */}
-      <div className="flex-shrink-0">
+      {/* Navigation */}
+      <div className="flex-1">
         <SidebarNav currentPath={currentPath} collapsed={collapsed} />
-      </div>
-
-      {/* Projects - scrollable, takes remaining space */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {!collapsed && (
-          <SidebarProjects
-            projects={projects}
-            selectedProject={selectedProject}
-            onSelectProject={onSelectProject}
-          />
-        )}
       </div>
 
       {/* Footer - fixed at bottom */}
