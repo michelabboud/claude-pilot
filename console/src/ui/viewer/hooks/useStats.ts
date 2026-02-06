@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 interface Stats {
   observations: number;
   summaries: number;
-  prompts: number;
+  lastObservationAt: string | null;
   projects: number;
 }
 
@@ -77,7 +77,7 @@ export function useStats(): UseStatsResult {
   const [stats, setStats] = useState<Stats>({
     observations: 0,
     summaries: 0,
-    prompts: 0,
+    lastObservationAt: null,
     projects: 0,
   });
   const [workerStatus, setWorkerStatus] = useState<WorkerStatus>({
@@ -113,10 +113,14 @@ export function useStats(): UseStatsResult {
       const gitData = await gitRes.json();
       const sessionsData = await sessionsRes.json();
 
+      const rawItems = activityData.items || activityData.observations || activityData || [];
+      const recentItems = Array.isArray(rawItems) ? rawItems : [];
+      const lastObsTimestamp = recentItems.length > 0 ? (recentItems[0]?.created_at || null) : null;
+
       setStats({
         observations: statsData.database?.observations || 0,
         summaries: statsData.database?.summaries || 0,
-        prompts: statsData.database?.prompts || 0,
+        lastObservationAt: lastObsTimestamp ? formatTimestamp(lastObsTimestamp) : null,
         projects: projectsData.projects?.length || 0,
       });
 

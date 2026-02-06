@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from './layouts';
 import { Router, useRouter } from './router';
 import { DashboardView, MemoriesView, SearchView, SessionsView, SpecView } from './views';
@@ -24,7 +24,7 @@ const LOGS_OPEN_KEY = 'pilot-memory-logs-open';
 export function App() {
   const { path, navigate } = useRouter();
   const { resolvedTheme, setThemePreference } = useTheme();
-  const { stats, workerStatus, isLoading } = useStats();
+  const { workerStatus } = useStats();
 
   const [projects, setProjects] = useState<{ name: string; observationCount: number }[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
@@ -63,13 +63,6 @@ export function App() {
 
     fetchProjects();
   }, []);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-    },
-    [navigate]
-  );
 
   const handleSelectProject = useCallback(
     (projectName: string | null) => {
@@ -139,11 +132,9 @@ export function App() {
         onSelectProject={handleSelectProject}
         workerStatus={workerStatus.status}
         queueDepth={workerStatus.queueDepth}
-        onSearch={handleSearch}
         theme={resolvedTheme as 'light' | 'dark'}
         onToggleTheme={handleToggleTheme}
         onToggleLogs={handleToggleLogs}
-        isProcessing={workerStatus.status === 'processing'}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
       >

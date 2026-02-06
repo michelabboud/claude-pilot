@@ -5,21 +5,6 @@
 import { Database } from "bun:sqlite";
 import type { SessionPlan, ActivePlan, DashboardSession } from "./types.js";
 
-/** Ensure the session_plans table exists (migration010). */
-export function ensureSessionPlansTable(db: Database): void {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS session_plans (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_db_id INTEGER NOT NULL UNIQUE,
-      plan_path TEXT NOT NULL,
-      plan_status TEXT DEFAULT 'PENDING',
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (session_db_id) REFERENCES sdk_sessions(id) ON DELETE CASCADE
-    )
-  `);
-}
-
 /** Associate a plan with a session (upsert). */
 export function associatePlan(
   db: Database,

@@ -151,7 +151,7 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
     @patch("installer.steps.dependencies._clean_npm_stale_dirs")
-    def test_install_claude_code_cleans_stale_dirs(self, mock_clean, mock_remove, mock_run, mock_config, mock_version):
+    def test_install_claude_code_cleans_stale_dirs(self, mock_clean, _mock_remove, _mock_run, _mock_config, _mock_version):
         """install_claude_code cleans stale npm temp directories before install."""
         from installer.steps.dependencies import install_claude_code
 
@@ -164,7 +164,7 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._configure_claude_defaults")
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
-    def test_install_claude_code_removes_native_binaries(self, mock_remove, mock_run, mock_config, mock_version):
+    def test_install_claude_code_removes_native_binaries(self, mock_remove, _mock_run, _mock_config, _mock_version):
         """install_claude_code removes native binaries before npm install."""
         from installer.steps.dependencies import install_claude_code
 
@@ -177,7 +177,7 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._configure_claude_defaults")
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
-    def test_install_claude_code_uses_npm(self, mock_remove, mock_run, mock_config, mock_version):
+    def test_install_claude_code_uses_npm(self, _mock_remove, mock_run, _mock_config, _mock_version):
         """install_claude_code uses npm install -g."""
         from installer.steps.dependencies import install_claude_code
 
@@ -194,7 +194,7 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._configure_claude_defaults")
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
-    def test_install_claude_code_uses_version_tag(self, mock_remove, mock_run, mock_config, mock_version):
+    def test_install_claude_code_uses_version_tag(self, _mock_remove, mock_run, _mock_config, _mock_version):
         """install_claude_code uses npm version tag for pinned version."""
         from installer.steps.dependencies import install_claude_code
 
@@ -212,8 +212,9 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._configure_claude_defaults")
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=False)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
+    @patch("installer.steps.dependencies._get_installed_claude_version", return_value="1.0.0")
     def test_install_claude_code_succeeds_if_already_installed(
-        self, mock_remove, mock_run, mock_config, mock_version, mock_cmd_exists
+        self, _mock_get_ver, _mock_remove, _mock_run, mock_config, _mock_version, _mock_cmd_exists
     ):
         """install_claude_code returns success when npm fails but claude already exists."""
         from installer.steps.dependencies import install_claude_code
@@ -222,13 +223,14 @@ class TestClaudeCodeInstall:
             success, version = install_claude_code(Path(tmpdir))
 
         assert success is True, "Should succeed when claude is already installed"
+        assert version == "1.0.0", "Should return actual installed version"
         mock_config.assert_called_once()
 
     @patch("installer.steps.dependencies._get_forced_claude_version", return_value=None)
     @patch("installer.steps.dependencies._configure_claude_defaults")
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
-    def test_install_claude_code_configures_defaults(self, mock_remove, mock_run, mock_config, mock_version):
+    def test_install_claude_code_configures_defaults(self, _mock_remove, _mock_run, mock_config, _mock_version):
         """install_claude_code configures Claude defaults after npm install."""
         from installer.steps.dependencies import install_claude_code
 
@@ -242,7 +244,7 @@ class TestClaudeCodeInstall:
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
     @patch("installer.steps.dependencies._remove_native_claude_binaries")
     def test_install_claude_code_with_ui_shows_pinned_version_info(
-        self, mock_remove, mock_run, mock_config, mock_version
+        self, _mock_remove, _mock_run, _mock_config, _mock_version
     ):
         """_install_claude_code_with_ui shows info about pinned version."""
         from installer.steps.dependencies import _install_claude_code_with_ui
@@ -317,49 +319,61 @@ class TestClaudeCodeInstall:
 class TestCleanNpmStaleDirs:
     """Test cleaning stale npm temp directories that cause ENOTEMPTY errors."""
 
-    def test_clean_npm_stale_dirs_removes_temp_directories(self):
+    @patch("installer.steps.dependencies.command_exists", return_value=True)
+    def test_clean_npm_stale_dirs_removes_temp_directories(self, _mock_cmd):
         """_clean_npm_stale_dirs removes .claude-code-* temp dirs under @anthropic-ai."""
         from installer.steps.dependencies import _clean_npm_stale_dirs
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            npm_prefix = Path(tmpdir)
-            anthropic_dir = npm_prefix / "lib" / "node_modules" / "@anthropic-ai"
+            node_modules = Path(tmpdir) / "node_modules"
+            anthropic_dir = node_modules / "@anthropic-ai"
             anthropic_dir.mkdir(parents=True)
             stale_dir = anthropic_dir / ".claude-code-HDmMpB7K"
             stale_dir.mkdir()
             (stale_dir / "package.json").write_text("{}")
 
             with patch("installer.steps.dependencies.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0, stdout=str(npm_prefix) + "\n")
+                mock_run.return_value = MagicMock(returncode=0, stdout=str(node_modules) + "\n")
                 _clean_npm_stale_dirs()
 
             assert not stale_dir.exists(), "Stale temp directory should be removed"
 
-    def test_clean_npm_stale_dirs_preserves_real_package(self):
+    @patch("installer.steps.dependencies.command_exists", return_value=True)
+    def test_clean_npm_stale_dirs_preserves_real_package(self, _mock_cmd):
         """_clean_npm_stale_dirs does not remove the real claude-code directory."""
         from installer.steps.dependencies import _clean_npm_stale_dirs
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            npm_prefix = Path(tmpdir)
-            anthropic_dir = npm_prefix / "lib" / "node_modules" / "@anthropic-ai"
+            node_modules = Path(tmpdir) / "node_modules"
+            anthropic_dir = node_modules / "@anthropic-ai"
             anthropic_dir.mkdir(parents=True)
             real_dir = anthropic_dir / "claude-code"
             real_dir.mkdir()
             (real_dir / "package.json").write_text("{}")
 
             with patch("installer.steps.dependencies.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0, stdout=str(npm_prefix) + "\n")
+                mock_run.return_value = MagicMock(returncode=0, stdout=str(node_modules) + "\n")
                 _clean_npm_stale_dirs()
 
             assert real_dir.exists(), "Real claude-code directory should be preserved"
 
-    def test_clean_npm_stale_dirs_handles_npm_failure(self):
-        """_clean_npm_stale_dirs does nothing when npm prefix fails."""
+    @patch("installer.steps.dependencies.command_exists", return_value=True)
+    def test_clean_npm_stale_dirs_handles_npm_failure(self, _mock_cmd):
+        """_clean_npm_stale_dirs does nothing when npm root fails."""
         from installer.steps.dependencies import _clean_npm_stale_dirs
 
         with patch("installer.steps.dependencies.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1, stdout="")
             _clean_npm_stale_dirs()
+
+    def test_clean_npm_stale_dirs_skips_without_npm(self):
+        """_clean_npm_stale_dirs does nothing when npm is not installed."""
+        from installer.steps.dependencies import _clean_npm_stale_dirs
+
+        with patch("installer.steps.dependencies.command_exists", return_value=False):
+            with patch("installer.steps.dependencies.subprocess.run") as mock_run:
+                _clean_npm_stale_dirs()
+                mock_run.assert_not_called()
 
 
 class TestSetupPilotMemory:

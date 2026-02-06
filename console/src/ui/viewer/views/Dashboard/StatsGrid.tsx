@@ -1,10 +1,9 @@
-import React from 'react';
 import { StatsCard } from './StatsCard';
 
 interface Stats {
   observations: number;
   summaries: number;
-  prompts: number;
+  lastObservationAt: string | null;
   projects: number;
 }
 
@@ -21,14 +20,14 @@ export function StatsGrid({ stats }: StatsGridProps) {
         value={stats.observations.toLocaleString()}
       />
       <StatsCard
+        icon="lucide:clock"
+        label="Last Observation"
+        value={stats.lastObservationAt || 'None yet'}
+      />
+      <StatsCard
         icon="lucide:file-text"
         label="Summaries"
         value={stats.summaries.toLocaleString()}
-      />
-      <StatsCard
-        icon="lucide:message-square"
-        label="Prompts"
-        value={stats.prompts.toLocaleString()}
       />
       <StatsCard
         icon="lucide:folder"

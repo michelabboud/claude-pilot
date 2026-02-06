@@ -193,17 +193,20 @@ def _clean_npm_stale_dirs() -> None:
     """Remove stale .claude-code-* temp dirs that cause npm ENOTEMPTY errors."""
     import shutil
 
+    if not command_exists("npm"):
+        return
+
     try:
         result = subprocess.run(
-            ["npm", "prefix", "-g"],
+            ["npm", "root", "-g"],
             capture_output=True,
             text=True,
         )
         if result.returncode != 0:
             return
 
-        npm_prefix = Path(result.stdout.strip())
-        anthropic_dir = npm_prefix / "lib" / "node_modules" / "@anthropic-ai"
+        node_modules_dir = Path(result.stdout.strip())
+        anthropic_dir = node_modules_dir / "@anthropic-ai"
         if not anthropic_dir.exists():
             return
 
@@ -212,6 +215,21 @@ def _clean_npm_stale_dirs() -> None:
                 shutil.rmtree(stale_dir, ignore_errors=True)
     except Exception:
         pass
+
+
+def _get_installed_claude_version() -> str | None:
+    """Probe the actual installed Claude Code version via claude --version."""
+    try:
+        result = subprocess.run(
+            ["claude", "--version"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return None
 
 
 def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
@@ -234,7 +252,8 @@ def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
     if not _run_bash_with_retry(npm_cmd):
         if command_exists("claude"):
             _configure_claude_defaults()
-            return True, version
+            actual_version = _get_installed_claude_version()
+            return True, actual_version or version
         return False, version
 
     _configure_claude_defaults()

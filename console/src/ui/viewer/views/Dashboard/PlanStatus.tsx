@@ -28,7 +28,7 @@ export function PlanStatus({ active, plan }: PlanStatusProps) {
       <Card>
         <CardBody>
           <div className="flex items-center justify-between mb-4">
-            <CardTitle>Spec Status</CardTitle>
+            <CardTitle>Specification Status</CardTitle>
             <Badge variant="ghost">Quick Mode</Badge>
           </div>
           <div className="text-sm text-base-content/60">
@@ -47,7 +47,7 @@ export function PlanStatus({ active, plan }: PlanStatusProps) {
     <Card>
       <CardBody>
         <div className="flex items-center justify-between mb-4">
-          <CardTitle>Spec Status</CardTitle>
+          <CardTitle>Specification Status</CardTitle>
           <Badge variant={config.color as 'info' | 'warning' | 'accent'}>
             {config.label}
           </Badge>

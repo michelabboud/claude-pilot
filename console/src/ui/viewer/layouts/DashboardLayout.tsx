@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { Footer } from '../components/Footer';
 
 interface Project {
   name: string;
@@ -15,12 +16,9 @@ interface DashboardLayoutProps {
   onSelectProject: (name: string | null) => void;
   workerStatus: 'online' | 'offline' | 'processing';
   queueDepth?: number;
-  onSearch: (query: string) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onToggleLogs?: () => void;
-  isProcessing?: boolean;
-  lastProcessed?: string;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
 }
@@ -33,12 +31,9 @@ export function DashboardLayout({
   onSelectProject,
   workerStatus,
   queueDepth,
-  onSearch,
   theme,
   onToggleTheme,
   onToggleLogs,
-  isProcessing,
-  lastProcessed,
   sidebarCollapsed,
   onToggleSidebar,
 }: DashboardLayoutProps) {
@@ -58,15 +53,15 @@ export function DashboardLayout({
       />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar
-          onSearch={onSearch}
           theme={theme}
           onToggleTheme={onToggleTheme}
           onToggleLogs={onToggleLogs}
-          isProcessing={isProcessing}
-          lastProcessed={lastProcessed}
         />
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
+        <main className="flex-1 p-6 overflow-y-auto flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </main>
       </div>
     </div>

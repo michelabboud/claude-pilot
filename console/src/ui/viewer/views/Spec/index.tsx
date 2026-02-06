@@ -178,11 +178,18 @@ export function SpecView() {
             value={selectedSpec || ''}
             onChange={(e) => setSelectedSpec(e.target.value)}
           >
-            {specs.map((spec) => (
-              <option key={spec.filePath} value={spec.filePath}>
-                {spec.name} ({spec.status})
-              </option>
-            ))}
+            {specs.map((spec) => {
+              const date = spec.modifiedAt ? new Date(spec.modifiedAt) : null;
+              const dateStr = date
+                ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+                  ' ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                : '';
+              return (
+                <option key={spec.filePath} value={spec.filePath}>
+                  {spec.name} ({spec.status}){dateStr ? ` - ${dateStr}` : ''}
+                </option>
+              );
+            })}
           </select>
         )}
       </div>
@@ -265,6 +272,14 @@ export function SpecView() {
                   )}
                   {!currentSpec.approved && currentSpec.status === 'PENDING' && (
                     <Badge variant="warning" size="xs">Awaiting Approval</Badge>
+                  )}
+                  {currentSpec.modifiedAt && (
+                    <div className="flex items-center gap-1">
+                      <Icon icon="lucide:calendar" size={12} />
+                      <span>{new Date(currentSpec.modifiedAt).toLocaleString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}</span>
+                    </div>
                   )}
                   <div className="flex items-center gap-1 ml-auto">
                     <Icon icon="lucide:file" size={12} />
