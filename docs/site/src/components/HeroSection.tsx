@@ -73,11 +73,6 @@ const HeroSection = () => {
             <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">MCP</div>
             <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">External Context</div>
           </div>
-          <div className="w-px h-8 bg-border/50 hidden xs:block" />
-          <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">LSP</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Diagnostics</div>
-          </div>
         </div>
 
         {/* Feature badges */}

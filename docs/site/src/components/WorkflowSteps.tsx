@@ -21,7 +21,6 @@ const implementDetails = [
   { icon: Code2, text: "Implements code to make the test pass (GREEN phase)" },
   { icon: RefreshCw, text: "Refactors while keeping tests green (REFACTOR phase)" },
   { icon: Shield, text: "Quality hooks auto-lint, format, and type-check every edit" },
-  { icon: CheckCircle2, text: "Updates plan checkboxes after each completed task" },
 ];
 
 const verifyDetails = [

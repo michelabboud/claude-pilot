@@ -170,8 +170,6 @@ Plan  →  Approve  →  Implement  →  Verify
 2. Implements code to make the test pass (GREEN phase)
 3. Refactors while keeping tests green (REFACTOR phase)
 4. Quality hooks auto-lint, format, and type-check every file edit
-5. Updates plan checkboxes after each completed task
-6. If context reaches 70%+, hands off to next session seamlessly
 
 </details>
 
@@ -182,9 +180,8 @@ Plan  →  Approve  →  Implement  →  Verify
 2. Type checking and linting across the entire project
 3. Executes actual program to verify real-world behavior (not just tests)
 4. **Spec-verifier sub-agent** performs independent code review against the plan
-5. Categorizes findings as `must_fix`, `should_fix`, or `suggestion`
-6. Auto-fixes all findings, then re-verifies until clean
-7. Loops back to implementation if structural issues remain
+5. Auto-fixes all findings, then re-verifies until clean
+6. Loops back to implementation if structural issues remain
 
 </details>
 
