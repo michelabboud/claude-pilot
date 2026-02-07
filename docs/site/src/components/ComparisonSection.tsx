@@ -12,7 +12,7 @@ const ComparisonSection = () => {
     { without: "Context degrades mid-task", with: "Endless Mode with 80%/90%/95% thresholds and auto-handoff" },
     { without: "Every session starts fresh", with: "Persistent memory across sessions via Pilot Console" },
     { without: "Hope it works", with: "Verifier sub-agents perform code review before marking complete" },
-    { without: "No codebase knowledge", with: "21 rules (2,800+ lines) loaded into every session" },
+    { without: "No codebase knowledge", with: "22 rules (2,900+ lines) loaded into every session" },
     { without: "Generic suggestions", with: "14 coding skills activated dynamically when relevant" },
     { without: "Manual tool setup", with: "5 MCP servers + 3 LSP servers pre-configured and ready" },
   ];

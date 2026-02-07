@@ -23,8 +23,7 @@ model: opus
 | [7. Sync Skills](#phase-7-sync-existing-skills) | Update existing skills |
 | [8. New Rules](#phase-8-discover-new-rules) | Document undocumented patterns |
 | [9. New Skills](#phase-9-discover--create-skills) | Create skills via /learn |
-| [10. Team Vault](#phase-10-team-vault-sx) | Share via sx |
-| [11. Summary](#phase-11-summary) | Report changes |
+| [10. Summary](#phase-10-summary) | Report changes |
 
 ### Quick Reference
 
@@ -32,7 +31,9 @@ model: opus
 - **Phases 1-4:** Discovery (read, index, explore, compare)
 - **Phases 5-7:** Sync existing (project, MCP, skills)
 - **Phases 8-9:** Create new (rules, skills)
-- **Phases 10-11:** Share & report
+- **Phase 10:** Report
+
+**Team sharing:** Use `/vault` to push/pull assets via sx after sync completes.
 
 ---
 
@@ -605,91 +606,7 @@ After `/learn` completes:
 2. Confirm SKILL.md has proper frontmatter (name, description with triggers)
 3. Test skill is recognized: mention it in conversation to trigger
 
-## Phase 10: Team Vault (sx)
-
-**Share rules and skills with your team via sx.**
-
-#### Step 10.1: Check sx Availability
-
-```bash
-which sx 2>/dev/null || echo "sx not installed"
-```
-
-**If sx not installed:** Inform user and skip to Phase 11.
-
-#### Step 10.2: Check Vault Status
-
-```bash
-sx vault list 2>&1
-```
-
-**IMPORTANT: Parse the output carefully:**
-
-| Output Contains | Action |
-|-----------------|--------|
-| Lists assets (table with Name, Type, Version) | Vault configured → Step 10.3 |
-| "configuration not found" or "Run 'sx init'" | **MUST ask user** → Step 10.2a |
-| "failed to load" or any other error | **MUST ask user** → Step 10.2a |
-
-**DO NOT skip Phase 10 just because vault isn't configured. Always offer setup.**
-
-#### Step 10.2a: Vault Setup (not configured)
-
-**This step is MANDATORY when sx is installed but vault is not configured.**
-
-```
-Question: "sx is installed but no vault configured. Set up team sharing?"
-Header: "Team Vault"
-Options:
-- "Yes, set up vault" - I'll provide a git repo URL
-- "Skip" - Continue without team sharing
-```
-
-**If user chooses Yes:**
-1. Ask for repo URL (user types via "Other" option)
-2. Run:
-   ```bash
-   sx init --type git --repo-url <user-provided-url>
-   ```
-3. Verify with `sx vault list`
-4. If fails, show error and suggest user run `sx init` manually
-
-#### Step 10.3: Pull Team Assets
-
-```bash
-sx install --repair
-```
-
-This installs any team assets the user doesn't have locally.
-
-#### Step 10.4: Share New Assets
-
-**Only if new rules/skills were created in this session (not `project.md`):**
-
-```
-Question: "Share these with your team?"
-Header: "Share Assets"
-multiSelect: true
-Options:
-- "[skill] skill-name" - Share this skill
-- "[rule] rule-name" - Share this rule
-- "None" - Skip sharing
-```
-
-**For each selected asset:**
-```bash
-# Skills
-sx add .claude/skills/skill-name --yes --type skill --name "skill-name" --no-install
-
-# Rules
-sx add .claude/rules/rule-name.md --yes --type rule --name "rule-name" --no-install
-```
-
-**Note:** `--no-install` prevents duplicating assets that already exist locally.
-
----
-
-## Phase 11: Summary
+## Phase 10: Summary
 
 **Report what was synced:**
 
@@ -725,8 +642,11 @@ sx add .claude/rules/rule-name.md --yes --type rule --name "rule-name" --no-inst
 Question: "Sync complete. What next?"
 Header: "Continue?"
 Options:
+- "Share via Team Vault" - Push new assets to your team with /vault
 - "Discover more standards" - Look for more patterns to document
 - "Create more skills" - Look for more workflow patterns
 - "Done" - Finish sync
 ```
+
+**If user selects "Share via Team Vault":** Invoke `Skill(skill='vault')` to handle team sharing.
 

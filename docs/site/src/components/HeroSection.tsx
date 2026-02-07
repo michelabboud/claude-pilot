@@ -55,7 +55,7 @@ const HeroSection = () => {
         {/* Stats bar */}
         <div className="flex flex-wrap justify-center gap-3 xs:gap-4 sm:gap-6 mb-6 xs:mb-8 animate-fade-in-up animation-delay-300 px-2">
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">21</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">22</div>
             <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Rules</div>
           </div>
           <div className="w-px h-8 bg-border/50 hidden xs:block" />

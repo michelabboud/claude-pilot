@@ -9,7 +9,7 @@ import {
   Globe,
   BookOpen,
   Gauge,
-  Languages,
+
   AlertTriangle,
   CheckCircle2,
   Activity,
@@ -148,7 +148,7 @@ const DeepDiveSection = () => {
             Under the Hood
           </h2>
           <p className="text-muted-foreground text-lg sm:text-xl max-w-3xl mx-auto">
-            Pilot isn't a thin wrapper — it's a deeply engineered system with 21 rules, 7 automated hooks,
+            Pilot isn't a thin wrapper — it's a deeply engineered system with 22 rules, 7 automated hooks,
             14 coding skills, 3 language servers, and 5 MCP servers working together on every edit.
           </p>
         </div>
@@ -253,8 +253,8 @@ const DeepDiveSection = () => {
               <Layers className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-foreground">21 Built-in Rules</h3>
-              <p className="text-sm text-muted-foreground">Loaded every session — 2,800+ lines of best practices always in context</p>
+              <h3 className="text-2xl font-bold text-foreground">22 Built-in Rules</h3>
+              <p className="text-sm text-muted-foreground">Loaded every session — 2,900+ lines of best practices always in context</p>
             </div>
           </div>
 
@@ -378,18 +378,6 @@ const DeepDiveSection = () => {
                   </div>
                   <p className="text-xs text-muted-foreground">gopls — official Go language server, auto-restart on crash</p>
                 </div>
-              </div>
-
-              {/* Localization */}
-              <div className="mt-6 rounded-xl p-4 border border-border/50 bg-card/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <Languages className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-foreground text-sm">25 Language Modes</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Pilot speaks your language — English, Arabic, Bengali, Czech, German, Spanish, French, Hindi,
-                  Japanese, Korean, Portuguese, Chinese, and 13 more. Including a "chill" mode.
-                </p>
               </div>
             </div>
           </div>

@@ -88,7 +88,7 @@ const PricingSection = () => {
             <ul className="space-y-3 mb-8">
               <li className="flex items-start gap-3">
                 <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-muted-foreground text-sm group-hover:text-foreground/80 transition-colors">21 rules, 7 hooks, 14 skills, 3 LSPs</span>
+                <span className="text-muted-foreground text-sm group-hover:text-foreground/80 transition-colors">22 rules, 7 hooks, 14 skills, 3 LSPs</span>
               </li>
               <li className="flex items-start gap-3">
                 <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -167,7 +167,7 @@ const PricingSection = () => {
             <div className="flex flex-col items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
               <p className="text-sm text-muted-foreground">
-                <span className="text-foreground font-medium">2,800+ lines</span> of production-tested rules and best practices loaded into every session
+                <span className="text-foreground font-medium">2,900+ lines</span> of production-tested rules and best practices loaded into every session
               </p>
             </div>
             <div className="flex flex-col items-center gap-2">

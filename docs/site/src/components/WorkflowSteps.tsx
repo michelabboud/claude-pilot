@@ -1,4 +1,4 @@
-import { FileText, Code2, CheckCircle2, RefreshCw, Zap, Search, MessageSquare, Shield, Bug, Brain, BookOpen } from "lucide-react";
+import { FileText, Code2, CheckCircle2, RefreshCw, Zap, Search, MessageSquare, Shield, Bug, Brain } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
 const specSteps = [
@@ -201,7 +201,7 @@ const WorkflowSteps = () => {
           className={`rounded-2xl p-6 border border-border/50 bg-card/30 backdrop-blur-sm ${commandsInView ? "animate-fade-in-up" : "opacity-0"}`}
         >
           <h3 className="text-lg font-semibold text-foreground mb-5 text-center">All Commands</h3>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-xl p-4 border border-border/40 bg-background/30">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -217,7 +217,16 @@ const WorkflowSteps = () => {
                 <code className="text-sm font-medium text-primary">/sync</code>
               </div>
               <p className="text-xs text-muted-foreground">
-                11-phase sync — explores your codebase, updates project rules, discovers undocumented patterns, creates skills, shares via Team Vault.
+                Syncs rules and skills with your codebase — explores patterns, updates project docs, discovers undocumented conventions, creates new skills.
+              </p>
+            </div>
+            <div className="rounded-xl p-4 border border-border/40 bg-background/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="h-4 w-4 text-primary" />
+                <code className="text-sm font-medium text-primary">/vault</code>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Team Vault — push, pull, and browse shared rules, skills, and commands across your team via sx.
               </p>
             </div>
             <div className="rounded-xl p-4 border border-border/40 bg-background/30">

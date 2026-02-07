@@ -47,7 +47,7 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Claude Pilot",
-    "description": "Production-grade development framework for Claude Code with 21 rules, 7 automated hooks, 14 coding skills, 3 language servers, and 5 MCP servers. Tests enforced, context preserved, quality automated.",
+    "description": "Production-grade development framework for Claude Code with 22 rules, 7 automated hooks, 14 coding skills, 3 language servers, and 5 MCP servers. Tests enforced, context preserved, quality automated.",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Linux, macOS, Windows",
     "offers": {
@@ -69,7 +69,7 @@ const Index = () => {
     <>
       <SEO
         title="Claude Pilot - Production-Grade Development with Claude Code"
-        description="Claude Code ships fast but breaks things — Pilot fixes that. 21 rules, 7 automated hooks, 14 coding skills, 3 language servers, and 5 MCP servers. Tests enforced, context preserved, quality automated."
+        description="Claude Code ships fast but breaks things — Pilot fixes that. 22 rules, 7 automated hooks, 14 coding skills, 3 language servers, and 5 MCP servers. Tests enforced, context preserved, quality automated."
         structuredData={[websiteStructuredData, breadcrumbStructuredData, softwareStructuredData]}
       />
       <NavBar />

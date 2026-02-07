@@ -15,7 +15,7 @@ interface InsideItem {
   icon: React.ElementType;
   title: string;
   description: string;
-  items: string[];
+  summary: string;
 }
 
 const insideItems: InsideItem[] = [
@@ -23,97 +23,49 @@ const insideItems: InsideItem[] = [
     icon: InfinityIcon,
     title: "Endless Mode",
     description: "Never lose context mid-task",
-    items: [
-      "Context monitor with 80% / 90% / 95% thresholds",
-      "Automatic session handoff with state preservation",
-      "Crash recovery with exponential backoff (max 3 retries)",
-      "Multiple Pilot sessions in parallel, zero interference",
-      "Persistent memory bridges observations across all sessions",
-    ],
+    summary: "Context monitor tracks usage and automatically hands off to a new session at critical thresholds. State is preserved, memory persists, and multiple sessions run in parallel without interference.",
   },
   {
     icon: Workflow,
     title: "Spec-Driven Development",
-    description: "Structured planning with verification",
-    items: [
-      "Plan: semantic search, clarifying questions, markdown spec",
-      "Approve: human review gate before any code is written",
-      "Implement: mandatory TDD — RED, GREEN, REFACTOR cycle",
-      "Verify: sub-agent code review + full test suite",
-      "Automatic loop-back if verification finds issues",
-    ],
+    description: "Plan → Approve → Implement → Verify",
+    summary: "A structured workflow with human review gates, mandatory TDD, and sub-agent verification. Loops back automatically if any check fails.",
   },
   {
     icon: ShieldCheck,
     title: "Quality Automation",
-    description: "7 hooks enforce standards on every edit",
-    items: [
-      "TDD enforcer — warns if no failing test before code change",
-      "Python: ruff format + lint + basedpyright type checking",
-      "TypeScript: Prettier + ESLint + vtsls type checking",
-      "Go: gofmt + golangci-lint + gopls type checking",
-      "Status line — live context, memory, plan, and license info",
-    ],
+    description: "7 hooks on every file edit",
+    summary: "Auto-formatting, linting, and type checking for Python, TypeScript, and Go. TDD enforcer warns when code changes lack tests. Status line shows live session info.",
   },
   {
     icon: FileCode2,
     title: "Rules, Commands & Skills",
-    description: "21 rules, 6 commands, 14 skills",
-    items: [
-      "21 rules (2,800+ lines) loaded into every session",
-      "/spec, /sync, /learn — structured workflows",
-      "14 coding standard skills activated on demand",
-      "Custom rules, commands, skills survive updates",
-      "/sync: 11-phase codebase analysis and documentation",
-    ],
+    description: "22 rules · 7 commands · 14 skills",
+    summary: "2,900+ lines of best practices loaded every session. Structured workflows via /spec, /sync, /vault, /learn. Custom rules and skills survive updates.",
   },
   {
     icon: Plug2,
     title: "Enhanced Context",
     description: "5 MCP servers + 3 language servers",
-    items: [
-      "Pilot Console at localhost:41777 — visual dashboard",
-      "Persistent memory with semantic search (Vexor)",
-      "Context7 library docs + grep-mcp GitHub search",
-      "LSP: basedpyright, vtsls, gopls — real-time diagnostics",
-      "Agent browser for E2E UI testing",
-    ],
+    summary: "Library docs, persistent memory, web search, GitHub code search, and real-time LSP diagnostics — all pre-configured and always available.",
   },
   {
     icon: Container,
     title: "One-Command Installer",
     description: "Ready in minutes, auto-updates",
-    items: [
-      "8-step installer with progress, rollback, and idempotent re-runs",
-      "Dev Container auto-setup with all tools pre-configured",
-      "Auto-updater with release notes and one-key upgrade",
-      "Shell integration: bash, fish, zsh with pilot alias",
-      "macOS, Linux, Windows (WSL2) support",
-    ],
+    summary: "8-step installer with progress tracking, rollback on failure, and idempotent re-runs. Shell integration, Dev Container support, and automated updates.",
   },
   {
     icon: Users,
     title: "Team Vault",
     description: "Share knowledge across your team",
-    items: [
-      "Private Git repo for shared rules, commands, skills",
-      "Pull shared assets from your team's vault",
-      "Push custom rules and skills to teammates",
-      "Automatic versioning (v1, v2, v3...)",
-      "Works with GitHub, GitLab, Bitbucket",
-    ],
+    summary: "Push and pull rules, commands, and skills via a private Git repo. Automatic versioning. Works with GitHub, GitLab, and Bitbucket.",
   },
   {
     icon: GitBranch,
     title: "Online Learning",
     description: "Captures discoveries as reusable skills",
-    items: [
-      "Extracts non-obvious debugging patterns automatically",
-      "Captures workarounds and tool integration knowledge",
-      "Creates .claude/skills/ with proper frontmatter",
-      "Triggered by 10+ minute investigation sessions",
-      "Quality gates verify content is reusable",
-    ],
+    summary: "Automatically extracts non-obvious debugging patterns and workarounds into .claude/skills/ with quality gates to ensure reusability.",
   },
 ];
 
@@ -182,20 +134,10 @@ const WhatsInside = () => {
                   </div>
                 </div>
 
-                {/* Feature List */}
-                <ul className="space-y-1.5 mt-3">
-                  {item.items.map((listItem, i) => (
-                    <li
-                      key={i}
-                      className="text-muted-foreground text-xs flex items-start gap-1.5"
-                    >
-                      <span className="text-primary mt-0.5 text-[10px]">&#x25B8;</span>
-                      <span className="group-hover:text-foreground/80 transition-colors duration-200">
-                        {listItem}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Summary */}
+                <p className="text-muted-foreground text-xs leading-relaxed mt-3 group-hover:text-foreground/80 transition-colors duration-200">
+                  {item.summary}
+                </p>
 
                 {/* Subtle gradient overlay on hover */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
