@@ -62,7 +62,7 @@ The complexity is in the system, not in your workflow.
 
 ### Prerequisites
 
-**Claude Subscription:** [Max](https://www.anthropic.com/max), [Team](https://claude.ai/pricing/team), or [Enterprise](https://www.anthropic.com/enterprise) recommended
+**Claude Subscription:** [Max](https://claude.com/pricing), [Team Premium](https://claude.com/pricing#team-&-enterprise), or [Enterprise](https://claude.com/pricing#team-&-enterprise) recommended; using the API may lead to much higher costs
 
 ### Installation
 
@@ -266,7 +266,7 @@ After **every single file edit**, these hooks fire:
 | `file_checker_go.py`     | Blocking     | Runs gofmt + golangci-lint + type checking on `.go` files. Auto-fixes formatting.                                                                                    |
 | `tdd_enforcer.py`        | Non-blocking | Checks if implementation files were modified without failing tests first. Shows reminder to write tests. Excludes test files, docs, config, TSX, and infrastructure. |
 | Memory observer          | Async        | Captures development observations to persistent memory.                                                                                                              |
-| `context_monitor.py`     | Non-blocking | Monitors context window usage. Warns as usage grows, forces handoff before hitting limits. Caches for 15 seconds to avoid spam.                                       |
+| `context_monitor.py`     | Non-blocking | Monitors context window usage. Warns as usage grows, forces handoff before hitting limits. Caches for 15 seconds to avoid spam.                                      |
 
 #### PreToolUse (before search, web, or task tools)
 
