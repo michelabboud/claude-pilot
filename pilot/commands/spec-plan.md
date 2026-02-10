@@ -137,14 +137,19 @@ model: opus
 
 **Immediately upon starting planning, create the plan file header for status bar detection.**
 
-1. **Generate filename:** `docs/plans/YYYY-MM-DD-<feature-slug>.md`
+1. **Parse worktree choice from arguments:**
+   - Look for `--worktree=yes` or `--worktree=no` at the end of the arguments
+   - Strip the `--worktree=...` flag from the task description
+   - Default to `Yes` if no flag is present (backward compatibility)
+
+2. **Generate filename:** `docs/plans/YYYY-MM-DD-<feature-slug>.md`
    - Use current date
    - Create slug from first 3-4 words of task description (lowercase, hyphens)
    - Example: "add user authentication" → `2026-01-24-add-user-authentication.md`
 
-2. **Create directory if needed:** `mkdir -p docs/plans`
+3. **Create directory if needed:** `mkdir -p docs/plans`
 
-3. **Write initial header immediately:**
+4. **Write initial header immediately (with worktree choice from dispatcher):**
    ```markdown
    # [Feature Name] Implementation Plan
 
@@ -152,7 +157,7 @@ model: opus
    Status: PENDING
    Approved: No
    Iterations: 0
-   Worktree: Yes
+   Worktree: [Yes|No - from dispatcher's --worktree flag]
 
    > Planning in progress...
 
@@ -163,13 +168,13 @@ model: opus
    *Exploring codebase and gathering requirements...*
    ```
 
-4. **Register plan association (MANDATORY):**
+5. **Register plan association (MANDATORY):**
    ```bash
    ~/.pilot/bin/pilot register-plan "<plan_path>" "PENDING" 2>/dev/null || true
    ```
    This tells the statusline which plan belongs to THIS session. Without it, parallel sessions show the wrong plan.
 
-5. **Why this matters:**
+6. **Why this matters:**
    - Status bar shows "Spec: <name> [/plan]" immediately
    - User sees progress even during exploration phase
    - Plan file exists for continuation if session clears
@@ -309,7 +314,7 @@ Worktree: Yes
 > - VERIFIED: All checks passed
 >
 > **Approval Gate:** Implementation CANNOT proceed until `Approved: Yes`
-> **Worktree:** `Yes` (default) uses git worktree isolation; `No` works directly on current branch
+> **Worktree:** Set at plan creation (from dispatcher). `Yes` uses git worktree isolation; `No` works directly on current branch
 
 ## Summary
 **Goal:** [One sentence describing what this builds]
@@ -468,28 +473,21 @@ After verification completes, fix all issues by severity:
    - Key tasks (numbered list)
    - Tech stack / approach
 
-2. **Use AskUserQuestion to request approval (batch both questions):**
+2. **Use AskUserQuestion to request approval:**
    ```
-   Question 1: "Do you approve this plan for implementation?"
+   Question: "Do you approve this plan for implementation?"
    Header: "Plan Review"
    Options:
    - "Yes, proceed with implementation" - I've reviewed the plan and it looks good
    - "No, I need to make changes" - I want to edit the plan first
-
-   Question 2: "Use git worktree isolation for this spec?"
-   Header: "Worktree"
-   Options:
-   - "Yes (Recommended)" - Isolate work on a dedicated branch; safe to experiment, easy to discard or squash merge
-   - "No" - Work directly on the current branch without worktree isolation
    ```
+
+   Note: The `Worktree:` field was already set at plan creation time (Step 1.1) based on the user's choice from the dispatcher. It does NOT need to be asked again here.
 
 3. **Based on user response:**
 
    **If user approves (selects "Yes" or any approval option):**
-   - **⛔ BOTH fields MUST be updated in a single edit — never one without the other:**
-     1. `Approved: No` → `Approved: Yes`
-     2. `Worktree:` → match the user's worktree choice (`Yes` or `No`)
-   - If approval and worktree were combined into one answer (e.g., "Approve (no worktree)"), parse the worktree preference from that answer
+   - Update `Approved: No` → `Approved: Yes` in the plan file
    - **⛔ Phase Transition Context Guard:** Run `~/.pilot/bin/pilot check-context --json`. If >= 80%, hand off instead (see spec.md Section 0.3).
    - **Invoke implementation phase:** `Skill(skill='spec-implement', args='<plan-path>')`
 

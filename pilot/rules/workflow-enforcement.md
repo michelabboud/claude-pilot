@@ -225,7 +225,7 @@ spec-verify finds issues → Status: PENDING → spec-implement fixes → COMPLE
 
 **⛔ Both verification steps are NON-NEGOTIABLE. Skipping is FORBIDDEN.**
 
-**⛔ CRITICAL: Only TWO user interaction points exist: Plan Approval (in `spec-plan`) and Worktree Sync Approval (in `spec-verify`, only when `Worktree: Yes`).**
+**⛔ CRITICAL: Only THREE user interaction points exist: Worktree Choice (in `spec.md` dispatcher, new plans only), Plan Approval (in `spec-plan`), and Worktree Sync Approval (in `spec-verify`, only when `Worktree: Yes`).**
 
 Everything else is automatic:
 - Plan verification findings are fixed automatically before showing to user
@@ -245,7 +245,7 @@ The user approved the plan. Verification fixes are part of that approval.
 
 ### Worktree Isolation (Optional)
 
-Worktree isolation is controlled by the `Worktree:` field in the plan header (default: `Yes`). The user chooses during plan approval whether to use isolation.
+Worktree isolation is controlled by the `Worktree:` field in the plan header (default: `Yes`). The user chooses at the START of the `/spec` flow (before planning begins) whether to use isolation. The dispatcher asks the worktree question and passes the choice to `spec-plan`, which writes it into the plan header at creation time.
 
 **When `Worktree: Yes` (default):**
 1. After plan approval, a worktree is created at `.worktrees/spec-<slug>-<hash>/`
@@ -296,7 +296,7 @@ Each phase needs significant context headroom. Starting a new phase above 80% ri
 
 ## No Stopping - Automatic Continuation
 
-**The ONLY user interaction points are plan approval and worktree sync approval (when `Worktree: Yes`).**
+**The ONLY user interaction points are worktree choice (new plans only), plan approval, and worktree sync approval (when `Worktree: Yes`).**
 
 - Never stop after writing continuation file - trigger clear immediately
 - Never wait for user acknowledgment before session handoff

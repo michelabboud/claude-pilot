@@ -370,7 +370,7 @@ Run the test suite and type checker one final time to catch any regressions from
 
 **After all verification passes, sync worktree changes back to the original branch with user approval.**
 
-This is the SECOND user interaction point in the `/spec` workflow (first is plan approval).
+This is the THIRD user interaction point in the `/spec` workflow (first is worktree choice, second is plan approval).
 
 1. **Check for active worktree:**
    ```bash

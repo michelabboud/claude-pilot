@@ -82,9 +82,27 @@ ELIF arguments end with ".md" AND file exists:
 
 ELSE:
     task_description = arguments  # ALWAYS treated as task description, regardless of phrasing
-    → Invoke planning phase: Skill(skill='spec-plan', args='<task_description>')
+    → Ask worktree question FIRST (see Section 0.1.1 below)
+    → Invoke planning phase with worktree choice: Skill(skill='spec-plan', args='<task_description> --worktree=yes|no')
     # NEVER have a freeform conversation instead. ALWAYS invoke the Skill.
 ```
+
+### 0.1.1 Worktree Question (New Plans Only)
+
+**Before invoking `spec-plan` for a NEW plan, ask the user about worktree isolation:**
+
+```
+AskUserQuestion:
+  question: "Use git worktree isolation for this spec?"
+  header: "Worktree"
+  options:
+    - "Yes (Recommended)" - Isolate work on a dedicated branch; safe to experiment, easy to discard or squash merge
+    - "No" - Work directly on the current branch without worktree isolation
+```
+
+**Append the choice to the spec-plan args:** `Skill(skill='spec-plan', args='<task_description> --worktree=yes')` or `--worktree=no`.
+
+**This question is ONLY asked for new plans.** When continuing an existing plan (`--continue` or `.md` path), the `Worktree:` field is already set in the plan header.
 
 **After reading the plan file, register the plan association (non-blocking):**
 
