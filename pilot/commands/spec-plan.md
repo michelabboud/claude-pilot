@@ -53,11 +53,24 @@ model: opus
 | **Priority decisions** | "Performance or simplicity - which matters more here?" |
 | **Missing domain knowledge** | "How does the existing auth flow work in production?" |
 
+**Questioning philosophy — Dream extraction, not requirements gathering:**
+- **Start open, then narrow** — Begin with "What does success look like?" before diving into specifics
+- **Follow energy** — If the user is excited about a detail, explore it; if they're vague, they may not care about the specifics
+- **Challenge vagueness** — "Fast" means what? Sub-100ms? Under 2 seconds? Make abstract concrete
+- **Present interpretations as options** — "I think you mean X — should we do X (simple, covers 80%) or Y (comprehensive, handles edge cases)?" is better than "What do you want?"
+
+**Anti-patterns to avoid:**
+- **Checklist walking** — Don't ask every possible question; focus on genuine ambiguities
+- **Canned questions** — Adapt questions to the specific task, not generic templates
+- **Shallow acceptance** — Don't accept "it should work well" — ask what "well" means concretely
+- **Interrogation** — 1-2 focused questions are better than 4 vague ones
+
 **Key principles:**
 - Present options, not open-ended questions when possible
 - Include trade-offs for each option
-- **Batch related questions together** - don't interrupt user flow
-- Don't proceed with assumptions - ASK
+- **Batch related questions together** — don't interrupt user flow
+- Don't proceed with assumptions — ASK
+- **Scope guardrail** — Questions clarify HOW to implement, not WHETHER to expand scope
 
 ## Extending Existing Plans
 
@@ -184,7 +197,7 @@ model: opus
 
 ---
 
-### Step 1.2: Task Understanding & Clarification
+### Step 1.2: Task Understanding, Discuss & Clarify
 
 **First, clearly state your understanding of the task.**
 
@@ -193,9 +206,25 @@ Before any exploration:
 2. Identify the core problem being solved
 3. List any assumptions you're making
 
+**Then identify gray areas using domain-aware analysis:**
+
+Analyze the task description to find ambiguities that NEED resolution before planning. Different types of work have different gray areas:
+
+| Domain | Typical Gray Areas |
+|--------|-------------------|
+| **Something users SEE** (UI/frontend) | Layout density, interaction patterns, responsive breakpoints, empty states, loading states |
+| **Something users CALL** (API/backend) | Response shape, error codes, auth model, pagination, rate limiting |
+| **Something users RUN** (CLI/scripts) | Output format, flags/options, exit codes, interactive vs non-interactive |
+| **Something users STORE** (data/config) | Schema shape, migration strategy, validation rules, default values |
+| **Something users READ** (docs/content) | Audience level, structure, examples needed, update frequency |
+
+**Scope guardrail:** Questions should clarify HOW to implement the task, not WHETHER to expand scope. If discussion surfaces new feature ideas, capture them as "Deferred Ideas" in the plan's Open Questions section — don't add them to scope.
+
 **Then gather clarifications if needed (Question Batch 1):**
 
-If ambiguities exist, use AskUserQuestion to ask everything upfront in a single interaction. If the task is clear and unambiguous, skip directly to Step 1.3.
+If gray areas exist, use AskUserQuestion to ask focused questions per area in a single interaction. Present your interpretation as options when possible — "Should the API return paginated results (recommended for large datasets) or all results at once?" is better than "How should the API handle large result sets?"
+
+If the task is clear and unambiguous with no meaningful gray areas, skip directly to Step 1.3.
 
 ### Step 1.3: Exploration
 
@@ -249,11 +278,17 @@ Each task should be:
 
 Split a task if it has multiple unrelated DoD criteria. Merge tasks if one can't be tested without the other. Don't create tasks for setup/boilerplate that have no standalone value — fold them into the first task that uses them.
 
+**For each task, populate:**
+- **Dependencies** — Which tasks must complete first? Use `None` for independent tasks. This enables wave-based parallel execution during implementation.
+- **Verify** — What concrete commands prove this task is done? Include test commands, build commands, or curl/CLI invocations. The implementation phase runs these after completing each task.
+
 **Task Structure:**
 ```markdown
 ### Task N: [Component Name]
 
 **Objective:** [1-2 sentences describing what to build]
+
+**Dependencies:** [None | Task X, Task Y — tasks that must complete before this one]
 
 **Files:**
 - Create: `exact/path/to/file.py`
@@ -270,7 +305,13 @@ Split a task if it has multiple unrelated DoD criteria. Merge tasks if one can't
 - [ ] No diagnostics errors (linting, type checking)
 - [ ] [Task-specific criterion with observable outcome]
 - [ ] [Task-specific criterion with observable outcome]
+
+**Verify:**
+- `uv run pytest tests/path/to/test.py -q` — task-specific tests pass
+- [Additional verification command or check]
 ```
+
+**Wave grouping for parallel execution:** Tasks with `Dependencies: None` and no overlapping files in their "Modify" lists can run in parallel as Wave 1. Tasks that depend only on Wave 1 tasks form Wave 2, and so on. The `spec-implement` phase uses Dependencies and file overlap to auto-detect waves — you don't need to assign wave numbers manually, but you can add `Wave: N` to tasks if you want explicit control.
 
 **⚠️ DoD criteria must be verifiable.** The verification phase checks each criterion against the actual code and running program. Replace the `[Task-specific criterion]` placeholders with criteria that can be checked with a specific test, command, or observation.
 
@@ -392,10 +433,20 @@ Worktree: Yes
 ## Implementation Tasks
 
 ### Task 1: [Component Name]
-[Full task structure]
+**Objective:** ...
+**Dependencies:** None
+**Files:** ...
+**Key Decisions / Notes:** ...
+**Definition of Done:** ...
+**Verify:** [Concrete commands to verify this task]
 
 ### Task 2: [Component Name]
-[Full task structure]
+**Objective:** ...
+**Dependencies:** Task 1
+**Files:** ...
+**Key Decisions / Notes:** ...
+**Definition of Done:** ...
+**Verify:** [Concrete commands to verify this task]
 
 ## Testing Strategy
 - Unit tests: [What to test in isolation]
@@ -418,6 +469,9 @@ Worktree: Yes
 ## Open Questions
 - [Any remaining questions for the user]
 - [Decisions deferred to implementation]
+
+### Deferred Ideas
+- [Ideas surfaced during discussion that are out of scope for this plan]
 ```
 
 ### Step 1.7: Plan Verification

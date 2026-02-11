@@ -2,7 +2,7 @@
 name: spec-verifier
 description: Performs code review for /spec verification. Returns structured JSON findings.
 tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*)
-model: inherit
+model: opus
 permissionMode: plan
 skills:
   - pilot:standards-testing
@@ -18,6 +18,7 @@ skills:
   - pilot:standards-css
   - pilot:standards-accessibility
   - pilot:standards-responsive
+  - pilot:standards-design
 ---
 
 # Spec Verifier

@@ -310,7 +310,21 @@ If code processes external data, ALWAYS verify by fetching source data independe
 | **Minor** (typo, off-by-one, missing import) | Fix immediately, re-run, continue verification |
 | **Major** (logic error, missing function, architectural issue) | Add task to plan, set PENDING, **⛔ Context Guard** (spec.md 0.3), then `Skill(skill='spec-implement', args='<plan-path>')` |
 
-### Step 3.9: Definition of Done Audit
+### Step 3.9: Goal Verification and DoD Audit
+
+**Task completion ≠ Goal achievement.** A task can be marked "done" (file created, test passes) while the plan's actual goal remains unmet. Verify both levels.
+
+#### 3.9a: Goal-Backward Verification
+
+Read the plan's **Summary/Goal** section. Work backwards from the intended outcome:
+
+1. **What must be TRUE** for the goal to be achieved? (e.g., "users can filter by project")
+2. **What must EXIST** for those truths to hold? (e.g., filter component, API parameter, query logic)
+3. **What must be WIRED** for those artifacts to function? (e.g., component imported, route registered, state connected)
+
+Verify each level against the actual codebase and running program. If any level fails, the goal is not achieved regardless of task completion status.
+
+#### 3.9b: Per-Task DoD Audit
 
 **For EACH task in the plan**, read its Definition of Done criteria and verify each criterion is met with evidence from the running program.
 
@@ -321,7 +335,7 @@ If code processes external data, ALWAYS verify by fetching source data independe
 ...
 ```
 
-**If any criterion is unmet:**
+**If any criterion is unmet (at either goal or task level):**
 - If fixable inline → fix immediately
 - If structural → add task to plan and loop back to implementation
 

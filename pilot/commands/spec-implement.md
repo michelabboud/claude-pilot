@@ -18,7 +18,7 @@ model: opus
 
 | # | Rule |
 |---|------|
-| 1 | **NO sub-agents during implementation** - Use direct tools only. |
+| 1 | **NO ad-hoc sub-agents** (exploration, research, general-purpose) - Use direct tools only. Exception: `pilot:spec-executor` agents for parallel wave execution (see Step 2.2b). |
 | 2 | **TDD is MANDATORY** - No production code without failing test first |
 | 3 | **Update plan checkboxes AND task status after EACH task** - Not at the end |
 | 4 | **NEVER SKIP TASKS** - Every task MUST be fully implemented |
@@ -179,6 +179,83 @@ TaskCreate: "Task 4: Add documentation"            → id=4, addBlockedBy: [2]
 
 ---
 
+### Step 2.2b: Wave Detection and Parallel Execution (Optional)
+
+**After setting up the task list, detect if independent tasks can run in parallel.**
+
+Wave-based execution spawns `pilot:spec-executor` subagents for independent tasks, each with a fresh context window. This is inspired by GSD's parallel plan execution model, adapted to Pilot's single-plan architecture.
+
+#### When to Use Parallel Waves
+
+| Condition | Execution Mode |
+|-----------|---------------|
+| Plan has `Wave:` markers on tasks | Follow wave grouping from plan |
+| Tasks have `Dependencies:` fields | Auto-detect waves from dependency graph |
+| Tasks share files in "Modify" lists | Run those tasks **sequentially** (conflict risk) |
+| Only 1 task remaining | Run directly (no parallelism benefit) |
+| All tasks depend on each other | Run sequentially as normal (Step 2.3) |
+
+#### Wave Detection Algorithm
+
+```
+1. Parse each uncompleted task's Dependencies and Modify file lists
+2. Build dependency graph:
+   - Task B depends on Task A → B must wait for A
+   - Task B and C modify the same file → B must wait for C (or vice versa)
+3. Group into waves:
+   - Wave 1: Tasks with no dependencies and no file conflicts
+   - Wave 2: Tasks that depend only on Wave 1 tasks
+   - Wave N: Tasks that depend only on Wave 1..N-1 tasks
+4. If a wave has only 1 task → run directly (no subagent overhead)
+5. If a wave has 2+ tasks → spawn parallel spec-executor subagents
+```
+
+#### Parallel Execution Protocol
+
+**For each wave with 2+ independent tasks:**
+
+1. **Prepare task context** for each executor:
+   ```
+   Task number, full task definition (objective, files, key decisions, DoD),
+   plan summary (goal, tech stack, scope), project root path
+   ```
+
+2. **Spawn parallel executors** using a single message with multiple Task tool calls:
+   ```
+   Task(
+     subagent_type="pilot:spec-executor",
+     prompt="Execute Task N from the plan...\n\nTask Definition:\n{task_def}\n\nPlan Context:\n{plan_summary}\n\nProject Root: {project_root}",
+     description="Spec executor: Task N"
+   )
+   ```
+   **Send ALL executor calls in ONE message** for true parallelism.
+
+3. **Collect results** from each executor:
+   - Parse the JSON output for status, files_changed, dod_checklist
+   - Verify each task's DoD criteria are met
+   - If any executor reports `failed` or `blocked`, handle before proceeding
+
+4. **After all executors complete:**
+   - Run the full test suite to check for cross-task conflicts
+   - Update plan checkboxes for all completed tasks (Step 2.4)
+   - Mark completed tasks in the task list
+   - Proceed to next wave
+
+#### Sequential Fallback
+
+**If wave detection finds all tasks are dependent (no parallelism possible), skip this step entirely and proceed to Step 2.3 (sequential TDD loop).** This is the default behavior — parallel waves are an optimization, not a requirement.
+
+#### Error Handling
+
+| Situation | Action |
+|-----------|--------|
+| Executor returns `failed` | Read the failure reason, fix directly (don't re-spawn), continue |
+| Executor returns `blocked` | Check if blocker is another task, reorder if needed |
+| Cross-task test failures after wave | Fix conflicts directly before next wave |
+| Executor times out | Run task directly in main context |
+
+---
+
 ### Step 2.3: Per-Task TDD Loop
 
 **TDD is MANDATORY. No production code without a failing test first.**
@@ -206,9 +283,15 @@ TaskCreate: "Task 4: Add documentation"            → id=4, addBlockedBy: [2]
 6. **Run actual program** - Use the plan's Runtime Environment section to start the service/program. Show real output with sample data.
 7. **Check diagnostics** - Must be zero errors
 8. **Validate Definition of Done** - Check all criteria from plan
-9. **Mark task as `completed`** - `TaskUpdate(taskId="<id>", status="completed")`
-10. **UPDATE PLAN FILE IMMEDIATELY** (see Step 2.4)
-11. **Check context usage** - Run `~/.pilot/bin/pilot check-context --json`
+9. **Per-task commit (worktree mode only)** - If `Worktree: Yes` in the plan, commit task changes immediately:
+   ```bash
+   git add <task-specific-files>  # Stage only files related to this task
+   git commit -m "{type}(spec): {task-name}"
+   ```
+   Use `feat(spec):` for new features, `fix(spec):` for bug fixes, `test(spec):` for test-only tasks, `refactor(spec):` for refactoring. Skip this step when `Worktree: No` (normal git rules apply).
+10. **Mark task as `completed`** - `TaskUpdate(taskId="<id>", status="completed")`
+11. **UPDATE PLAN FILE IMMEDIATELY** (see Step 2.4)
+12. **Check context usage** - Run `~/.pilot/bin/pilot check-context --json`
 
 **⚠️ NEVER SKIP TASKS:**
 - EVERY task MUST be fully implemented

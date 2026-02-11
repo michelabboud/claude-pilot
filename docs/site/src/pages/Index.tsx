@@ -6,6 +6,7 @@ import WhatsInside from "@/components/WhatsInside";
 import DeepDiveSection from "@/components/DeepDiveSection";
 import InstallSection from "@/components/InstallSection";
 import PricingSection from "@/components/PricingSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 
@@ -81,6 +82,7 @@ const Index = () => {
         <WhatsInside />
         <DeepDiveSection />
         <PricingSection />
+        <TestimonialsSection />
         <Footer />
       </main>
     </>

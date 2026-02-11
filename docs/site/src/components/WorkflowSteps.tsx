@@ -1,10 +1,11 @@
-import { FileText, Code2, CheckCircle2, RefreshCw, Zap, Search, MessageSquare, Shield, Bug, Brain } from "lucide-react";
+import { FileText, Code2, CheckCircle2, RefreshCw, Zap, Search, MessageSquare, Shield, Bug, Brain, GitBranch } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
 const specSteps = [
+  { icon: MessageSquare, title: "Discuss", desc: "Clarifies gray areas" },
   { icon: FileText, title: "Plan", desc: "Explores codebase, generates spec" },
   { icon: CheckCircle2, title: "Approve", desc: "You review and approve" },
-  { icon: Code2, title: "Implement", desc: "TDD enforced execution" },
+  { icon: Code2, title: "Implement", desc: "Parallel TDD execution" },
   { icon: RefreshCw, title: "Verify", desc: "Tests pass or loops back" },
 ];
 
@@ -17,6 +18,7 @@ const planDetails = [
 ];
 
 const implementDetails = [
+  { icon: GitBranch, text: "Independent tasks run in parallel waves, each with fresh context" },
   { icon: Bug, text: "Writes a failing test first (RED phase of TDD)" },
   { icon: Code2, text: "Implements code to make the test pass (GREEN phase)" },
   { icon: RefreshCw, text: "Refactors while keeping tests green (REFACTOR phase)" },

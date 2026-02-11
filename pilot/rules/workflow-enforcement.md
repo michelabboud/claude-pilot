@@ -122,11 +122,11 @@ Tasks 3 and 4 won't show as ready until Task 2 completes.
 
 ## ⛔ ABSOLUTE BANS
 
-### No Sub-Agents (Except Verification Steps)
-**NEVER use the Task tool to spawn sub-agents during planning exploration or implementation.**
+### No Ad-Hoc Sub-Agents (Exceptions: Verification + Parallel Waves)
+**NEVER use the Task tool to spawn sub-agents for exploration or ad-hoc implementation.**
 - Use `Read`, `Grep`, `Glob`, `Bash` directly for targeted lookups
 - Use `vexor search` for semantic/intent-based codebase exploration (replaces Explore agent)
-- Sub-agents lose context and make mistakes during implementation
+- Ad-hoc sub-agents lose context and make mistakes
 
 **⛔ Explore agent is BANNED.** It produces low-quality results compared to `vexor search`. For codebase exploration:
 
@@ -136,7 +136,7 @@ Tasks 3 and 4 won't show as ready until Task 2 completes.
 | Exact text/pattern match | `Grep` or `Glob` | Task/Explore |
 | Specific file content | `Read` | Task/Explore |
 
-**Exception: Verification steps in /spec workflow.**
+**Exception 1: Verification steps in /spec workflow.**
 
 There are TWO verification points that use a single verifier sub-agent each:
 
@@ -144,6 +144,14 @@ There are TWO verification points that use a single verifier sub-agent each:
 |-------------|-------|---------|
 | **`spec-plan` (Step 1.7)** | `plan-verifier` | Verify plan captures user requirements before approval |
 | **`spec-verify` (Step 3.5)** | `spec-verifier` | Verify code implements the plan correctly |
+
+**Exception 2: Parallel wave execution in spec-implement.**
+
+When independent tasks exist in a plan, `spec-implement` can spawn `pilot:spec-executor` subagents to run them in parallel (see Step 2.2b in spec-implement). Each executor gets the task definition, plan context, and project root — it does NOT need full session context.
+
+| Phase Skill | Agent | Purpose |
+|-------------|-------|---------|
+| **`spec-implement` (Step 2.2b)** | `spec-executor` | Execute one independent task with TDD in a parallel wave |
 
 **⛔ VERIFICATION STEPS ARE MANDATORY - NEVER SKIP THEM.**
 
@@ -172,6 +180,33 @@ Note: Task management tools (TaskCreate, TaskList, etc.) are ALWAYS allowed.
 **NEVER use `EnterPlanMode` or `ExitPlanMode` tools.**
 - Use `/spec` command instead
 - Built-in plan mode is incompatible with this workflow
+
+## Deviation Handling During Implementation
+
+**When you discover unplanned work during implementation, apply these rules automatically.**
+
+| Type | Trigger | Action | User Input? |
+|------|---------|--------|-------------|
+| **Bug Found** | Code doesn't work as intended (errors, wrong output, type errors) | Auto-fix inline, add/update tests, document in plan as deviation | No |
+| **Missing Critical** | Feature won't work without this (missing validation, error handling, null checks) | Auto-add to current task scope, implement, document | No |
+| **Blocking Issue** | Can't proceed without fixing (broken import, missing dependency, wrong types) | Auto-fix, document, continue task | No |
+| **Architectural** | Fix requires significant structural change (new DB table, switching libraries, breaking API) | **STOP** — use `AskUserQuestion` to present options | **Yes** |
+
+**Rules for auto-fix (Bug, Missing Critical, Blocking):**
+- Fix inline without asking permission
+- Add or update tests if applicable
+- Document the deviation in the plan's task notes or completion summary
+- Do NOT expand scope — only fix what's needed to make the current task work
+
+**Rules for Architectural deviations:**
+- STOP implementation immediately
+- Use `AskUserQuestion` with concrete options (not vague descriptions)
+- Wait for user decision before proceeding
+- If user says "skip it", document as deferred and continue
+
+**Priority order:** Architectural (stop) > Bug/Missing/Blocking (auto-fix) > Uncertain (treat as Architectural)
+
+---
 
 ## Plan Registration (MANDATORY for /spec)
 
