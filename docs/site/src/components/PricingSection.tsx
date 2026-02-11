@@ -168,7 +168,7 @@ const PricingSection = () => {
             </ul>
 
             <Button asChild variant="outline" className="w-full border-indigo-500/50 hover:bg-indigo-500/10">
-              <a href={TEAM_CHECKOUT_URL} {...(IS_PRODUCTION ? { "data-polar-checkout": true, "data-polar-checkout-theme": "dark" } : { target: "_blank", rel: "noopener" })}>
+              <a href={TEAM_CHECKOUT_URL} target="_blank" rel="noopener">
                 Subscribe
               </a>
             </Button>

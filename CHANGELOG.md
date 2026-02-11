@@ -8,7 +8,6 @@ All notable changes to Claude Pilot will be documented in this file.
 
 - Updated models for commands and agents
 - Add MCP server smoke-testing step to sync command
-- Add MCP server smoke-testing step to sync command
 - Resolve console test failures from parallel execution and mock contamination
 - Show server-side license dates and seat count in banner
 - Promote parallel execution as primary implement strategy and add license display
@@ -29,13 +28,7 @@ All notable changes to Claude Pilot will be documented in this file.
 ### Features
 
 - Add parallel execution, goal verification, and workflow improvements
-- Implement spec/polar-activation-analytics
-- Implement spec/console-spec-dashboard-metrics
 - Add git worktree isolation for /spec workflow
-
-### Miscellaneous
-
-- Sync claude review workflow paths-ignore for encrypted dirs
 
 ## [6.2.2] - 2026-02-08
 
