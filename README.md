@@ -7,11 +7,10 @@
 Ship code you can actually trust. Pilot is your quality autopilot.</br>
 **Tests enforced. Context preserved. Quality automated.**
 
-[![Version](https://img.shields.io/github/v/release/maxritter/claude-pilot?label=Version&color=orange)](https://github.com/maxritter/claude-pilot/releases)
-[![Stars](https://img.shields.io/github/stars/maxritter/claude-pilot?style=flat&color=yellow)](https://github.com/maxritter/claude-pilot/stargazers)
-[![Last Commit](https://img.shields.io/github/last-commit/maxritter/claude-pilot?color=blue)](https://github.com/maxritter/claude-pilot/commits/main)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/maxritter/claude-pilot/pulls)
-[![Star History](https://img.shields.io/badge/Star_History-chart-yellow)](https://star-history.com/#maxritter/claude-pilot&Date)
+[![Stars](https://img.shields.io/github/stars/maxritter/claude-pilot?style=flat&color=F59E0B)](https://github.com/maxritter/claude-pilot/stargazers)
+[![Star History](https://img.shields.io/badge/Star_History-chart-8B5CF6)](https://star-history.com/#maxritter/claude-pilot&Date)
+[![Last Commit](https://img.shields.io/github/last-commit/maxritter/claude-pilot?color=3B82F6)](https://github.com/maxritter/claude-pilot/commits/main)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-10B981.svg)](https://github.com/maxritter/claude-pilot/pulls)
 
 ⭐ [Star this repo](https://github.com/maxritter/claude-pilot) · 🌐 [Website](https://claude-pilot.com) · 🔔 [Follow for updates](https://www.linkedin.com/in/rittermax/) · 📋 [Changelog](https://pilot.openchangelog.com/) · 📄 [License](LICENSE)
 
