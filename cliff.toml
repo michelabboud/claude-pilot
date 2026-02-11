@@ -33,7 +33,7 @@ footer = ""
 # Parse conventional commits
 conventional_commits = true
 filter_unconventional = true
-split_commits = false
+split_commits = true
 
 # Only include commits from v6.0.0 onwards (project rebranding)
 # This prevents git-cliff from regenerating old changelog entries
@@ -44,6 +44,8 @@ ignore_tags = "v[0-5].*"
 
 # Commit preprocessors
 commit_preprocessors = [
+    # Strip leading "* " from squash merge body lines (split_commits)
+    { pattern = '^\* ', replace = "" },
     # Remove issue numbers from commits
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
 ]
