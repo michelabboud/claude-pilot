@@ -119,11 +119,16 @@ describe("VexorStatus Widget", () => {
 
   describe("VectorDbStatus is removed", () => {
     it("VectorDbStatus.tsx no longer exists", async () => {
-      const fs = await import("fs");
+      const { statSync } = await import("node:fs");
       const path = await import("path");
-      const exists = fs.existsSync(
-        path.join(__dirname, "../../src/ui/viewer/views/Dashboard/VectorDbStatus.tsx")
-      );
+      const filePath = path.join(__dirname, "../../src/ui/viewer/views/Dashboard/VectorDbStatus.tsx");
+      let exists: boolean;
+      try {
+        statSync(filePath);
+        exists = true;
+      } catch {
+        exists = false;
+      }
       expect(exists).toBe(false);
     });
   });
