@@ -2,6 +2,20 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.4.5] - 2026-02-12
+
+### Bug Fixes
+
+- Allow background Bash tasks for long-running processes like dev servers
+- Install Playwright system dependencies after browser download
+- Optimize subagent models and reduce token waste in review agents
+- Run plan verification agents in parallel with run_in_background
+- Fix npx MCP server pre-caching leaving incomplete installations
+
+### Miscellaneous
+
+- Update website and README messaging and FAQ transparency
+
 ## [6.4.4] - 2026-02-12
 
 ### Bug Fixes
