@@ -2,6 +2,16 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.5.9] - 2026-02-15
+
+### Bug Fixes
+
+- Prevent installer hang on Homebrew installation and improve UX
+
+### Miscellaneous
+
+- Re-stage worktree files with correct filters
+
 ## [6.5.8] - 2026-02-15
 
 ### Bug Fixes
