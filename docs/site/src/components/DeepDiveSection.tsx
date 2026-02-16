@@ -8,13 +8,11 @@ import {
   Search,
   Globe,
   BookOpen,
-  Gauge,
-
-  AlertTriangle,
   CheckCircle2,
   Activity,
   Layers,
   Cpu,
+  RefreshCw,
 } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
@@ -49,7 +47,7 @@ const hooksPipeline = [
     hooks: [
       "File checker: auto-format, lint, type-check (Python, TypeScript, Go)",
       "TDD enforcer: warns if no failing test exists",
-      "Context monitor: warns at 65%+, caution at 75%+",
+      "Context monitor: tracks usage, warns before compaction",
       "Memory observation: captures development context (async)",
     ],
     color: "text-primary",
@@ -58,7 +56,7 @@ const hooksPipeline = [
   },
   {
     trigger: "PreCompact",
-    description: "Before auto-compaction fires at ~83%",
+    description: "Before auto-compaction fires",
     hooks: [
       "Capture active plan, task list, and key context to memory",
     ],
@@ -136,7 +134,7 @@ const DeepDiveSection = () => {
   const [hooksRef, hooksInView] = useInView<HTMLDivElement>();
   const [rulesRef, rulesInView] = useInView<HTMLDivElement>();
   const [mcpRef, mcpInView] = useInView<HTMLDivElement>();
-  const [contextRef, contextInView] = useInView<HTMLDivElement>();
+
 
   return (
     <section id="deep-dive" className="py-16 lg:py-24 px-4 sm:px-6 relative">
@@ -196,53 +194,21 @@ const DeepDiveSection = () => {
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Context Monitoring */}
-        <div
-          ref={contextRef}
-          className={`mb-16 ${contextInView ? "animate-fade-in-up" : "opacity-0"}`}
-        >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-              <Gauge className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-foreground">Context Monitor & Auto-Compaction</h3>
-              <p className="text-sm text-muted-foreground">Automatic context preservation with seamless session continuity</p>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="rounded-2xl p-5 border border-amber-400/30 bg-card/30 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-amber-400" />
-                <span className="text-lg font-bold text-foreground">65%</span>
-                <span className="text-xs text-amber-400 font-medium">INFO</span>
+          {/* Context Preservation — the hooks working together */}
+          <div className="mt-6 rounded-2xl p-5 border border-violet-400/20 bg-gradient-to-r from-violet-500/5 via-sky-500/5 to-violet-500/5 backdrop-blur-sm">
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 bg-violet-400/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <RefreshCw className="h-4 w-4 text-violet-400" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Informational notice. Auto-compaction will handle context management automatically. No action needed — work continues normally.
-              </p>
-            </div>
-            <div className="rounded-2xl p-5 border border-orange-500/30 bg-card/30 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                <span className="text-lg font-bold text-foreground">75%</span>
-                <span className="text-xs text-orange-500 font-medium">CAUTION</span>
+              <div>
+                <h4 className="font-semibold text-foreground text-sm mb-1">Seamless Context Preservation</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  These hooks form a closed loop. When compaction fires, <span className="text-violet-400">PreCompact</span> captures
+                  your active plan, task list, and key decisions to persistent memory. <span className="text-sky-400">SessionStart</span> restores
+                  everything afterward — work continues exactly where it left off. No progress lost, no manual intervention.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Auto-compaction approaching. Complete current task with full quality — no rush, no context is lost. Hooks capture state to persistent memory.
-              </p>
-            </div>
-            <div className="rounded-2xl p-5 border border-rose-500/30 bg-card/30 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-rose-500" />
-                <span className="text-lg font-bold text-foreground">~83%</span>
-                <span className="text-xs text-rose-500 font-medium">AUTO-COMPACT</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Auto-compaction fires. All progress preserved — recent files rehydrated, task list restored, plan state re-injected. Work resumes seamlessly.
-              </p>
             </div>
           </div>
         </div>

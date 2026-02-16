@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 import urllib.error
 from pathlib import Path
@@ -194,11 +195,14 @@ class TestTreeCaching:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             cache_path.write_text('{"main": {"etag": "\\"cached-etag\\"", "files": [{"path": "pilot/test.py", "sha": "abc123"}]}}')
 
+            def side_effect(request, *_args, **_kwargs):
+                url = request.full_url if hasattr(request, 'full_url') else str(request)
+                if 'tree.json' in url:
+                    raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)  # type: ignore[arg-type]
+                raise urllib.error.HTTPError(url, 304, "Not Modified", {}, None)  # type: ignore[arg-type]
+
             with patch("installer.downloads.get_cache_path", return_value=cache_path):
-                error_304 = urllib.error.HTTPError(
-                    url="test", code=304, msg="Not Modified", hdrs=None, fp=None  # type: ignore[arg-type]
-                )
-                with patch("urllib.request.urlopen", side_effect=error_304):
+                with patch("urllib.request.urlopen", side_effect=side_effect):
                     files = get_repo_files("pilot", config)
 
         assert len(files) == 1
@@ -321,3 +325,82 @@ class TestDownloadFilesParallel:
                 [Path("/tmp/a.txt")],
                 config,
             )
+
+
+class TestTreeJsonFallback:
+    """Test tree.json release asset fallback for get_repo_files."""
+
+    def test_get_repo_files_uses_tree_json_from_release_assets(self):
+        """get_repo_files tries tree.json from release assets before API."""
+        from unittest.mock import MagicMock, patch
+
+        from installer.downloads import DownloadConfig, get_repo_files
+
+        config = DownloadConfig(
+            repo_url="https://github.com/test/repo",
+            repo_branch="v6.6.0",
+        )
+
+        tree_json_data = {
+            "tree": [
+                {"path": "pilot/test.py", "type": "blob", "sha": "abc123"},
+                {"path": "installer/test.py", "type": "blob", "sha": "def456"},
+            ]
+        }
+
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_response.read.return_value = json.dumps(tree_json_data).encode()
+        mock_response.__enter__.return_value = mock_response
+        mock_response.__exit__.return_value = None
+
+        with patch("urllib.request.urlopen", return_value=mock_response) as mock_urlopen:
+            files = get_repo_files("pilot", config)
+
+        assert mock_urlopen.call_count == 1, "Should only call urlopen once (tree.json), not fall through to API"
+        first_call_request = mock_urlopen.call_args_list[0][0][0]
+        first_call_url = first_call_request.full_url if hasattr(first_call_request, 'full_url') else str(first_call_request)
+        assert "releases/download/v6.6.0/tree.json" in first_call_url
+
+        assert len(files) == 1
+        assert files[0].path == "pilot/test.py"
+        assert files[0].sha == "abc123"
+
+    def test_get_repo_files_falls_back_to_api_when_tree_json_unavailable(self):
+        """get_repo_files falls back to API when tree.json returns 404."""
+        from unittest.mock import MagicMock, patch
+
+        from installer.downloads import DownloadConfig, get_repo_files
+
+        config = DownloadConfig(
+            repo_url="https://github.com/test/repo",
+            repo_branch="v6.0.0",
+        )
+
+        api_data = {
+            "tree": [
+                {"path": "pilot/test.py", "type": "blob", "sha": "xyz789"},
+            ]
+        }
+
+        def side_effect(request, *_args, **_kwargs):
+            url = request.full_url if hasattr(request, 'full_url') else str(request)
+            if "tree.json" in url:
+                raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)  # type: ignore[arg-type]
+            else:
+                mock_response = MagicMock()
+                mock_response.status = 200
+                mock_response.headers.get.return_value = None
+                mock_response.read.return_value = json.dumps(api_data).encode()
+                mock_response.__enter__.return_value = mock_response
+                mock_response.__exit__.return_value = None
+                return mock_response
+
+        with patch("urllib.request.urlopen", side_effect=side_effect) as mock_urlopen:
+            files = get_repo_files("pilot", config)
+
+        assert mock_urlopen.call_count == 2
+
+        assert len(files) == 1
+        assert files[0].path == "pilot/test.py"
+        assert files[0].sha == "xyz789"

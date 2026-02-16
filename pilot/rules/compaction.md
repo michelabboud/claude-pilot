@@ -1,6 +1,6 @@
 # Context Compaction — Preservation Guide
 
-**Auto-compaction fires at ~83% context usage.** When compaction occurs, preserve these Pilot-specific elements in your summary:
+**Auto-compaction fires when context reaches 100%.** When compaction occurs, preserve these Pilot-specific elements in your summary:
 
 ## Critical State to Preserve
 

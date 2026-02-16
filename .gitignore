@@ -235,6 +235,7 @@ playwright/
 .claude/config/
 .claude/skills/
 .claude/rules/
+.claude/.pilot-*-baseline.json
 
 # Build artifacts
 docs/plans

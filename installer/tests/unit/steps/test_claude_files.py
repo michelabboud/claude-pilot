@@ -276,8 +276,8 @@ class TestClaudeFilesCustomRulesPreservation:
 class TestDirectoryClearing:
     """Test directory clearing behavior in local and normal mode."""
 
-    def test_clears_directories_in_normal_local_mode(self):
-        """Global rules directory is cleared when source != destination in local mode."""
+    def test_clears_managed_files_preserves_user_files(self):
+        """Pilot-managed rules are removed on update; user-created files are preserved."""
         from installer.context import InstallContext
         from installer.steps.claude_files import ClaudeFilesStep
         from installer.ui import Console
@@ -289,7 +289,11 @@ class TestDirectoryClearing:
 
             old_global_rules = home_dir / ".claude" / "rules"
             old_global_rules.mkdir(parents=True)
-            (old_global_rules / "old-rule.md").write_text("old rule to be removed")
+            (old_global_rules / "old-rule.md").write_text("old Pilot rule to be removed")
+            (old_global_rules / "my-custom-rule.md").write_text("user-created rule")
+
+            manifest_path = home_dir / ".claude" / ".pilot-manifest.json"
+            manifest_path.write_text(json.dumps({"files": ["rules/old-rule.md"]}, indent=2))
 
             source_dir = Path(tmpdir) / "source"
             source_pilot = source_dir / "pilot"
@@ -314,6 +318,57 @@ class TestDirectoryClearing:
             assert (global_rules / "new-rule.md").exists()
             assert (global_rules / "new-rule.md").read_text() == "new rule content"
             assert not (global_rules / "old-rule.md").exists()
+            assert (global_rules / "my-custom-rule.md").exists()
+            assert (global_rules / "my-custom-rule.md").read_text() == "user-created rule"
+
+    def test_legacy_upgrade_seeds_manifest_and_cleans_old_files(self):
+        """Pre-manifest upgrade: old Pilot files are seeded into manifest and cleaned up."""
+        from installer.context import InstallContext
+        from installer.steps.claude_files import PILOT_MANIFEST_FILE, ClaudeFilesStep
+        from installer.ui import Console
+
+        step = ClaudeFilesStep()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home_dir = Path(tmpdir) / "home"
+            home_dir.mkdir()
+
+            old_global_rules = home_dir / ".claude" / "rules"
+            old_global_rules.mkdir(parents=True)
+            (old_global_rules / "old-pilot-rule.md").write_text("old Pilot rule")
+            (old_global_rules / "another-old-rule.md").write_text("another old rule")
+
+            old_global_cmds = home_dir / ".claude" / "commands"
+            old_global_cmds.mkdir(parents=True)
+            (old_global_cmds / "old-cmd.md").write_text("old Pilot command")
+
+            manifest_path = home_dir / ".claude" / PILOT_MANIFEST_FILE
+            assert not manifest_path.exists()
+
+            source_dir = Path(tmpdir) / "source"
+            source_pilot = source_dir / "pilot"
+            source_rules = source_pilot / "rules"
+            source_rules.mkdir(parents=True)
+            (source_rules / "new-rule.md").write_text("new rule content")
+
+            dest_dir = Path(tmpdir) / "dest"
+            dest_dir.mkdir()
+
+            ctx = InstallContext(
+                project_dir=dest_dir,
+                ui=Console(non_interactive=True),
+                local_mode=True,
+                local_repo_dir=source_dir,
+            )
+
+            with patch("installer.steps.claude_files.Path.home", return_value=home_dir):
+                step.run(ctx)
+
+            global_rules = home_dir / ".claude" / "rules"
+            assert (global_rules / "new-rule.md").exists()
+            assert not (global_rules / "old-pilot-rule.md").exists()
+            assert not (global_rules / "another-old-rule.md").exists()
+            assert not (old_global_cmds / "old-cmd.md").exists()
+            assert manifest_path.exists()
 
     def test_skips_clearing_when_source_equals_destination(self):
         """Directories are NOT cleared when source == destination (same dir)."""
@@ -343,8 +398,8 @@ class TestDirectoryClearing:
 
             assert (home_dir / ".claude" / "rules" / "existing-rule.md").exists()
 
-    def test_stale_rules_removed_when_source_equals_destination(self):
-        """Stale global rules are removed even when source == destination."""
+    def test_stale_managed_rules_removed_when_source_equals_destination(self):
+        """Stale Pilot-managed rules are removed even when source == destination."""
         from installer.context import InstallContext
         from installer.steps.claude_files import ClaudeFilesStep
         from installer.ui import Console
@@ -357,6 +412,9 @@ class TestDirectoryClearing:
             global_rules = home_dir / ".claude" / "rules"
             global_rules.mkdir(parents=True)
             (global_rules / "old-deleted-rule.md").write_text("stale rule from previous install")
+
+            manifest_path = home_dir / ".claude" / ".pilot-manifest.json"
+            manifest_path.write_text(json.dumps({"files": ["rules/old-deleted-rule.md"]}, indent=2))
 
             pilot_dir = Path(tmpdir) / "pilot"
             rules_dir = pilot_dir / "rules"
@@ -1032,7 +1090,7 @@ class TestMergeAppConfig:
 
     def test_merge_sets_new_keys(self):
         """Keys in source that don't exist in target are added."""
-        from installer.steps.claude_files import merge_app_config
+        from installer.steps.settings_merge import merge_app_config
 
         target = {"numStartups": 500, "oauthAccount": {"email": "x"}}
         source = {"autoCompactEnabled": True, "theme": "dark"}
@@ -1047,7 +1105,7 @@ class TestMergeAppConfig:
 
     def test_merge_updates_existing_keys(self):
         """Keys in source that exist in target are updated to source value."""
-        from installer.steps.claude_files import merge_app_config
+        from installer.steps.settings_merge import merge_app_config
 
         target = {"autoCompactEnabled": False, "verbose": False}
         source = {"autoCompactEnabled": True, "verbose": True}
@@ -1060,7 +1118,7 @@ class TestMergeAppConfig:
 
     def test_merge_preserves_all_other_keys(self):
         """Keys not in source are never touched."""
-        from installer.steps.claude_files import merge_app_config
+        from installer.steps.settings_merge import merge_app_config
 
         target = {
             "numStartups": 500,
@@ -1082,7 +1140,7 @@ class TestMergeAppConfig:
 
     def test_merge_returns_none_when_no_changes(self):
         """Returns None when all source keys already match target values."""
-        from installer.steps.claude_files import merge_app_config
+        from installer.steps.settings_merge import merge_app_config
 
         target = {"autoCompactEnabled": True, "theme": "dark", "numStartups": 500}
         source = {"autoCompactEnabled": True, "theme": "dark"}
@@ -1229,6 +1287,158 @@ class TestMergeAppConfig:
                 step.run(ctx)
 
             assert not (home_dir / ".claude.json").exists()
+
+
+class TestMergeSettings:
+    """Tests for three-way settings merge."""
+
+    def test_first_install_uses_incoming(self):
+        """Without baseline or current, incoming settings are used as-is."""
+        from installer.steps.settings_merge import merge_settings
+
+        incoming = {
+            "env": {"A": "1", "B": "2"},
+            "permissions": {"allow": ["Bash", "Edit"], "deny": []},
+            "spinnerTipsEnabled": False,
+        }
+        result = merge_settings(None, {}, incoming)
+
+        assert result["env"] == {"A": "1", "B": "2"}
+        assert result["permissions"]["allow"] == ["Bash", "Edit"]
+        assert result["spinnerTipsEnabled"] is False
+
+    def test_preserves_user_added_permissions(self):
+        """User-added permissions survive an update."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"permissions": {"allow": ["Bash", "Edit"], "deny": []}}
+        current = {"permissions": {"allow": ["Bash", "Edit", "mcp__typefully__*"], "deny": []}}
+        incoming = {"permissions": {"allow": ["Bash", "Edit", "LSP"], "deny": []}}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert "mcp__typefully__*" in result["permissions"]["allow"]
+        assert "LSP" in result["permissions"]["allow"]
+        assert "Bash" in result["permissions"]["allow"]
+
+    def test_preserves_user_removed_permissions(self):
+        """If user deliberately removed a Pilot permission, it stays removed."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"permissions": {"allow": ["Bash", "Edit", "WebFetch"], "deny": []}}
+        current = {"permissions": {"allow": ["Bash", "Edit"], "deny": []}}
+        incoming = {"permissions": {"allow": ["Bash", "Edit", "WebFetch", "LSP"], "deny": []}}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert "WebFetch" not in result["permissions"]["allow"]
+        assert "LSP" in result["permissions"]["allow"]
+
+    def test_preserves_user_changed_env_var(self):
+        """If user changed an env var value, Pilot doesn't overwrite it."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"env": {"DISABLE_TELEMETRY": "true", "ENABLE_LSP_TOOL": "true"}}
+        current = {"env": {"DISABLE_TELEMETRY": "false", "ENABLE_LSP_TOOL": "true"}}
+        incoming = {"env": {"DISABLE_TELEMETRY": "true", "ENABLE_LSP_TOOL": "true", "NEW_VAR": "1"}}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["env"]["DISABLE_TELEMETRY"] == "false"
+        assert result["env"]["NEW_VAR"] == "1"
+        assert result["env"]["ENABLE_LSP_TOOL"] == "true"
+
+    def test_preserves_user_only_keys(self):
+        """Keys the user added that Pilot doesn't manage are preserved."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"spinnerTipsEnabled": False}
+        current = {"spinnerTipsEnabled": False, "myCustomKey": "hello"}
+        incoming = {"spinnerTipsEnabled": False}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["myCustomKey"] == "hello"
+
+    def test_adds_new_pilot_keys(self):
+        """New keys from Pilot are added on update."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"env": {"A": "1"}}
+        current = {"env": {"A": "1"}}
+        incoming = {"env": {"A": "1", "B": "2"}, "newFeature": True}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["env"]["B"] == "2"
+        assert result["newFeature"] is True
+
+    def test_updates_unchanged_scalars(self):
+        """Scalar values the user didn't touch get updated to new Pilot values."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"alwaysThinkingEnabled": False}
+        current = {"alwaysThinkingEnabled": False}
+        incoming = {"alwaysThinkingEnabled": True}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["alwaysThinkingEnabled"] is True
+
+    def test_preserves_user_changed_scalar(self):
+        """Scalar values the user changed from baseline are kept."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"alwaysThinkingEnabled": True}
+        current = {"alwaysThinkingEnabled": False}
+        incoming = {"alwaysThinkingEnabled": True}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["alwaysThinkingEnabled"] is False
+
+    def test_preserves_user_added_env_vars(self):
+        """User-added env vars not in Pilot's set are preserved."""
+        from installer.steps.settings_merge import merge_settings
+
+        baseline = {"env": {"A": "1"}}
+        current = {"env": {"A": "1", "MY_CUSTOM_VAR": "yes"}}
+        incoming = {"env": {"A": "1"}}
+
+        result = merge_settings(baseline, current, incoming)
+
+        assert result["env"]["MY_CUSTOM_VAR"] == "yes"
+
+
+class TestMergeAppConfigWithBaseline:
+    """Tests for merge_app_config with baseline parameter."""
+
+    def test_baseline_preserves_user_changes(self):
+        """User changes to ~/.claude.json are preserved when baseline exists."""
+        from installer.steps.settings_merge import merge_app_config
+
+        target = {"autoCompactEnabled": False, "verbose": True}
+        source = {"autoCompactEnabled": True, "verbose": True, "newKey": "value"}
+        baseline = {"autoCompactEnabled": True, "verbose": True}
+
+        result = merge_app_config(target, source, baseline)
+
+        assert result is not None
+        assert result["autoCompactEnabled"] is False
+        assert result["newKey"] == "value"
+        assert result["verbose"] is True
+
+    def test_no_baseline_overwrites_like_before(self):
+        """Without baseline (first install), all source keys are applied."""
+        from installer.steps.settings_merge import merge_app_config
+
+        target = {"autoCompactEnabled": False}
+        source = {"autoCompactEnabled": True}
+
+        result = merge_app_config(target, source, None)
+
+        assert result is not None
+        assert result["autoCompactEnabled"] is True
 
 
 class TestResolveRepoUrl:

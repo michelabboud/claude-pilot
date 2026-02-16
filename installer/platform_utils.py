@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -38,6 +39,42 @@ def is_in_devcontainer() -> bool:
 def command_exists(command: str) -> bool:
     """Check if a command exists in PATH."""
     return shutil.which(command) is not None
+
+
+def needs_npm_sudo() -> bool:
+    """Check if npm global installs require sudo.
+
+    Returns True when the npm global prefix directory is not writable
+    by the current user (e.g. /usr/lib/node_modules on system-wide installs).
+    """
+    if not command_exists("npm"):
+        return False
+    try:
+        result = subprocess.run(
+            ["npm", "prefix", "-g"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return False
+        prefix = Path(result.stdout.strip())
+        node_modules = prefix / "lib" / "node_modules"
+        check_dir = node_modules if node_modules.exists() else prefix
+        return not os.access(check_dir, os.W_OK)
+    except Exception:
+        return False
+
+
+def npm_global_cmd(cmd: str) -> str:
+    """Wrap an npm global command with sudo -n if needed.
+
+    Uses sudo -n (non-interactive) so it fails immediately if a password
+    is required, avoiding installer hangs.
+    """
+    if needs_npm_sudo():
+        return f"sudo -n {cmd}"
+    return cmd
 
 
 def is_homebrew_available() -> bool:

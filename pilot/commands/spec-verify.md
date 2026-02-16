@@ -578,6 +578,6 @@ This is the THIRD user interaction point in the `/spec` workflow (first is workt
 
 ## Context Management
 
-Context is managed automatically by auto-compaction at 90%. No agent action needed — just keep working.
+Context is managed automatically by auto-compaction. No agent action needed — just keep working.
 
 ARGUMENTS: $ARGUMENTS

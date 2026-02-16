@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from installer.context import InstallContext
-from installer.platform_utils import command_exists
+from installer.platform_utils import command_exists, npm_global_cmd
 from installer.steps.base import BaseStep
 
 MAX_RETRIES = 3
@@ -158,11 +158,11 @@ def install_claude_code(project_dir: Path, ui: Any = None) -> tuple[bool, str]:
     version = forced_version if forced_version else "latest"
 
     if version != "latest":
-        npm_cmd = f"npm install -g @anthropic-ai/claude-code@{version}"
+        npm_cmd = npm_global_cmd(f"npm install -g @anthropic-ai/claude-code@{version}")
         if ui:
             ui.status(f"Installing Claude Code v{version}...")
     else:
-        npm_cmd = "npm install -g @anthropic-ai/claude-code"
+        npm_cmd = npm_global_cmd("npm install -g @anthropic-ai/claude-code")
         if ui:
             ui.status("Installing Claude Code...")
 
@@ -306,15 +306,18 @@ def install_vexor(use_local: bool = False, ui: Any = None) -> bool:
 
 
 def install_mcp_cli() -> bool:
-    """Install mcp-cli via bun for MCP server interaction.
+    """Install mcp-cli for MCP server interaction.
 
-    Requires bun to be installed first.
-    Install command: bun install -g https://github.com/philschmid/mcp-cli
+    Checks if already installed (via npm or bun) before attempting install.
+    Prefers bun for installation, falls back to npm.
     """
-    if not command_exists("bun"):
-        return False
+    if command_exists("mcp-cli"):
+        return True
 
-    return _run_bash_with_retry("bun install -g https://github.com/philschmid/mcp-cli")
+    if command_exists("bun"):
+        return _run_bash_with_retry("bun install -g https://github.com/philschmid/mcp-cli")
+
+    return _run_bash_with_retry(npm_global_cmd("npm install -g mcp-cli"))
 
 
 def install_sx() -> bool:
@@ -351,7 +354,7 @@ def install_typescript_lsp() -> bool:
     """Install TypeScript language server and compiler globally."""
     if _is_vtsls_installed():
         return True
-    return _run_bash_with_retry("npm install -g @vtsls/language-server typescript")
+    return _run_bash_with_retry(npm_global_cmd("npm install -g @vtsls/language-server typescript"))
 
 
 def _is_ccusage_installed() -> bool:
@@ -371,7 +374,7 @@ def install_ccusage() -> bool:
     """Install ccusage globally for usage tracking."""
     if _is_ccusage_installed():
         return True
-    return _run_bash_with_retry("npm install -g ccusage@latest")
+    return _run_bash_with_retry(npm_global_cmd("npm install -g ccusage@latest"))
 
 
 def _get_playwright_cache_dirs() -> list[Path]:
@@ -442,7 +445,7 @@ def install_playwright_cli(ui: Any = None) -> bool:
     if _is_playwright_cli_ready():
         return True
 
-    if not _run_bash_with_retry("npm install -g @playwright/cli@latest"):
+    if not _run_bash_with_retry(npm_global_cmd("npm install -g @playwright/cli@latest")):
         return False
 
     if _is_playwright_cli_ready():

@@ -39,9 +39,34 @@ while [ $# -gt 0 ]; do
 done
 
 get_latest_release() {
+	local redirect_url="https://github.com/${REPO}/releases/latest"
 	local api_url="https://api.github.com/repos/${REPO}/releases/latest"
 	local version=""
 
+	# Try redirect-based approach first (not rate-limited)
+	if command -v curl >/dev/null 2>&1; then
+		local redirect_location
+		redirect_location=$(curl -sIo /dev/null -w '%{redirect_url}' "$redirect_url" 2>/dev/null | tr -d '\r') || true
+		# Parse version from redirect URL: /releases/tag/v6.6.0 -> 6.6.0
+		# Handle edge cases: empty, literal %{redirect_url}, or non-matching pattern
+		if [ -n "$redirect_location" ] && [ "$redirect_location" != "%{redirect_url}" ]; then
+			version=$(echo "$redirect_location" | sed -n 's|.*/releases/tag/v\([^/]*\).*|\1|p') || true
+		fi
+	elif command -v wget >/dev/null 2>&1; then
+		local redirect_location
+		redirect_location=$(wget --spider -S "$redirect_url" 2>&1 | grep -i 'location:' | tail -1 | sed 's/.*location: *//I' | tr -d '\r') || true
+		if [ -n "$redirect_location" ]; then
+			version=$(echo "$redirect_location" | sed -n 's|.*/releases/tag/v\([^/]*\).*|\1|p') || true
+		fi
+	fi
+
+	# If redirect approach succeeded, return the version
+	if [ -n "$version" ]; then
+		echo "$version"
+		return 0
+	fi
+
+	# Fall back to API call if redirect failed
 	if command -v curl >/dev/null 2>&1; then
 		version=$(curl -fsSL "$api_url" 2>/dev/null | grep -m1 '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/') || true
 	elif command -v wget >/dev/null 2>&1; then
@@ -212,6 +237,14 @@ download_installer() {
 	rm -rf "$installer_dir"
 	mkdir -p "$installer_dir/installer"
 
+	# Construct URLs for tree.json (release asset) and API fallback
+	local base_url=""
+	case "$VERSION" in
+	dev-*) base_url="https://github.com/${REPO}/releases/download/${VERSION}" ;;
+	*) base_url="https://github.com/${REPO}/releases/download/v${VERSION}" ;;
+	esac
+	local tree_url="${base_url}/tree.json"
+
 	local tag_ref=""
 	case "$VERSION" in
 	dev-*) tag_ref="$VERSION" ;;
@@ -220,12 +253,23 @@ download_installer() {
 	local api_url="https://api.github.com/repos/${REPO}/git/trees/${tag_ref}?recursive=true"
 	local tree_json=""
 
+	# Try tree.json from release assets first (not rate-limited)
 	if command -v curl >/dev/null 2>&1; then
-		tree_json=$(curl -fsSL "$api_url" 2>/dev/null) || true
+		tree_json=$(curl -fsSL "$tree_url" 2>/dev/null) || true
 	elif command -v wget >/dev/null 2>&1; then
-		tree_json=$(wget -qO- "$api_url" 2>/dev/null) || true
+		tree_json=$(wget -qO- "$tree_url" 2>/dev/null) || true
 	fi
 
+	# If tree.json failed, fall back to API
+	if [ -z "$tree_json" ]; then
+		if command -v curl >/dev/null 2>&1; then
+			tree_json=$(curl -fsSL "$api_url" 2>/dev/null) || true
+		elif command -v wget >/dev/null 2>&1; then
+			tree_json=$(wget -qO- "$api_url" 2>/dev/null) || true
+		fi
+	fi
+
+	# Only exit if both tree.json and API failed
 	if [ -z "$tree_json" ]; then
 		echo "  [!!] Failed to fetch file list from GitHub API"
 		exit 1

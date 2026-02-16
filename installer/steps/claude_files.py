@@ -16,8 +16,17 @@ from installer.downloads import (
     get_repo_files,
 )
 from installer.steps.base import BaseStep
+from installer.steps.settings_merge import (
+    cleanup_managed_files,
+    load_manifest,
+    merge_app_config,
+    merge_settings,
+    save_manifest,
+)
 
 SETTINGS_FILE = "settings.local.json"
+SETTINGS_BASELINE_FILE = ".pilot-settings-baseline.json"
+PILOT_MANIFEST_FILE = ".pilot-manifest.json"
 
 REPO_URL = "https://github.com/maxritter/claude-pilot"
 
@@ -78,23 +87,6 @@ def patch_global_settings(
             modified = True
 
     return global_settings if modified else None
-
-
-def merge_app_config(
-    target: dict[str, Any],
-    source: dict[str, Any],
-) -> dict[str, Any] | None:
-    """Merge app-level preferences from source into target (~/.claude.json).
-
-    Sets each key from source in target. Returns patched dict if changes were made,
-    None if all keys already match.
-    """
-    modified = False
-    for key, value in source.items():
-        if key not in target or target[key] != value:
-            target[key] = value
-            modified = True
-    return target if modified else None
 
 
 def _should_skip_file(file_path: str) -> bool:
@@ -239,11 +231,10 @@ class ClaudeFilesStep(BaseStep):
         config: DownloadConfig,
         ui: Any,
     ) -> None:
-        """Clean up old installation directories.
+        """Clean up Pilot-managed files before reinstallation.
 
-        Always cleans all directories when called - cleanup is decoupled from
-        which file categories were found. This ensures stale files are removed
-        even if specific categories are empty due to filtering or API issues.
+        Uses manifests to track which files Pilot installed. Only removes
+        Pilot-managed files — user-created files in commands/ and rules/ are preserved.
         """
         home_claude_dir = Path.home() / ".claude"
         home_pilot_plugin_dir = home_claude_dir / "pilot"
@@ -256,17 +247,11 @@ class ClaudeFilesStep(BaseStep):
         if source_is_destination:
             return
 
-        _clear_directory_safe(
-            home_claude_dir / "commands",
-            ui,
-            "Failed to clear global commands directory",
-        )
-
-        _clear_directory_safe(
-            home_claude_dir / "rules",
-            ui,
-            "Failed to clear global rules directory",
-        )
+        manifest_path = home_claude_dir / PILOT_MANIFEST_FILE
+        if not manifest_path.exists():
+            self._seed_manifest_from_existing(home_claude_dir, manifest_path)
+        cleanup_managed_files(home_claude_dir / "commands", manifest_path, "commands/")
+        cleanup_managed_files(home_claude_dir / "rules", manifest_path, "rules/")
 
         _clear_directory_contents(home_pilot_plugin_dir)
 
@@ -327,6 +312,26 @@ class ClaudeFilesStep(BaseStep):
                     old_custom_rules.rmdir()
             except (OSError, IOError):
                 pass
+
+    def _seed_manifest_from_existing(self, home_claude_dir: Path, manifest_path: Path) -> None:
+        """Seed manifest from existing files for legacy upgrades.
+
+        When upgrading from a pre-manifest Pilot version, no manifest exists yet.
+        The old installer nuked these directories entirely, so all existing files
+        are Pilot-managed. Seed the manifest with them so cleanup_managed_files
+        can remove stale ones while future user-added files remain safe.
+        """
+        files: set[str] = set()
+        for subdir in ("commands", "rules"):
+            directory = home_claude_dir / subdir
+            if not directory.exists():
+                continue
+            for item in directory.iterdir():
+                if item.name.startswith("."):
+                    continue
+                files.add(f"{subdir}/{item.name}")
+        if files:
+            save_manifest(manifest_path, files)
 
     def _install_categories(
         self,
@@ -440,7 +445,33 @@ class ClaudeFilesStep(BaseStep):
         self._merge_app_config()
         self._patch_overlapping_settings(ctx)
         self._cleanup_stale_rules(ctx)
+        self._save_pilot_manifest(ctx)
         self._ensure_project_rules_dir(ctx)
+
+    def _save_pilot_manifest(self, ctx: InstallContext) -> None:
+        """Save manifest of Pilot-managed files in commands/ and rules/.
+
+        Records filenames (relative to their directory) so the next update
+        can selectively remove only Pilot's files, preserving user files.
+        """
+        home_claude_dir = Path.home() / ".claude"
+        installed = ctx.config.get("installed_files", [])
+
+        commands_dir = home_claude_dir / "commands"
+        rules_dir = home_claude_dir / "rules"
+        managed_files: set[str] = set()
+
+        for filepath_str in installed:
+            filepath = Path(filepath_str)
+            try:
+                if filepath.is_relative_to(commands_dir):
+                    managed_files.add("commands/" + str(filepath.relative_to(commands_dir)))
+                elif filepath.is_relative_to(rules_dir):
+                    managed_files.add("rules/" + str(filepath.relative_to(rules_dir)))
+            except (ValueError, TypeError):
+                continue
+
+        save_manifest(home_claude_dir / PILOT_MANIFEST_FILE, managed_files)
 
     def _make_scripts_executable(self, plugin_dir: Path) -> None:
         """Make script files executable."""
@@ -484,15 +515,17 @@ class ClaudeFilesStep(BaseStep):
     def _merge_app_config(self) -> None:
         """Merge app-level preferences from pilot/claude.json into ~/.claude.json.
 
+        Uses three-way merge with baseline to preserve user customizations.
         Reads the installed claude.json template and merges its keys into the
         user's ~/.claude.json. Preserves all existing app state (projects,
-        oauthAccount, caches, etc.) — only sets keys defined in the template.
+        oauthAccount, caches, etc.) — only sets/updates keys defined in the template.
         """
         template_path = Path.home() / ".claude" / "pilot" / "claude.json"
         if not template_path.exists():
             return
 
         claude_json_path = Path.home() / ".claude.json"
+        baseline_path = Path.home() / ".claude" / ".pilot-claude-baseline.json"
 
         try:
             source = json.loads(template_path.read_text())
@@ -504,12 +537,25 @@ class ClaudeFilesStep(BaseStep):
         except (json.JSONDecodeError, OSError, IOError):
             target = {}
 
-        patched = merge_app_config(target, source)
+        baseline: dict[str, Any] | None = None
+        if baseline_path.exists():
+            try:
+                baseline = json.loads(baseline_path.read_text())
+            except (json.JSONDecodeError, OSError, IOError):
+                baseline = None
+
+        patched = merge_app_config(target, source, baseline)
         if patched is not None:
             try:
                 claude_json_path.write_text(json.dumps(patched, indent=2) + "\n")
             except (OSError, IOError):
                 pass
+
+        try:
+            baseline_path.parent.mkdir(parents=True, exist_ok=True)
+            baseline_path.write_text(json.dumps(source, indent=2) + "\n")
+        except (OSError, IOError):
+            pass
 
     def _patch_overlapping_settings(self, ctx: InstallContext) -> None:
         """Patch global and project settings.json to avoid overriding settings.local.json.
@@ -544,21 +590,29 @@ class ClaudeFilesStep(BaseStep):
                 continue
 
     def _cleanup_stale_rules(self, ctx: InstallContext) -> None:
-        """Remove stale rule files from ~/.claude/rules/ not present in this installation.
+        """Remove stale Pilot-managed rule files not present in this installation.
 
-        ~/.claude/rules/ is purely installer-managed (user rules go in project .claude/rules/).
-        Any file there that wasn't just installed is stale from a previous version.
+        Only removes files that Pilot previously installed (tracked in manifest)
+        but are no longer part of the current installation. User-created rules
+        are never touched.
         """
-        global_rules_dir = Path.home() / ".claude" / "rules"
+        home_claude_dir = Path.home() / ".claude"
+        global_rules_dir = home_claude_dir / "rules"
         if not global_rules_dir.exists():
             return
 
+        manifest_path = home_claude_dir / PILOT_MANIFEST_FILE
+        previous_managed = load_manifest(manifest_path)
         installed = {Path(p).resolve() for p in ctx.config.get("installed_files", [])}
 
-        for item in global_rules_dir.iterdir():
-            if item.is_file() and item.resolve() not in installed:
+        for entry in previous_managed:
+            if not entry.startswith("rules/"):
+                continue
+            relative = entry[len("rules/") :]
+            file_path = global_rules_dir / relative
+            if file_path.exists() and file_path.resolve() not in installed:
                 try:
-                    item.unlink()
+                    file_path.unlink()
                 except (OSError, IOError):
                     pass
 
@@ -592,7 +646,13 @@ class ClaudeFilesStep(BaseStep):
         dest_path: Path,
         config: DownloadConfig,
     ) -> bool:
-        """Download and process settings file."""
+        """Download, merge, and install settings file.
+
+        Uses three-way merge to preserve user customizations:
+        - baseline (.pilot-settings-baseline.json) = what Pilot installed last time
+        - current (settings.local.json) = what's on disk now (may have user changes)
+        - incoming (downloaded settings.json) = new Pilot settings
+        """
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -601,11 +661,37 @@ class ClaudeFilesStep(BaseStep):
                 return False
 
             try:
-                settings_content = temp_file.read_text()
-                processed_content = process_settings(settings_content)
-                processed_content = patch_claude_paths(processed_content)
+                raw_content = temp_file.read_text()
+                processed_content = patch_claude_paths(process_settings(raw_content))
+                incoming: dict[str, Any] = json.loads(processed_content)
+
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
-                dest_path.write_text(processed_content)
+                baseline_path = dest_path.parent / SETTINGS_BASELINE_FILE
+
+                current: dict[str, Any] | None = None
+                baseline: dict[str, Any] | None = None
+
+                if dest_path.exists():
+                    try:
+                        current = json.loads(dest_path.read_text())
+                    except (json.JSONDecodeError, OSError, IOError):
+                        current = None
+
+                if baseline_path.exists():
+                    try:
+                        baseline = json.loads(baseline_path.read_text())
+                    except (json.JSONDecodeError, OSError, IOError):
+                        baseline = None
+
+                if current is not None:
+                    merged = merge_settings(baseline, current, incoming)
+                else:
+                    merged = incoming
+
+                dest_path.write_text(json.dumps(merged, indent=2) + "\n")
+
+                baseline_path.write_text(json.dumps(incoming, indent=2) + "\n")
+
                 return True
             except (json.JSONDecodeError, OSError, IOError):
                 return False

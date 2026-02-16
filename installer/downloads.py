@@ -193,6 +193,24 @@ def get_repo_files(dir_path: str, config: DownloadConfig) -> list[FileInfo]:
     cached_etag = branch_cache.get("etag")
     cached_files = branch_cache.get("files", [])
 
+    tree_json_url = f"{config.repo_url}/releases/download/{config.repo_branch}/tree.json"
+    try:
+        request = urllib.request.Request(tree_json_url)
+        with urllib.request.urlopen(request, timeout=30.0) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                remote_files: list[FileInfo] = []
+                if "tree" in data:
+                    for item in data["tree"]:
+                        if item.get("type") == "blob":
+                            path = item.get("path", "")
+                            sha = item.get("sha")
+                            if path.startswith(dir_path):
+                                remote_files.append(FileInfo(path=path, sha=sha))
+                return remote_files
+    except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError, TimeoutError):
+        pass
+
     try:
         repo_path = config.repo_url.replace("https://github.com/", "")
         tree_url = f"https://api.github.com/repos/{repo_path}/git/trees/{config.repo_branch}?recursive=true"
@@ -209,7 +227,7 @@ def get_repo_files(dir_path: str, config: DownloadConfig) -> list[FileInfo]:
             data = json.loads(response.read().decode("utf-8"))
 
             all_files: list[dict] = []
-            remote_files: list[FileInfo] = []
+            remote_files = []
             if "tree" in data:
                 for item in data["tree"]:
                     if item.get("type") == "blob":

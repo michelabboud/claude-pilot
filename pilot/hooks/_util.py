@@ -22,6 +22,7 @@ NC = "\033[0m"
 
 FILE_LENGTH_WARN = 300
 FILE_LENGTH_CRITICAL = 500
+COMPACTION_THRESHOLD_PCT = 83.5
 
 
 def _sessions_base() -> Path:

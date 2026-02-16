@@ -15,7 +15,7 @@ Hooks
 
 Proactively backup your Claude Code session before compaction hits. StatusLine monitoring and threshold triggers keep your work safe.
 
-You're 4 hours into a complex implementation. Context hits 83%. Auto-compaction fires. Suddenly Claude doesn't remember the specific error message you debugged, the exact function signatures you discussed, or the architectural decisions that led to your current approach.
+You're 4 hours into a complex implementation. Context hits 100%. Auto-compaction fires. Suddenly Claude doesn't remember the specific error message you debugged, the exact function signatures you discussed, or the architectural decisions that led to your current approach.
 
 The summary captures the gist. The precision is gone.
 
@@ -243,7 +243,7 @@ And the backups are structured. Not a raw paste of conversation, but organized s
 
 | Aspect | Auto-Compaction | Threshold Backup + /clear |
 | --- | --- | --- |
-| **When it happens** | At ~83.5% usage | At configurable thresholds |
+| **When it happens** | At 100% effective usage | At configurable thresholds |
 | **What's preserved** | Lossy summary | Structured markdown with full detail |
 | **Control** | None (hardcoded) | You choose thresholds |
 | **Recovery** | Continue with summary | Load specific backup file |

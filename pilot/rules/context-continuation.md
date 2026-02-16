@@ -1,10 +1,10 @@
 # Context Management — Auto-Compaction
 
-**Context management is fully automatic.** Auto-compaction fires at ~83% context, preserves Pilot state via hooks, and restores context seamlessly. **No context is ever lost.**
+**Context management is fully automatic.** Auto-compaction fires when context reaches 100%, preserves Pilot state via hooks, and restores context seamlessly. **No context is ever lost.**
 
 ## How Auto-Compaction Works
 
-When context reaches ~83%, Claude Code's auto-compaction automatically:
+When context reaches 100%, Claude Code's auto-compaction automatically:
 1. **PreCompact hook** captures Pilot state (active plan, task progress, key context) to Memory
 2. **Compaction** summarizes the conversation, preserving recent work and context
 3. **SessionStart(compact) hook** re-injects Pilot-specific context after compaction
@@ -14,10 +14,10 @@ When context reaches ~83%, Claude Code's auto-compaction automatically:
 
 | Level | What Happens |
 |-------|--------------|
-| < 65% | Work normally |
-| 65%   | Informational notice: "Auto-compact will handle context management automatically" |
-| 75%+  | Caution: "Auto-compact approaching. Complete current work — do NOT start new complex tasks" |
-| ~83%  | Auto-compaction fires automatically — state preserved, context restored |
+| < 80% | Work normally |
+| ~80%  | Informational notice: "Auto-compact will handle context management automatically" |
+| ~90%+ | Caution: "Auto-compact approaching. Complete current work — do NOT start new complex tasks" |
+| 100%  | Auto-compaction fires automatically — state preserved, context restored |
 
 ## ⛔ NEVER Rush — Quality Is Always Priority #1
 
@@ -40,7 +40,7 @@ Work spans compaction cycles seamlessly via:
 
 - ❌ Worrying about when to `/compact` (auto-compact handles this)
 - ❌ Writing continuation files (PreCompact hook captures state)
-- ❌ Stopping work at 75% (complete current task, then auto-compact fires)
+- ❌ Stopping work at 90% (complete current task, then auto-compact fires)
 - ❌ Worrying about context percentage (informational only)
 - ❌ Rushing to finish before compaction (quality over speed, always)
 

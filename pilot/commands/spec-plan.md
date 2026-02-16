@@ -651,6 +651,6 @@ Both agents persist their findings JSON to the session directory for reliable re
 
 ## Context Management
 
-Context is managed automatically by auto-compaction at 90%. No agent action needed — just keep working.
+Context is managed automatically by auto-compaction. No agent action needed — just keep working.
 
 ARGUMENTS: $ARGUMENTS

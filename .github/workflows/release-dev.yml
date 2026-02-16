@@ -236,6 +236,27 @@ jobs:
           echo "Downloaded artifacts:"
           find artifacts -type f -ls
 
+      - name: Generate tree.json manifest
+        run: |
+          echo "Generating tree.json from repository files..."
+          git ls-tree -r HEAD | python3 -c "
+          import sys, json
+          items = []
+          for line in sys.stdin:
+              parts = line.strip().split('\t', 1)
+              if len(parts) == 2:
+                  meta, path = parts
+                  fields = meta.split()
+                  if len(fields) == 3:
+                      items.append({'path': path, 'type': 'blob', 'sha': fields[2]})
+          json.dump({'tree': items}, sys.stdout, separators=(', ', ': '))
+          " > tree.json
+
+          echo "Validating tree.json..."
+          python3 -c "import json; data=json.load(open('tree.json')); assert 'tree' in data and len(data['tree']) > 0, 'Invalid tree.json'"
+
+          echo "tree.json generated successfully with $(python3 -c "import json; print(len(json.load(open('tree.json'))['tree']))") files"
+
       - name: Create pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -267,7 +288,8 @@ jobs:
             --prerelease \
             artifacts/pilot-linux-arm64/pilot-linux-arm64.so \
             artifacts/pilot-linux-arm64/pilot \
-            artifacts/pilot-darwin-arm64/pilot-darwin-arm64.so
+            artifacts/pilot-darwin-arm64/pilot-darwin-arm64.so \
+            tree.json
 
           echo "Pre-release $VERSION created successfully"
 

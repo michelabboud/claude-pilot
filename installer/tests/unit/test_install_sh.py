@@ -25,8 +25,11 @@ def test_install_sh_downloads_installer_files():
 
     assert "download_installer" in content, "install.sh must have download_installer function"
 
-    assert "api.github.com" in content, "Must use GitHub API for file discovery"
-    assert "git/trees" in content, "Must use git trees API endpoint"
+    assert "tree.json" in content, "Must download tree.json from release assets"
+    assert "releases/download" in content, "Must use release asset URL pattern"
+
+    assert "api.github.com" in content, "Must use GitHub API for file discovery fallback"
+    assert "git/trees" in content, "Must use git trees API endpoint as fallback"
 
     assert "installer/" in content, "Must filter for installer directory"
     assert ".py" in content, "Must filter for Python files"
@@ -222,3 +225,21 @@ def test_install_sh_handles_api_failure():
     content = install_sh.read_text()
 
     assert "Failed to fetch" in content or "Could not" in content, "Must have error message for API failure"
+
+
+def test_install_sh_uses_redirect_for_version_detection():
+    """Verify install.sh uses redirect-based approach before API for version detection."""
+    install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    assert "redirect_url" in content, "Must use redirect_url for curl"
+    assert "releases/latest" in content, "Must query releases/latest for redirect"
+
+    assert "--spider" in content or "Location:" in content, "Must detect wget redirects"
+
+    assert "api.github.com" in content, "Must still have API fallback"
+    assert "releases/latest" in content, "Must query both redirect and API endpoints"
+
+    assert "tr -d" in content, "Must strip carriage returns from redirect response"
+    assert "%{redirect_url}" in content, "Must detect literal %{redirect_url} from old curl versions"
+    assert "releases/tag/v" in content, "Must parse version from redirect URL path"

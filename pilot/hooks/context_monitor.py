@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _util import (
+    COMPACTION_THRESHOLD_PCT,
     CYAN,
     NC,
     YELLOW,
@@ -20,6 +21,11 @@ from _util import (
 THRESHOLD_WARN = 65
 THRESHOLD_AUTOCOMPACT = 75
 LEARN_THRESHOLDS = [40, 55, 65]
+
+
+def _to_effective(raw_pct: float) -> float:
+    """Convert raw context % to effective % (where compaction threshold = 100%)."""
+    return min(raw_pct / COMPACTION_THRESHOLD_PCT * 100, 100)
 
 
 def get_current_session_id() -> str:
@@ -120,9 +126,9 @@ def _is_throttled(session_id: str) -> bool:
 
     Returns True if:
     - Last check was < 30 seconds ago AND
-    - Last cached context was < 65%
+    - Last cached context was below the warning threshold (~80% effective)
 
-    Always returns False at 65%+ context (never throttle high context).
+    Always returns False at high context (never throttle when approaching compaction).
     """
     cache_path = get_session_cache_path()
     if not cache_path.exists():
@@ -174,24 +180,26 @@ def run_context_monitor() -> int:
         return 0
 
     percentage, total_tokens, shown_learn, shown_80_warn = resolved
+    effective = _to_effective(percentage)
 
     save_cache(total_tokens, session_id)
 
     new_learn_shown: list[int] = []
-    for threshold in LEARN_THRESHOLDS:
-        if percentage >= threshold and threshold not in shown_learn:
-            print(
-                f"{CYAN}💡 Context {percentage:.0f}% - Non-obvious discovery or reusable workflow? → Invoke Skill(learn){NC}",
-                file=sys.stderr,
-            )
-            new_learn_shown.append(threshold)
-            break
+    if percentage < THRESHOLD_AUTOCOMPACT:
+        for threshold in LEARN_THRESHOLDS:
+            if percentage >= threshold and threshold not in shown_learn:
+                print(
+                    f"{CYAN}💡 Context {effective:.0f}% — non-obvious discovery or reusable workflow? → Invoke Skill(learn){NC}",
+                    file=sys.stderr,
+                )
+                new_learn_shown.append(threshold)
+                break
 
     if percentage >= THRESHOLD_AUTOCOMPACT:
         save_cache(total_tokens, session_id, new_learn_shown if new_learn_shown else None)
         print("", file=sys.stderr)
         print(
-            f"{YELLOW}⚠️  Context at {percentage:.0f}%. Auto-compact approaching — no rush, no context is lost.{NC}",
+            f"{YELLOW}⚠️  Context at {effective:.0f}%. Auto-compact approaching — no rush, no context is lost.{NC}",
             file=sys.stderr,
         )
         print(
@@ -204,7 +212,7 @@ def run_context_monitor() -> int:
         save_cache(total_tokens, session_id, new_learn_shown if new_learn_shown else None, shown_80_warn=True)
         print("", file=sys.stderr)
         print(
-            f"{CYAN}💡 Context at {percentage:.0f}%. Auto-compact will handle context management automatically. No rush.{NC}",
+            f"{CYAN}💡 Context at {effective:.0f}%. Auto-compact will handle context management automatically. No rush.{NC}",
             file=sys.stderr,
         )
         return 0

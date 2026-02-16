@@ -351,7 +351,7 @@ After **every single file edit**, these hooks fire:
 | -------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `file_checker.py`    | Blocking     | Dispatches to language-specific checkers: Python (ruff + basedpyright), TypeScript (Prettier + ESLint + tsc), Go (gofmt + golangci-lint). Auto-fixes formatting.     |
 | `tdd_enforcer.py`    | Non-blocking | Checks if implementation files were modified without failing tests first. Shows reminder to write tests. Excludes test files, docs, config, TSX, and infrastructure. |
-| `context_monitor.py` | Non-blocking | Monitors context usage. Warns at 65%+ (informational) and 75%+ (caution). Prompts `/learn` at key thresholds.                                                       |
+| `context_monitor.py` | Non-blocking | Monitors context usage. Warns at ~80% (informational) and ~90%+ (caution). Prompts `/learn` at key thresholds.                                                       |
 | Memory observer      | Async        | Captures development observations to persistent memory.                                                                                                              |
 
 #### PreCompact (before auto-compaction)
@@ -375,13 +375,14 @@ After **every single file edit**, these hooks fire:
 
 ### Context Preservation
 
-The context monitor tracks usage in real-time, and auto-compaction handles context limits transparently:
+Pilot preserves context automatically across compaction boundaries:
 
-- At ~83% context, Claude's built-in compaction fires automatically — no process restart needed
 - `pre_compact.py` captures Pilot state (active plan, tasks, key context) to persistent memory
 - `post_compact_restore.py` re-injects Pilot context after compaction — agent continues seamlessly
 - Multiple Pilot sessions can run in parallel on the same project without interference
 - Status line shows live context usage, memory status, active plan, and license info
+
+**Effective context display:** Claude Code reserves ~16.5% of the context window as a compaction buffer, triggering auto-compaction at ~83.5% raw usage. Pilot rescales this to an **effective 0–100% range** so the status bar fills naturally to 100% right before compaction fires. A `▓` buffer indicator at the end of the bar shows the reserved zone. The context monitor warns at ~80% effective (informational) and ~90%+ effective (caution) — no confusing raw percentages.
 
 ### Built-in Rules & Standards
 
