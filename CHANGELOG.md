@@ -2,6 +2,12 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.7.5] - 2026-02-17
+
+### Bug Fixes
+
+- Harden worktree lifecycle against data loss and improve project config
+
 ## [6.7.4] - 2026-02-17
 
 ### Bug Fixes
