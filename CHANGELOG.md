@@ -2,6 +2,12 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.7.1] - 2026-02-17
+
+### Bug Fixes
+
+- Move settings to global ~/.claude/settings.json with SSL and platform fixes
+
 ## [6.7.0] - 2026-02-16
 
 ### Features
