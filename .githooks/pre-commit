@@ -1,43 +1,54 @@
 #!/usr/bin/env bash
-# Pre-commit hook: auto-rebuild console build artifacts
-# Ensures pilot/scripts/*.cjs and pilot/ui/ assets are always in sync with console/src/
+# Pre-commit hook: test gates + auto-rebuild console build artifacts
+#
+# 1. Python unit tests   — when launcher/ or pilot/hooks/ changed
+# 2. Console unit tests  — when console/ changed
+# 3. Console typecheck + build + stage artifacts — when console/src/ changed
 
-set -e
+set -eo pipefail
 
-# Build artifacts that must stay in sync with console source
-ARTIFACTS=(
-  "pilot/scripts/mcp-server.cjs"
-  "pilot/scripts/worker-service.cjs"
-  "pilot/scripts/context-generator.cjs"
-  "pilot/scripts/worker-wrapper.cjs"
-  "pilot/ui/viewer-bundle.js"
-  "pilot/ui/viewer.css"
-)
+# --- 1. Python unit tests ---
+PYTHON_CHANGED=$(git diff --cached --name-only -- 'launcher/' 'pilot/hooks/' | head -1)
 
-# Check if any console source files are staged
+if [ -n "$PYTHON_CHANGED" ]; then
+  echo "[pre-commit] Python source changed — running unit tests..."
+  uv run pytest launcher/tests/ pilot/hooks/tests/ -q --tb=short 2>&1 | tail -5
+  echo "[pre-commit] Python unit tests passed."
+fi
+
+# --- 2. Console unit tests ---
 CONSOLE_CHANGED=$(git diff --cached --name-only -- 'console/src/' 'console/scripts/' 'console/package.json' 'console/tsconfig.json' 'console/vite.config.ts' | head -1)
 
-if [ -z "$CONSOLE_CHANGED" ]; then
-  exit 0
+if [ -n "$CONSOLE_CHANGED" ]; then
+  # Verify node_modules exist
+  if [ ! -d "console/node_modules" ]; then
+    echo "[pre-commit] ERROR: console/node_modules missing. Run: cd console && bun install"
+    exit 1
+  fi
+
+  echo "[pre-commit] Console source changed — running unit tests..."
+  (cd console && bun test 2>&1) | tail -5
+  echo "[pre-commit] Console unit tests passed."
+
+  # --- 3. Console typecheck + build + stage artifacts ---
+  echo "[pre-commit] Running typecheck..."
+  (cd console && bun run typecheck 2>&1) | tail -5
+  echo "[pre-commit] Console typecheck passed."
+
+  echo "[pre-commit] Rebuilding console artifacts..."
+  (cd console && npm run build 2>&1) | tail -3
+  echo ""
+
+  # Build artifacts that must stay in sync with console source
+  ARTIFACTS=(
+    "pilot/scripts/mcp-server.cjs"
+    "pilot/scripts/worker-service.cjs"
+    "pilot/scripts/context-generator.cjs"
+    "pilot/scripts/worker-wrapper.cjs"
+    "pilot/ui/viewer-bundle.js"
+    "pilot/ui/viewer.css"
+  )
+
+  git add "${ARTIFACTS[@]}"
+  echo "[pre-commit] Console artifacts rebuilt and staged."
 fi
-
-echo "[pre-commit] Console source changed — rebuilding artifacts..."
-
-# Verify node_modules exist
-if [ ! -d "console/node_modules" ]; then
-  echo "[pre-commit] ERROR: console/node_modules missing. Run: cd console && npm install"
-  exit 1
-fi
-
-# Rebuild
-cd console
-if ! npm run build 2>&1 | tail -3; then
-  echo "[pre-commit] ERROR: Console build failed. Fix build errors before committing."
-  exit 1
-fi
-cd ..
-
-# Stage the rebuilt artifacts
-git add "${ARTIFACTS[@]}"
-
-echo "[pre-commit] Console artifacts rebuilt and staged."
