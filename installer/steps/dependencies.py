@@ -474,16 +474,48 @@ def install_prettier() -> bool:
     return _run_bash_with_retry(npm_global_cmd("npm install -g prettier"))
 
 
-def install_golangci_lint() -> bool:
-    """Install golangci-lint for comprehensive Go code linting.
+def _install_go_via_apt() -> bool:
+    """Install Go and gopls via apt on Linux."""
+    import platform
 
-    Skips if Go is not installed, since golangci-lint requires it.
-    Uses the official install script to place the binary in $(go env GOPATH)/bin.
-    """
+    if platform.system() != "Linux":
+        return False
+    if not command_exists("apt-get"):
+        return False
+    return _run_bash_with_retry(
+        "sudo apt-get update -qq && sudo apt-get install -y -qq golang-go gopls",
+        timeout=180,
+    )
+
+
+def _is_golangci_lint_installed() -> bool:
+    """Check if golangci-lint is installed, including in GOPATH/bin."""
     if command_exists("golangci-lint"):
         return True
     if not command_exists("go"):
         return False
+    try:
+        result = subprocess.run(["go", "env", "GOPATH"], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            gopath_bin = Path(result.stdout.strip()) / "bin" / "golangci-lint"
+            if gopath_bin.exists():
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def install_golangci_lint() -> bool:
+    """Install golangci-lint for comprehensive Go code linting.
+
+    Installs Go via apt first if missing on Linux.
+    Uses the official install script to place the binary in $(go env GOPATH)/bin.
+    """
+    if _is_golangci_lint_installed():
+        return True
+    if not command_exists("go"):
+        if not _install_go_via_apt():
+            return False
     install_cmd = (
         "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh"
         " | sh -s -- -b $(go env GOPATH)/bin"
@@ -801,7 +833,33 @@ def _precache_npx_mcp_servers(_ui: Any) -> bool:
         except subprocess.TimeoutExpired:
             _kill_proc(proc)
 
+    _fix_npx_peer_dependencies()
     return True
+
+
+def _fix_npx_peer_dependencies() -> None:
+    """Install missing peer dependencies in npx cache directories.
+
+    open-websearch depends on @modelcontextprotocol/sdk which declares zod
+    as a peer dependency. npm's npx cache doesn't always resolve peer deps,
+    causing 'Cannot find package zod' at runtime. This installs zod into
+    any cache dir that has open-websearch but is missing zod.
+    """
+    npx_cache = Path.home() / ".npm" / "_npx"
+    if not npx_cache.exists():
+        return
+    for hash_dir in npx_cache.iterdir():
+        nm = hash_dir / "node_modules"
+        if (nm / "open-websearch").is_dir() and not (nm / "zod").is_dir():
+            try:
+                subprocess.run(
+                    ["npm", "install", "zod"],
+                    cwd=hash_dir,
+                    capture_output=True,
+                    timeout=60,
+                )
+            except Exception:
+                pass
 
 
 class DependenciesStep(BaseStep):

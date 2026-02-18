@@ -541,6 +541,36 @@ class TestPrecacheNpxMcpServers:
         assert _extract_npx_package_name("@upstash/context7-mcp") == "@upstash/context7-mcp"
         assert _extract_npx_package_name("@scope/pkg@1.0.0") == "@scope/pkg"
 
+    def test_fix_npx_peer_dependencies_installs_zod(self):
+        """_fix_npx_peer_dependencies installs zod when open-websearch is cached but zod is missing."""
+        from installer.steps.dependencies import _fix_npx_peer_dependencies
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / ".npm" / "_npx" / "abc123" / "node_modules" / "open-websearch"
+            cache_dir.mkdir(parents=True)
+
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                with patch("installer.steps.dependencies.subprocess.run") as mock_run:
+                    _fix_npx_peer_dependencies()
+
+            mock_run.assert_called_once()
+            assert mock_run.call_args[0][0] == ["npm", "install", "zod"]
+
+    def test_fix_npx_peer_dependencies_skips_when_zod_present(self):
+        """_fix_npx_peer_dependencies skips when zod is already installed."""
+        from installer.steps.dependencies import _fix_npx_peer_dependencies
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hash_dir = Path(tmpdir) / ".npm" / "_npx" / "abc123" / "node_modules"
+            (hash_dir / "open-websearch").mkdir(parents=True)
+            (hash_dir / "zod").mkdir(parents=True)
+
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                with patch("installer.steps.dependencies.subprocess.run") as mock_run:
+                    _fix_npx_peer_dependencies()
+
+            mock_run.assert_not_called()
+
     @patch("installer.steps.dependencies.subprocess.run")
     def test_is_ccusage_installed_returns_true_when_present(self, mock_run):
         """_is_ccusage_installed returns True when ccusage is globally installed."""
@@ -839,26 +869,38 @@ class TestInstallGolangciLint:
         assert result is True
         mock_run.assert_not_called()
 
-    @patch("installer.steps.dependencies.command_exists")
-    def test_install_golangci_lint_skips_without_go(self, mock_cmd):
-        """install_golangci_lint returns False when go is not installed."""
+    @patch("installer.steps.dependencies._install_go_via_apt", return_value=False)
+    @patch("installer.steps.dependencies.command_exists", return_value=False)
+    def test_install_golangci_lint_fails_without_go_and_no_apt(self, mock_cmd, mock_apt):
+        """install_golangci_lint returns False when go missing and apt install fails."""
         from installer.steps.dependencies import install_golangci_lint
 
-        mock_cmd.side_effect = lambda cmd: cmd != "golangci-lint" and False
-
-        with patch("installer.steps.dependencies._run_bash_with_retry") as mock_run:
-            result = install_golangci_lint()
+        result = install_golangci_lint()
 
         assert result is False
-        mock_run.assert_not_called()
+        mock_apt.assert_called_once()
 
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
+    @patch("installer.steps.dependencies._install_go_via_apt", return_value=True)
     @patch("installer.steps.dependencies.command_exists")
-    def test_install_golangci_lint_uses_official_script(self, mock_cmd, mock_run):
-        """install_golangci_lint uses the official install.sh script."""
+    def test_install_golangci_lint_installs_go_via_apt_then_lint(self, mock_cmd, mock_apt, mock_run):
+        """install_golangci_lint installs Go via apt when missing, then installs lint."""
         from installer.steps.dependencies import install_golangci_lint
 
-        mock_cmd.side_effect = lambda cmd: cmd == "go"
+        mock_cmd.side_effect = lambda cmd: False
+
+        result = install_golangci_lint()
+
+        assert result is True
+        mock_apt.assert_called_once()
+        assert "golangci-lint" in mock_run.call_args[0][0]
+
+    @patch("installer.steps.dependencies._run_bash_with_retry", return_value=True)
+    @patch("installer.steps.dependencies.command_exists", side_effect=lambda cmd: cmd == "go")
+    @patch("installer.steps.dependencies._is_golangci_lint_installed", return_value=False)
+    def test_install_golangci_lint_uses_official_script(self, mock_check, mock_cmd, mock_run):
+        """install_golangci_lint uses the official install.sh script."""
+        from installer.steps.dependencies import install_golangci_lint
 
         result = install_golangci_lint()
 
@@ -870,12 +912,11 @@ class TestInstallGolangciLint:
         assert "go env GOPATH" in call_args
 
     @patch("installer.steps.dependencies._run_bash_with_retry", return_value=False)
-    @patch("installer.steps.dependencies.command_exists")
-    def test_install_golangci_lint_returns_false_on_failure(self, mock_cmd, mock_run):
+    @patch("installer.steps.dependencies.command_exists", side_effect=lambda cmd: cmd == "go")
+    @patch("installer.steps.dependencies._is_golangci_lint_installed", return_value=False)
+    def test_install_golangci_lint_returns_false_on_failure(self, mock_check, mock_cmd, mock_run):
         """install_golangci_lint returns False when install script fails."""
         from installer.steps.dependencies import install_golangci_lint
-
-        mock_cmd.side_effect = lambda cmd: cmd == "go"
 
         result = install_golangci_lint()
 
