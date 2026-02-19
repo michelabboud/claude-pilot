@@ -2,6 +2,19 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.9.0] - 2026-02-19
+
+### Bug Fixes
+
+- Grant prepare-release job write permission for semantic-release dry-run
+- Remove Dependabot configuration
+- Resolve Trivy security scan findings and add pre-commit hook
+- Improved MCP-CLI system as CC default
+
+### Features
+
+- Implement spec/release-security-hardening
+
 ## [6.8.3] - 2026-02-19
 
 ### Bug Fixes

@@ -1,4 +1,4 @@
 """Claude Pilot Installer - Step-based installation pipeline."""
 
-__version__ = "6.8.3"
+__version__ = "6.9.0"
 __build__ = "dev"
