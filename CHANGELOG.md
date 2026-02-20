@@ -2,6 +2,12 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.9.3] - 2026-02-20
+
+### Bug Fixes
+
+- Detect native Windows in install.sh and guide users to WSL2 or Dev Container
+
 ## [6.9.2] - 2026-02-20
 
 ### Bug Fixes
