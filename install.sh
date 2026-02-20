@@ -431,6 +431,59 @@ run_installer() {
 	fi
 }
 
+is_native_windows() {
+	case "$(uname -s)" in
+	MINGW* | MSYS* | CYGWIN*) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+if is_native_windows && ! is_in_container; then
+	echo ""
+	echo "======================================================================"
+	echo "  Claude Pilot — Windows Detected (no WSL2)"
+	echo "======================================================================"
+	echo ""
+	echo "  Pilot's local mode requires a Unix environment (macOS, Linux, or WSL2)."
+	echo ""
+	echo "  Your options:"
+	echo ""
+	echo "    1) Install WSL2, then run this installer inside Ubuntu"
+	echo "       PowerShell (admin): wsl --install -d Ubuntu"
+	echo ""
+	echo "    2) Use the Dev Container (works without WSL2)"
+	echo "       Requires Docker Desktop for Windows."
+	echo ""
+	echo "  Choose: "
+
+	choice=""
+	if [ -t 0 ]; then
+		printf "  Enter choice [1-2]: "
+		read -r choice
+	elif [ -e /dev/tty ]; then
+		printf "  Enter choice [1-2]: "
+		read -r choice </dev/tty
+	else
+		echo "  No interactive terminal. Install WSL2 or Docker Desktop."
+		exit 1
+	fi
+
+	case $choice in
+	2)
+		setup_devcontainer
+		;;
+	*)
+		echo ""
+		echo "  Install WSL2 first (PowerShell as admin):"
+		echo "    wsl --install -d Ubuntu"
+		echo ""
+		echo "  Then open Ubuntu and re-run this installer."
+		echo ""
+		exit 0
+		;;
+	esac
+fi
+
 if ! is_in_container; then
 	echo ""
 	echo "======================================================================"

@@ -77,13 +77,15 @@ claude --version
 ```p-4
 # Install WSL if needed (PowerShell as Administrator)
 wsl --install -d Ubuntu
- 
+
 # Inside Ubuntu terminal
 curl -fsSL https://claude.ai/install.sh | bash
 claude --version
 ```
 
 **Windows users**: The native installer no longer requires Node.js. WSL users should run Claude Code from their Linux terminal.
+
+> **Claude Pilot users on Windows**: Pilot requires a Unix environment. If you're on Windows without WSL2, use the **Dev Container** option in the Pilot installer — it gives you a fully configured Linux environment via Docker Desktop. With WSL2, you can install Pilot locally inside your Ubuntu terminal.
 
 ### [Install Claude Code on macOS](#install-claude-code-on-macos)
 

@@ -227,6 +227,19 @@ def test_install_sh_handles_api_failure():
     assert "Failed to fetch" in content or "Could not" in content, "Must have error message for API failure"
 
 
+def test_install_sh_detects_native_windows():
+    """Verify install.sh detects native Windows (MINGW/MSYS/Cygwin) and offers WSL2 or Dev Container."""
+    install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
+    content = install_sh.read_text()
+
+    assert "is_native_windows" in content, "Must have Windows detection function"
+    assert "MINGW" in content, "Must detect Git Bash (MINGW)"
+    assert "MSYS" in content, "Must detect MSYS2"
+    assert "CYGWIN" in content, "Must detect Cygwin"
+    assert "WSL2" in content or "WSL" in content, "Must mention WSL2 as an option"
+    assert "Dev Container" in content, "Must mention Dev Container as an option"
+
+
 def test_install_sh_uses_redirect_for_version_detection():
     """Verify install.sh uses redirect-based approach before API for version detection."""
     install_sh = Path(__file__).parent.parent.parent.parent / "install.sh"
