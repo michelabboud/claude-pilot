@@ -430,20 +430,6 @@ def _install_vexor_mlx(ui: Any = None) -> bool:
     return True
 
 
-def uninstall_mcp_cli() -> bool:
-    """Uninstall mcp-cli — now built into Claude Code.
-
-    Tries both bun and npm to ensure cleanup regardless of install method.
-    """
-    if not command_exists("mcp-cli"):
-        return True
-
-    if command_exists("bun"):
-        _run_bash_with_retry("bun remove -g mcp-cli")
-    _run_bash_with_retry(npm_global_cmd("npm uninstall -g mcp-cli"))
-    return True
-
-
 def install_sx() -> bool:
     """Install sx (sleuth.io skills exchange) for team asset sharing."""
     if not command_exists("sx"):
@@ -907,9 +893,6 @@ class DependenciesStep(BaseStep):
 
         if _install_with_spinner(ui, "Plugin dependencies", _install_plugin_dependencies, ctx.project_dir, ui):
             installed.append("plugin_deps")
-
-        if _install_with_spinner(ui, "mcp-cli cleanup", uninstall_mcp_cli):
-            installed.append("mcp_cli_cleanup")
 
         if _install_with_spinner(ui, "vtsls (TypeScript LSP server)", install_typescript_lsp):
             installed.append("typescript_lsp")

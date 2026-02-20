@@ -40,14 +40,14 @@ Parameters: `query`, `language`, `repo`, `path`, `useRegexp`, `matchCase`
 
 ### Web Search / Fetch
 
-**⛔ NEVER use built-in `WebFetch` or `WebSearch` — they are blocked by hook and will fail.** Always use the MCP alternatives via `mcp-cli`.
+**⛔ NEVER use built-in `WebFetch` or `WebSearch` — they are blocked by hook and will fail.** Use `ToolSearch` to load the MCP alternatives, then call them directly.
 
-| Need | Tool |
-|------|------|
-| Web search | `plugin_pilot_web-search/search` (DuckDuckGo/Bing/Exa) |
-| GitHub README | `plugin_pilot_web-search/fetchGithubReadme` |
-| Fetch full page | `plugin_pilot_web-fetch/fetch_url` (Playwright, no truncation) |
-| Fetch multiple | `plugin_pilot_web-fetch/fetch_urls` |
+| Need | ToolSearch query | Tool to call |
+|------|-----------------|--------------|
+| Web search | `+web-search search` | `mcp__plugin_pilot_web-search__search` |
+| GitHub README | `+web-search fetch` | `mcp__plugin_pilot_web-search__fetchGithubReadme` |
+| Fetch full page | `+web-fetch fetch` | `mcp__plugin_pilot_web-fetch__fetch_url` |
+| Fetch multiple | `+web-fetch fetch` | `mcp__plugin_pilot_web-fetch__fetch_urls` |
 
 Full MCP server reference with schemas and examples in `mcp-servers.md`.
 

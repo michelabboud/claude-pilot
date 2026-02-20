@@ -1,13 +1,14 @@
 ## Pilot MCP Servers
 
-All MCP tools are invoked via `mcp-cli`. **Always check schema before calling.**
+MCP tools are lazy-loaded via `ToolSearch`. Discover tools by keyword, then call them directly.
 
-```bash
-mcp-cli info <server>/<tool>                    # MANDATORY first — check schema
-mcp-cli call <server>/<tool> '{"param": "val"}' # Then call with correct params
+```
+ToolSearch(query="keyword")        # Discover and load tools by keyword
+ToolSearch(query="+server keyword") # Require a specific server prefix
+ToolSearch(query="select:full_tool_name") # Load a specific tool by exact name
 ```
 
-All internal Pilot servers use the `plugin_pilot_` prefix. Pre-approved permissions are configured in `settings.json`.
+All Pilot MCP servers use the `mcp__plugin_pilot_` prefix. Tools are available immediately after ToolSearch returns them.
 
 ---
 
@@ -32,11 +33,15 @@ All internal Pilot servers use the `plugin_pilot_` prefix. Pre-approved permissi
 
 **Types:** `bugfix`, `feature`, `refactor`, `discovery`, `decision`, `change`
 
-```bash
-mcp-cli call plugin_pilot_mem-search/search '{"query": "authentication flow", "limit": 5}'
-mcp-cli call plugin_pilot_mem-search/timeline '{"anchor": 22865, "depth_before": 3, "depth_after": 3}'
-mcp-cli call plugin_pilot_mem-search/get_observations '{"ids": [22865, 22866]}'
-mcp-cli call plugin_pilot_mem-search/save_memory '{"text": "Important finding", "title": "Short title"}'
+```
+# Discover tools
+ToolSearch(query="+mem-search search")
+
+# Then call directly
+mcp__plugin_pilot_mem-search__search(query="authentication flow", limit=5)
+mcp__plugin_pilot_mem-search__timeline(anchor=22865, depth_before=3, depth_after=3)
+mcp__plugin_pilot_mem-search__get_observations(ids=[22865, 22866])
+mcp__plugin_pilot_mem-search__save_memory(text="Important finding", title="Short title")
 ```
 
 ---
@@ -52,10 +57,12 @@ mcp-cli call plugin_pilot_mem-search/save_memory '{"text": "Important finding", 
 | 1 | `resolve-library-id` | Find library ID from name |
 | 2 | `query-docs` | Query docs using the resolved ID |
 
-```bash
-mcp-cli call plugin_pilot_context7/resolve-library-id '{"query": "how to use fixtures", "libraryName": "pytest"}'
+```
+ToolSearch(query="+context7 resolve")
+
+mcp__plugin_pilot_context7__resolve-library-id(query="how to use fixtures", libraryName="pytest")
 # → returns libraryId like "/pypi/pytest"
-mcp-cli call plugin_pilot_context7/query-docs '{"libraryId": "/pypi/pytest", "query": "how to create and use fixtures"}'
+mcp__plugin_pilot_context7__query-docs(libraryId="/pypi/pytest", query="how to create and use fixtures")
 ```
 
 Use descriptive queries. Max 3 calls per question per tool.
@@ -74,9 +81,11 @@ Use descriptive queries. Max 3 calls per question per tool.
 | `fetchCsdnArticle` | Fetch CSDN article | `url` |
 | `fetchJuejinArticle` | Fetch Juejin article | `url` |
 
-```bash
-mcp-cli call plugin_pilot_web-search/search '{"query": "Python asyncio best practices 2026", "limit": 5}'
-mcp-cli call plugin_pilot_web-search/fetchGithubReadme '{"url": "https://github.com/astral-sh/ruff"}'
+```
+ToolSearch(query="+web-search search")
+
+mcp__plugin_pilot_web-search__search(query="Python asyncio best practices 2026", limit=5)
+mcp__plugin_pilot_web-search__fetchGithubReadme(url="https://github.com/astral-sh/ruff")
 ```
 
 ---
@@ -96,9 +105,11 @@ mcp-cli call plugin_pilot_web-search/fetchGithubReadme '{"url": "https://github.
 | `useRegexp` | boolean | Regex mode. Prefix with `(?s)` for multiline |
 | `matchCase` | boolean | Case-sensitive search |
 
-```bash
-mcp-cli call plugin_pilot_grep-mcp/searchGitHub '{"query": "FastMCP", "language": ["Python"]}'
-mcp-cli call plugin_pilot_grep-mcp/searchGitHub '{"query": "(?s)useEffect\\(.*cleanup", "useRegexp": true, "language": ["TypeScript"]}'
+```
+ToolSearch(query="+grep-mcp searchGitHub")
+
+mcp__plugin_pilot_grep-mcp__searchGitHub(query="FastMCP", language=["Python"])
+mcp__plugin_pilot_grep-mcp__searchGitHub(query="(?s)useEffect\\(.*cleanup", useRegexp=True, language=["TypeScript"])
 ```
 
 ---
@@ -113,9 +124,11 @@ mcp-cli call plugin_pilot_grep-mcp/searchGitHub '{"query": "(?s)useEffect\\(.*cl
 | `fetch_urls` | Fetch multiple pages | `urls` (array, required), same options as above |
 | `browser_install` | Install Chromium | `withDeps`, `force` |
 
-```bash
-mcp-cli call plugin_pilot_web-fetch/fetch_url '{"url": "https://docs.example.com/api"}'
-mcp-cli call plugin_pilot_web-fetch/fetch_urls '{"urls": ["https://a.com", "https://b.com"]}'
+```
+ToolSearch(query="+web-fetch fetch")
+
+mcp__plugin_pilot_web-fetch__fetch_url(url="https://docs.example.com/api")
+mcp__plugin_pilot_web-fetch__fetch_urls(urls=["https://a.com", "https://b.com"])
 ```
 
 Options: `waitUntil` (load/domcontentloaded/networkidle), `returnHtml`, `waitForNavigation` (for anti-bot pages).

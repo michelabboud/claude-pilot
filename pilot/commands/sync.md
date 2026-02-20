@@ -336,12 +336,12 @@ MCP servers are configured in `.mcp.json`:
 For each user server discovered in Step 6.1:
 
 1. **Load the server's tools:**
-   - Use `mcp-cli tools <server-name>` to list available tools
-   - Use `mcp-cli info <server>/<tool>` to inspect each tool's schema
+   - Use `ToolSearch(query="+server-name keyword")` to discover and load available tools
+   - Review the returned tool schemas to understand parameters
 
 2. **Probe each tool with a minimal read-only call:**
-   - Use `mcp-cli call <server>/<tool> '{}'` with minimal/empty arguments (prefer list/get operations over create/delete)
-   - **Safety:** Only call read-only tools (list, get, search, describe). Skip tools that create, update, delete, or modify state. Check schema with `mcp-cli info` first when unsure.
+   - Call loaded tools directly with minimal arguments (prefer list/get operations over create/delete)
+   - **Safety:** Only call read-only tools (list, get, search, describe). Skip tools that create, update, delete, or modify state. Check the tool schema returned by ToolSearch when unsure.
 
 3. **Record results per tool:**
 
@@ -380,7 +380,7 @@ For each user server discovered in Step 6.1:
 For each user-configured server (not Pilot core):
 
 1. **Get server tools and descriptions:**
-   - Use `mcp-cli tools <server-name>` to list tools, then `mcp-cli info <server>/<tool>` to inspect schemas
+   - Use `ToolSearch(query="+server-name keyword")` to discover tools and inspect their schemas
 
 2. **Compare against existing `mcp-servers.md`:**
    - Check if server is already documented
@@ -423,7 +423,7 @@ Custom MCP servers configured for this project.
 
 **Example Usage:**
 
-Use `mcp-cli info <server>/<tool>` to check schema, then `mcp-cli call <server>/<tool> '{...}'` to invoke.
+Use `ToolSearch(query="+server-name keyword")` to discover and load tools, then call them directly.
 ````
 
 ```

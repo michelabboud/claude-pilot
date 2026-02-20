@@ -107,13 +107,13 @@ HINTS: dict[str, dict] = {
 BLOCKS: dict[str, dict] = {
     "WebSearch": {
         "message": "WebSearch is blocked (use MCP alternative)",
-        "alternative": "Use mcp-cli to call plugin_pilot_web-search/search",
-        "example": 'mcp-cli call plugin_pilot_web-search/search \'{"query": "..."}\'',
+        "alternative": "Use ToolSearch to load mcp__plugin_pilot_web-search__search, then call it directly",
+        "example": 'ToolSearch(query="+web-search search") then mcp__plugin_pilot_web-search__search(query="...")',
     },
     "WebFetch": {
         "message": "WebFetch is blocked (truncates at ~8KB)",
-        "alternative": "Use mcp-cli to call plugin_pilot_web-fetch/fetch_url for full page content",
-        "example": 'mcp-cli call plugin_pilot_web-fetch/fetch_url \'{"url": "..."}\'',
+        "alternative": "Use ToolSearch to load mcp__plugin_pilot_web-fetch__fetch_url, then call it directly",
+        "example": 'ToolSearch(query="+web-fetch fetch") then mcp__plugin_pilot_web-fetch__fetch_url(url="...")',
     },
     "EnterPlanMode": {
         "message": "BLOCKED: EnterPlanMode is FORBIDDEN. Plan mode is completely disabled in this project.",

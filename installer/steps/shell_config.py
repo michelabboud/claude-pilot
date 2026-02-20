@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import stat
 from pathlib import Path
 
 from installer.context import InstallContext
@@ -14,8 +13,6 @@ CLAUDE_ALIAS_MARKER = "# Claude Pilot"
 PILOT_BIN = "$HOME/.pilot/bin/pilot"
 PILOT_BIN_DIR = "$HOME/.pilot/bin"
 BUN_BIN_PATH = "$HOME/.bun/bin"
-
-MCP_CLI_SCRIPT = '#!/usr/bin/env bash\nexec claude --mcp-cli "$@"\n'
 
 
 def get_alias_lines(shell_type: str) -> str:
@@ -38,9 +35,6 @@ def alias_exists_in_file(config_file: Path) -> bool:
         or "alias ccp" in content
         or "alias claude" in content
         or "alias pilot" in content
-        or "alias mcp-cli" in content
-        or "mcp-cli()" in content
-        or "function mcp-cli" in content
     )
 
 
@@ -56,15 +50,12 @@ def remove_old_alias(config_file: Path) -> bool:
         or "alias ccp" in content
         or "alias claude" in content
         or "alias pilot" in content
-        or "alias mcp-cli" in content
         or "ccp()" in content
         or "claude()" in content
         or "pilot()" in content
-        or "mcp-cli()" in content
         or "function ccp" in content
         or "function claude" in content
         or "function pilot" in content
-        or "function mcp-cli" in content
         or 'PATH="$HOME/.bun/bin' in content
         or 'PATH="$HOME/.pilot/bin' in content
     )
@@ -86,11 +77,9 @@ def remove_old_alias(config_file: Path) -> bool:
             stripped.startswith("alias ccp=")
             or stripped.startswith("alias claude=")
             or stripped.startswith("alias pilot=")
-            or stripped.startswith("alias mcp-cli=")
             or stripped.startswith("alias ccp ")
             or stripped.startswith("alias claude ")
             or stripped.startswith("alias pilot ")
-            or stripped.startswith("alias mcp-cli ")
         ):
             continue
 
@@ -111,10 +100,6 @@ def remove_old_alias(config_file: Path) -> bool:
         elif stripped.startswith("pilot()") or stripped == "pilot () {":
             inside_function = True
             brace_count = 0
-        elif stripped.startswith("mcp-cli()") or stripped == "mcp-cli () {":
-            inside_function = True
-            brace_count = 0
-
         if inside_function:
             brace_count += line.count("{") - line.count("}")
             if brace_count <= 0:
@@ -125,7 +110,6 @@ def remove_old_alias(config_file: Path) -> bool:
             stripped.startswith("function ccp")
             or stripped.startswith("function claude")
             or stripped.startswith("function pilot")
-            or stripped.startswith("function mcp-cli")
         ):
             inside_function = True
             continue
@@ -161,7 +145,7 @@ class ShellConfigStep(BaseStep):
         return False
 
     def run(self, ctx: InstallContext) -> None:
-        """Configure shell with claude alias and mcp-cli wrapper script."""
+        """Configure shell with pilot alias."""
         ui = ctx.ui
         config_files = get_shell_config_files()
         modified_files: list[str] = []
@@ -169,8 +153,6 @@ class ShellConfigStep(BaseStep):
 
         if ui:
             ui.status("Configuring shell alias...")
-
-        self._install_mcp_cli_script(ui)
 
         for config_file in config_files:
             if not config_file.exists():
@@ -199,29 +181,3 @@ class ShellConfigStep(BaseStep):
 
         ctx.config["modified_shell_configs"] = modified_files
         ctx.config["shell_needs_reload"] = needs_reload
-
-    @staticmethod
-    def _install_mcp_cli_script(ui: object | None) -> None:
-        """Install mcp-cli wrapper script to ~/.pilot/bin/.
-
-        Claude Code's mcp-cli alias breaks in zsh when arguments contain
-        a forward slash (e.g., `mcp-cli call server/tool`). A real script
-        on PATH avoids this zsh alias expansion bug entirely.
-        See: https://github.com/anthropics/claude-code/issues/26655
-        """
-        mcp_cli_path = Path.home() / ".pilot" / "bin" / "mcp-cli"
-        try:
-            mcp_cli_path.parent.mkdir(parents=True, exist_ok=True)
-            mcp_cli_path.write_text(MCP_CLI_SCRIPT)
-            mcp_cli_path.chmod(mcp_cli_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-            if ui:
-                from installer.ui import Console
-
-                if isinstance(ui, Console):
-                    ui.success("Installed mcp-cli wrapper script")
-        except OSError as e:
-            if ui:
-                from installer.ui import Console
-
-                if isinstance(ui, Console):
-                    ui.warning(f"Could not install mcp-cli script: {e}")
