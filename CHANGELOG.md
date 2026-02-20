@@ -2,6 +2,13 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.9.2] - 2026-02-20
+
+### Bug Fixes
+
+- Improve vault command with correct client IDs and disable non-Claude clients
+- Migrate from deprecated mcp-cli to ToolSearch for MCP tool access
+
 ## [6.9.1] - 2026-02-20
 
 ### Bug Fixes
