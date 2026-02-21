@@ -2,6 +2,20 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.9.4] - 2026-02-21
+
+### Bug Fixes
+
+- Trigger release for AlmaLinux git prerequisite fix
+- Install git via system package manager before Homebrew on RHEL-based distros
+- Add uninstall script for clean Pilot removal
+
+### Miscellaneous
+
+- Updated Demo Video Link
+- Updated Readme
+- Added Demo to Readme and Website
+
 ## [6.9.3] - 2026-02-20
 
 ### Bug Fixes
