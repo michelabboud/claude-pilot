@@ -536,22 +536,20 @@ Details and licensing at [claude-pilot.com](https://claude-pilot.com).
 
 Pilot makes external calls **only for licensing**. Here is the complete list:
 
-| When                                        | Where              | What is sent                                                               |
-| ------------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| License validation (once per 24h)           | `api.polar.sh`     | License key, organization ID                                               |
-| License activation (once)                   | `api.polar.sh`     | License key, machine fingerprint, OS, architecture, Python version         |
-| Activation analytics (once)                 | `claude-pilot.com` | Tier, Pilot version, OS, architecture, Python version, machine fingerprint |
-| Trial start (once)                          | `claude-pilot.com` | Hashed hardware fingerprint, OS, Pilot version, locale                     |
-| Trial heartbeat (each session during trial) | `claude-pilot.com` | Hashed hardware fingerprint, OS, Pilot version                             |
+| When                              | Where              | What is sent                       |
+| --------------------------------- | ------------------ | ---------------------------------- |
+| License validation (once per 24h) | `api.polar.sh`     | License key, organization ID       |
+| License activation (once)         | `api.polar.sh`     | License key, machine fingerprint   |
+| Trial start (once)                | `claude-pilot.com` | Hashed hardware fingerprint        |
 
-That's it. No code, no filenames, no prompts, no project content, no personal data. The validation result is cached locally, and Pilot works fully offline for up to 7 days between checks. Beyond these licensing calls, the only external communication is between Claude Code and Anthropic's API — using your own subscription or API key.
+That's it — three calls total, each sent at most once (validation re-checks daily). No OS, no architecture, no Python version, no locale, no analytics, no heartbeats. The validation result is cached locally, and Pilot works fully offline for up to 7 days between checks. Beyond these licensing calls, the only external communication is between Claude Code and Anthropic's API — using your own subscription or API key.
 
 </details>
 
 <details>
 <summary><b>Is Pilot enterprise-compliant for data privacy?</b></summary>
 
-Yes. Your source code, project files, and development context never leave your machine through Pilot. The only external calls Pilot makes are for license management — validation (daily to `api.polar.sh`), activation and analytics (one-time), and trial heartbeats. None of these transmit any code, project data, or personal information. Enterprises using Claude Code with their own API key or Anthropic Enterprise subscription can add Pilot without changing their data compliance posture.
+Yes. Your source code, project files, and development context never leave your machine through Pilot. The only external calls are license validation (daily, license key only) and one-time activation/trial start (machine fingerprint only). No OS info, no version strings, no analytics, no telemetry. Enterprises using Claude Code with their own API key or Anthropic Enterprise subscription can add Pilot without changing their data compliance posture.
 
 </details>
 

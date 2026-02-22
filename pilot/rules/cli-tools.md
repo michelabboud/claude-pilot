@@ -27,7 +27,7 @@ Slug = plan filename without date prefix and `.md`. `create` auto-stashes uncomm
 
 **⛔ First choice for codebase search — always try before Grep, Glob, or Explore sub-agents.** Finds by intent, not exact text. Zero context cost until you read results.
 
-Set `timeout: 60000` — indexing can happen on first run. Never run in background.
+Set the **Bash tool's** `timeout` parameter to `60000` when calling vexor — indexing can happen on first run. Never run in background. The `timeout` is NOT a vexor flag.
 
 ```bash
 vexor "<QUERY>" [--path <ROOT>] [--mode <MODE>] [--ext .py,.md] [--exclude-pattern <PATTERN>] [--top 5]

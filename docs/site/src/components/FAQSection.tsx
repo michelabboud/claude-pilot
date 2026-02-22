@@ -1,17 +1,22 @@
 import { HelpCircle } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useInView } from "@/hooks/use-in-view";
 
 const faqItems = [
   {
     question: "Does Pilot send my code or data to external services?",
     answer:
-      "No code, files, prompts, project data, or personal information ever leaves your machine through Pilot. All development tools \u2014 vector search, persistent memory, session state, and quality hooks \u2014 run entirely locally. Pilot makes external calls only for licensing: (1) License validation \u2014 once every 24 hours, your license key is checked against Polar\u2019s API (api.polar.sh). (2) License activation \u2014 one-time, sends license key, machine fingerprint, OS, and architecture to api.polar.sh, plus a one-time activation analytics event (tier, Pilot version, OS info) to claude-pilot.com. (3) Trial \u2014 sends a hashed hardware fingerprint, OS, and Pilot version to claude-pilot.com to generate a 7-day trial key, with a lightweight heartbeat on each session start during the trial. That\u2019s the complete list. No code, no filenames, no prompts, no project content. The validation result is cached locally, and Pilot works fully offline for up to 7 days.",
+      "No code, files, prompts, project data, or personal information ever leaves your machine through Pilot. All development tools \u2014 vector search, persistent memory, session state, and quality hooks \u2014 run entirely locally. Pilot makes exactly three external calls, all for licensing only: (1) License validation \u2014 once every 24 hours, sends your license key and organization ID to api.polar.sh. (2) License activation \u2014 one-time, sends license key and a machine fingerprint to api.polar.sh. (3) Trial start \u2014 one-time, sends a hashed hardware fingerprint to claude-pilot.com to generate a 7-day trial key. That\u2019s the complete list. No OS info, no version strings, no analytics, no telemetry, no heartbeats. The validation result is cached locally, and Pilot works fully offline for up to 7 days.",
   },
   {
     question: "Is Pilot enterprise-compliant for data privacy?",
     answer:
-      "Yes. Your source code, project files, and development context never leave your machine through Pilot. The only external calls Pilot makes are for license management \u2014 validation (daily to api.polar.sh), activation and analytics (one-time), and trial heartbeats. None of these transmit any code, project data, or personal information. Enterprises using Claude Code with their own API key or Anthropic Enterprise subscription can add Pilot without changing their data compliance posture.",
+      "Yes. Your source code, project files, and development context never leave your machine through Pilot. The only external calls are license validation (daily, license key only) and one-time activation/trial start (machine fingerprint only). No OS info, no version strings, no analytics, no telemetry. Enterprises using Claude Code with their own API key or Anthropic Enterprise subscription can add Pilot without changing their data compliance posture.",
   },
   {
     question: "What are the licenses of Pilot's dependencies?",
