@@ -1,13 +1,9 @@
-import { Github, ArrowDown } from "lucide-react";
+import { Github, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/Logo";
 
 const HeroSection = () => {
-  const scrollToInstall = () => {
-    document.getElementById("installation")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <section className="min-h-[70vh] flex flex-col items-center justify-center px-3 xs:px-4 sm:px-6 relative overflow-hidden pt-16 xs:pt-20 pb-4">
       {/* Background effects */}
@@ -43,7 +39,9 @@ const HeroSection = () => {
             variant="outline"
             className="px-2 xs:px-3 sm:px-4 py-1 xs:py-1.5 text-[10px] xs:text-xs sm:text-sm border-primary/50 text-primary"
           >
-            <span className="hidden xs:inline">Claude Code is powerful. Pilot makes it reliable.</span>
+            <span className="hidden xs:inline">
+              Claude Code is powerful. Pilot makes it reliable.
+            </span>
             <span className="xs:hidden">Reliable Claude Code</span>
           </Badge>
         </div>
@@ -66,28 +64,48 @@ const HeroSection = () => {
         {/* Feature highlights */}
         <div className="flex flex-wrap justify-center gap-3 xs:gap-4 sm:gap-6 mb-6 xs:mb-8 animate-fade-in-up animation-delay-300 px-2">
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">Rules</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Best Practices</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">
+              Rules
+            </div>
+            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">
+              Best Practices
+            </div>
           </div>
           <div className="w-px h-8 bg-border/50 hidden xs:block" />
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">Hooks</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Quality Gates</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">
+              Hooks
+            </div>
+            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">
+              Quality Gates
+            </div>
           </div>
           <div className="w-px h-8 bg-border/50 hidden xs:block" />
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">MCP</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">External Context</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">
+              MCP
+            </div>
+            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">
+              External Context
+            </div>
           </div>
           <div className="w-px h-8 bg-border/50 hidden xs:block" />
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">LSP</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Live Diagnostics</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">
+              LSP
+            </div>
+            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">
+              Live Diagnostics
+            </div>
           </div>
           <div className="w-px h-8 bg-border/50 hidden xs:block" />
           <div className="text-center">
-            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">Search</div>
-            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">Semantic Index</div>
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold text-primary">
+              Search
+            </div>
+            <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">
+              Semantic Index
+            </div>
           </div>
         </div>
 
@@ -110,16 +128,31 @@ const HeroSection = () => {
           </Badge>
         </div>
 
-        {/* CTA Buttons with 3D effects */}
+        {/* CTA Buttons */}
         <div className="flex flex-col xs:flex-row items-center justify-center gap-2 xs:gap-3 sm:gap-4 animate-fade-in-up animation-delay-400 px-2">
-          <Button size="lg" onClick={scrollToInstall} className="w-full xs:w-auto text-sm xs:text-base">
-            <ArrowDown className="mr-1.5 xs:mr-2 h-3.5 w-3.5 xs:h-4 xs:w-4" />
-            Get Started
-          </Button>
-          <Button variant="outline" size="lg" asChild className="w-full xs:w-auto text-sm xs:text-base">
-            <a href="https://github.com/maxritter/claude-pilot" target="_blank" rel="noopener noreferrer">
+          <Button
+            size="lg"
+            asChild
+            className="w-full xs:w-auto text-sm xs:text-base"
+          >
+            <a
+              href="https://github.com/maxritter/claude-pilot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Github className="mr-1.5 xs:mr-2 h-3.5 w-3.5 xs:h-4 xs:w-4" />
               View on GitHub
+            </a>
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            asChild
+            className="w-full xs:w-auto text-sm xs:text-base"
+          >
+            <a href="/docs">
+              <BookOpen className="mr-1.5 xs:mr-2 h-3.5 w-3.5 xs:h-4 xs:w-4" />
+              Read Documentation
             </a>
           </Button>
         </div>
