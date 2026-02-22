@@ -2,6 +2,12 @@
 
 All notable changes to Claude Pilot will be documented in this file.
 
+## [6.10.0] - 2026-02-22
+
+### Features
+
+- Add goal verification sub-agent, documentation pages, and installer fixes
+
 ## [6.9.4] - 2026-02-21
 
 ### Bug Fixes
