@@ -85,7 +85,7 @@ After installation, `cd` into any project and run `pilot` or `ccp` to start Pilo
 **Specific version** (see [releases](https://github.com/maxritter/pilot-shell/releases)):
 
 ```bash
-export VERSION=7.1.0
+export VERSION=7.1.1
 curl -fsSL https://raw.githubusercontent.com/maxritter/pilot-shell/main/install.sh | bash
 ```
 

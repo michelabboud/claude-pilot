@@ -2,6 +2,13 @@
 
 All notable changes to Pilot Shell will be documented in this file.
 
+## [7.1.1] - 2026-03-02
+
+### Bug Fixes
+
+- Prevent worker from stopping when another session is still active
+- Optimize commands and rules for 52% token reduction without quality loss
+
 ## [7.1.0] - 2026-03-01
 
 ### Features
