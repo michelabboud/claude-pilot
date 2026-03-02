@@ -60,7 +60,9 @@ const ConsoleSection = () => {
             <Monitor className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">Pilot Shell Console</h2>
+            <h2 className="text-xl font-bold text-foreground">
+              Pilot Shell Console
+            </h2>
             <p className="text-sm text-muted-foreground">
               Local web dashboard at localhost:41777 — monitor and manage your
               sessions
@@ -130,7 +132,7 @@ const ConsoleSection = () => {
           <p className="text-xs text-muted-foreground leading-relaxed">
             <span className="text-primary font-medium">Settings tab:</span>{" "}
             Configure model selection per component — Planning (Opus),
-            Implementation (Sonnet), Verification (Opus), each sub-agent
+            Implementation (Sonnet), Verification (Sonnet), each sub-agent
             independently. Enable the{" "}
             <span className="text-primary">Extended Context (1M)</span> toggle
             to use the 1M token context window across all models simultaneously.{" "}

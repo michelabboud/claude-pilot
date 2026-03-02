@@ -62,18 +62,19 @@ When resuming same session (same `CLAUDE_CODE_TASK_LIST_ID`): run `TaskList` fir
 
 **Search:** See `research-tools.md` for the priority chain (Vexor → Grep/Glob → Explore). Task agents are for multi-step *reasoning*, not search.
 
-### /spec Verification Agents (MANDATORY)
+### /spec Verification Agents
 
 | Phase | Agent (background) | `subagent_type` |
 |-------|-------------------|-----------------|
-| `spec-plan` 1.7 (features only) | plan-reviewer | `pilot:plan-reviewer` |
-| `spec-verify` 3.0, 3.7 (features only) | spec-reviewer | `pilot:spec-reviewer` |
+| `spec-plan` 1.7 (features >3 tasks) | plan-reviewer | `pilot:plan-reviewer` |
+| `spec-verify` 3.1, 3.4 (features only) | spec-reviewer | `pilot:spec-reviewer` |
 
+**Plan-reviewer is conditional:** Skip for plans with ≤3 tasks, no Feature Inventory, and no open questions.
 **Bugfixes skip sub-agents** in both planning and verification — the Behavior Contract proves correctness through tests.
 
 **Rules:**
-- Launch the `Task()` call with `run_in_background=true`
-- ⛔ NEVER skip verification or use `TaskOutput` (wastes tokens) — agents write to JSON files, poll with Read
+- Launch with `run_in_background=true`
+- ⛔ NEVER use `TaskOutput` (wastes tokens) — agents write to JSON files, poll with bash file-existence loop then Read once
 - Sub-agents do NOT inherit rules but can read from `~/.claude/rules/*.md` and `.claude/rules/*.md`
 
 ### Background Bash
@@ -111,7 +112,7 @@ Call after creating plan header, reading existing plan, and after status changes
 /spec → Dispatcher → Detect type (LLM intent) → Feature: Skill('spec-plan') → Plan, verify, approve
                                                 → Bugfix:  Skill('spec-bugfix-plan') → Bug analysis, verify, approve
                    → Skill('spec-implement')   → TDD loop for each task (both types)
-                   → Feature: Skill('spec-verify')        → Tests, execution, code review, 3 sub-agents
+                   → Feature: Skill('spec-verify')        → Tests, execution, code review, 1 review agent
                    → Bugfix:  Skill('spec-bugfix-verify') → Behavior Contract audit, tests, process compliance
 ```
 
@@ -136,7 +137,7 @@ Call after creating plan header, reading existing plan, and after status changes
 | COMPLETE | * | Bugfix | `Skill(skill='spec-bugfix-verify', args='<plan-path>')` |
 | VERIFIED | * | * | Report completion, done |
 
-**`spec-implement` works identically for both plan types** — the plan file is the interface. **Verification dispatches by type:** features → `spec-verify` (3 review agents, E2E, full pipeline), bugfixes → `spec-bugfix-verify` (Behavior Contract audit, tests, process compliance — no sub-agents).
+**`spec-implement` works identically for both plan types** — the plan file is the interface. **Verification dispatches by type:** features → `spec-verify` (1 review agent, automated checks, runtime profile-based E2E), bugfixes → `spec-bugfix-verify` (Behavior Contract audit, tests, process compliance — no sub-agents).
 
 ### Feedback Loop
 
@@ -144,11 +145,11 @@ Call after creating plan header, reading existing plan, and after status changes
 spec-verify (or spec-bugfix-verify) finds issues → Status: PENDING → spec-implement fixes → COMPLETE → verify → ... → VERIFIED
 ```
 
-### ⛔ Only THREE User Interaction Points — No Stopping
+### ⛔ Only THREE User Interaction Points
 
 1. **Worktree Choice + Type Confirmation** (new plans only, in dispatcher — type only asked when ambiguous)
 2. **Plan Approval** (in spec-plan or spec-bugfix-plan)
-3. **Worktree Sync Approval** (in spec-verify, only when `Worktree: Yes`)
+3. **Worktree Sync Approval** (in spec-verify/spec-bugfix-verify, only when `Worktree: Yes`)
 
 Everything else is automatic. **NEVER ask "Should I fix these findings?"** — verification fixes are part of the approved plan.
 

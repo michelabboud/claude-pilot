@@ -2,7 +2,7 @@
 
 ### Project-Specific Policies
 
-**File Size:** Production code under 300 lines. 500 is hard limit — stop and refactor. Test files exempt.
+**File Size:** Production code under 400 lines. 600 is hard limit — stop and refactor. Test files exempt.
 
 **Dependency Check:** Before modifying any function, use `vexor`, `Grep`, or LSP `findReferences` to find all callers. Update all affected call sites.
 

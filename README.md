@@ -122,7 +122,7 @@ Plan  →  Approve  →  Implement (TDD)  →  Verify  →  Done
 
 Full exploration workflow for new functionality, refactoring, or architectural changes.
 
-**Plan:** Explores codebase with semantic search → asks clarifying questions → writes detailed spec with scope, tasks, and definition of done → **plan-reviewer sub-agent** validates completeness → waits for your approval.
+**Plan:** Explores codebase with semantic search → asks clarifying questions → writes detailed spec with scope, tasks, and definition of done → **plan-reviewer sub-agent** validates completeness (conditional: skipped for simple plans ≤3 tasks) → waits for your approval.
 
 **Implement:** Creates an isolated git worktree → implements each task with strict TDD (RED → GREEN → REFACTOR) → quality hooks auto-lint, format, and type-check every edit → full test suite after each task.
 
@@ -262,7 +262,7 @@ Claude Code reserves ~16.5% of the context window as a compaction buffer, trigge
 
 ### Smart Model Routing
 
-Opus for planning and verification — where reasoning quality matters most. Sonnet for implementation — where a clear spec makes fast execution predictable. All model assignments are configurable per-component via the Pilot Shell Console settings.
+Opus for planning — where reasoning quality matters most. Sonnet for implementation and verification — where a clear spec makes fast execution predictable. All model assignments are configurable per-component via the Pilot Shell Console settings.
 
 <details>
 <summary><b>Phase-by-phase breakdown</b></summary>
@@ -270,9 +270,9 @@ Opus for planning and verification — where reasoning quality matters most. Son
 | Phase                 | Default | Why                                                                                                                                               |
 | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Planning**          | Opus    | Exploring your codebase, designing architecture, and writing the spec requires deep reasoning. A good plan is the foundation of everything.       |
-| **Plan Verification** | Opus    | Catching gaps, missing edge cases, and requirement mismatches before implementation saves expensive rework.                                       |
+| **Plan Verification** | Sonnet  | The plan-reviewer sub-agent validates completeness and challenges assumptions. Conditional: skipped for simple plans (≤3 tasks, clear scope).     |
 | **Implementation**    | Sonnet  | With a solid plan, writing code is straightforward. Sonnet is fast, cost-effective, and produces high-quality code when guided by a clear spec.   |
-| **Code Verification** | Opus    | Independent code review against the plan requires the same reasoning depth as planning — catching subtle bugs, logic errors, and spec deviations. |
+| **Code Verification** | Sonnet  | The unified spec-reviewer agent handles deep code review (compliance + quality + goal). The orchestrator runs mechanical checks and applies fixes. |
 
 Choose between Sonnet 4.6 and Opus 4.6 for the main session, each command, and sub-agents. A global "Extended Context (1M)" toggle enables the 1M token context window across all models simultaneously. **Note:** 1M context models require a Max (20x) or Enterprise subscription — not available to all users.
 

@@ -76,8 +76,8 @@ export function ModelRoutingInfo() {
             </div>
             <p className="text-sm text-base-content/70 mt-2">
               Quick Mode uses <span className="font-mono">{mainModel}</span>.
-              Routing defaults use Opus for planning and verification
-              orchestration, Sonnet for implementation.
+              Routing defaults use Opus for planning, Sonnet for implementation
+              and verification.
             </p>
           </div>
 

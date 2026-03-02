@@ -22,7 +22,7 @@ paths:
 - **Minimal props:** Under 5-7. More = component doing too much. Always typed with defaults.
 - **State:** Keep local — only lift when multiple components need it. Prop drilling 3+ levels → use composition or context.
 - **Naming:** Components: PascalCase nouns. Props: camelCase, booleans `is*`/`has*`. Events: `on*` for props, `handle*` internal.
-- **Split when:** >200-300 lines, multiple responsibilities, reusable elsewhere, testing becomes difficult.
+- **Split when:** >300-400 lines, multiple responsibilities, reusable elsewhere, testing becomes difficult.
 
 ## CSS
 

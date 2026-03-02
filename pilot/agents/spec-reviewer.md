@@ -96,20 +96,22 @@ For EACH task in the plan, check its DoD criteria. Find evidence in changed file
 
 Apply all rules read in Step 1. Focus on real issues, not style preferences.
 
-#### Security
+**Note:** Hooks already enforce TDD compliance (tdd_enforcer), file length limits (file_checker), and tool usage (tool_redirect) during implementation. Prioritize issues hooks CANNOT catch: security vulnerabilities, logic bugs, error handling, and architectural quality.
+
+#### Security (highest priority — hooks can't catch these)
 - Shell injection: user input passed to subprocess/os.system without validation → **must_fix**
 - Hardcoded secrets/API keys → **must_fix**
 - Auth bypass vulnerabilities → **must_fix**
 - SQL injection → **must_fix**
 
-#### Bugs and Logic
+#### Bugs and Logic (hooks can't catch these)
 - Null/None dereferencing without checks
 - Off-by-one errors in loops or ranges
 - Race conditions or concurrent access issues
 - Incorrect algorithms or edge cases not handled
 
-#### TDD Compliance
-- New functions/methods with no corresponding test → **must_fix**
+#### Test Quality (hooks remind, you enforce)
+- New functions/methods with no corresponding test → **must_fix** (tdd_enforcer hook only reminds, doesn't block)
 - Tests that don't actually test the feature (only check no crash) → **should_fix**
 - Unit tests making real HTTP/subprocess/DB calls (no mocking) → **must_fix**
 
@@ -117,11 +119,6 @@ Apply all rules read in Step 1. Focus on real issues, not style preferences.
 - Bare `except:` or `except Exception:` without logging → **should_fix**
 - Silently swallowed errors with no fallback or notification → **should_fix**
 - External calls without timeout handling → **should_fix**
-
-#### Code Quality
-- No `any` types in TypeScript (use `unknown`) → **should_fix**
-- Unused imports or dead code → **suggestion**
-- Missing explicit return types on exported functions → **suggestion**
 
 ### Step 5: Phase C — Goal Achievement
 
@@ -259,13 +256,12 @@ Output ONLY valid JSON (no markdown wrapper, no explanation outside JSON):
 - [ ] Each risk mitigation from the Risks section is implemented and tested
 - [ ] Each task's Definition of Done criteria are met
 
-**Quality:**
-- [ ] Tests exist for new functions/methods
-- [ ] Unit tests mock external calls (no real HTTP/subprocess/DB in unit tests)
+**Quality (focus on what hooks can't catch):**
+- [ ] No security vulnerabilities (injection, hardcoded secrets, auth bypass)
+- [ ] No logic bugs (null deref, off-by-one, race conditions)
+- [ ] Tests verify behavior, not just no-crash (hooks enforce existence)
+- [ ] Unit tests mock external calls
 - [ ] Error handling is present (no bare except, errors not swallowed)
-- [ ] No shell injection (user input passed to subprocess without validation)
-- [ ] No secrets/credentials hardcoded
-- [ ] Return types explicit on exported functions
 
 **Goal:**
 - [ ] Language detected from Tech Stack or file extensions

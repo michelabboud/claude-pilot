@@ -307,14 +307,12 @@ const DeepDiveSection = () => {
                 <span className="text-sm font-mono font-semibold text-violet-400 bg-violet-400/10 px-3 py-1 rounded-lg">
                   OPUS
                 </span>
-                <span className="text-sm text-muted-foreground">
-                  Planning & Verification
-                </span>
+                <span className="text-sm text-muted-foreground">Planning</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Exploring your codebase, designing architecture, catching gaps,
-                and reviewing code against the plan. Deep reasoning prevents
-                expensive rework.
+                Exploring your codebase, designing architecture, and writing the
+                spec. Deep reasoning on the plan prevents expensive rework
+                downstream.
               </p>
             </div>
             <div className="rounded-2xl p-5 border border-primary/30 bg-primary/5 backdrop-blur-sm">
@@ -323,13 +321,13 @@ const DeepDiveSection = () => {
                   SONNET
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  Implementation
+                  Implementation & Verification
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                With a solid plan, writing code is straightforward. Fast,
-                cost-effective, and produces high-quality code when guided by a
-                clear spec.
+                With a solid plan, code and verification are straightforward.
+                The unified review agent handles deep code analysis while the
+                orchestrator runs mechanical checks efficiently.
               </p>
             </div>
           </div>

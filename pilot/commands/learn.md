@@ -5,75 +5,42 @@ model: sonnet
 
 # /learn - Online Learning System
 
-**Extract reusable knowledge from this session into skills.** Evaluates what was learned, checks for existing skills, and creates new ones when valuable patterns are discovered.
+**Extract reusable knowledge from this session into skills.** Evaluates what was learned, checks for existing skills, creates new ones when valuable.
 
 ---
 
-## TABLE OF CONTENTS
+## Phase 0: Reference
 
-| Phase       | Description                                            | Steps   |
-| ----------- | ------------------------------------------------------ | ------- |
-| **Phase 0** | Reference: triggers, quality criteria, skill structure | 0.1–0.4 |
-| **Phase 1** | Evaluate: assess if knowledge is worth extracting      | 1.1     |
-| **Phase 2** | Check Existing: search for related skills              | 2.1     |
-| **Phase 3** | Create Skill: write the skill file                     | 3.1–3.2 |
-| **Phase 4** | Quality Gates: final checklist before saving           | 4.1     |
+### Triggers
 
-**Quick Step Reference:**
+| Trigger | Example |
+|---------|---------|
+| **Non-obvious debugging** | Spent 10+ minutes; solution wasn't in docs |
+| **Misleading errors** | Error message pointed wrong direction; found real cause |
+| **Workarounds** | Found limitation and creative solution |
+| **Tool integration** | Undocumented API/tool usage |
+| **Trial-and-error** | Tried multiple approaches before finding what worked |
+| **Repeatable workflow** | Multi-step task that will recur |
+| **External service queries** | Fetched from Jira, GitHub, Confluence |
+| **User-facing automation** | Reports, status checks user will ask for again |
 
-- 0.1 Triggers, 0.2 Quality criteria, 0.3 What NOT to extract, 0.4 Skill structure
-- 1.1 Self-evaluation questions
-- 2.1 Search existing skills
-- 3.1 Choose location, 3.2 Write SKILL.md
-- 4.1 Final checklist
+### Quality Criteria
 
----
+- **Reusable**: Will help future tasks, not just this instance
+- **Non-trivial**: Required discovery or is a valuable workflow pattern
+- **Verified**: Solution actually worked
 
-## PHASE 0: REFERENCE
+**Do NOT extract:** Single-step tasks, one-off fixes, knowledge in official docs.
 
-### Step 0.1: Triggers
-
-Invoke `/learn` after ANY task involving:
-
-| Trigger                      | Example                                                          |
-| ---------------------------- | ---------------------------------------------------------------- |
-| **Non-obvious debugging**    | Spent 10+ minutes investigating; solution wasn't in docs         |
-| **Misleading errors**        | Error message pointed wrong direction; found real cause          |
-| **Workarounds**              | Found limitation and creative solution                           |
-| **Tool integration**         | Figured out how to use tool/API in undocumented way              |
-| **Trial-and-error**          | Tried multiple approaches before finding what worked             |
-| **Repeatable workflow**      | Multi-step task that will recur; worth standardizing             |
-| **External service queries** | Fetched data from Jira, GitHub, Confluence, or other APIs        |
-| **User-facing automation**   | Built something user will ask for again (reports, status checks) |
-
-### Step 0.2: Quality Criteria
-
-Skills must be:
-
-- **Reusable**: Will help with future tasks (not just this instance)
-- **Non-trivial**: Required discovery, OR is a valuable workflow pattern
-- **Verified**: Solution actually worked, not theoretical
-
-### Step 0.3: What NOT to Extract
-
-- Single-step tasks with no workflow value
-- One-off fixes unlikely to recur
-- Knowledge easily found in official docs
-
-### Step 0.4: Skill Structure
+### Skill Structure
 
 **Location:** `.claude/skills/[skill-name]/SKILL.md`
-
-**Template:**
 
 ```markdown
 ---
 name: descriptive-kebab-case-name
 description: |
-  [CRITICAL: This determines when the skill triggers. Include:]
-  - When to use it (trigger conditions, scenarios — NOT what the skill does)
-  - Specific trigger conditions (exact error messages, symptoms)
-  - Contexts where it applies
+  [CRITICAL: Describe WHEN to use, not HOW it works. Include trigger conditions, scenarios, exact error messages.]
 author: Claude Code
 version: 1.0.0
 ---
@@ -81,85 +48,37 @@ version: 1.0.0
 # Skill Name
 
 ## Problem
-
-[Clear description of the problem]
-
 ## Context / Trigger Conditions
-
-[When to use - exact error messages, symptoms, scenarios]
-
 ## Solution
-
-[Step-by-step solution]
-
 ## Verification
-
-[How to verify it worked]
-
 ## Example
-
-[Concrete example]
-
 ## References
-
-[Links to documentation]
 ```
 
-<details>
-<summary>Writing Effective Descriptions (⚠️ The Description Trap)</summary>
+**⚠️ The Description Trap:** If description summarizes the workflow, Claude follows the short description as a shortcut instead of reading SKILL.md. Always describe trigger conditions, not process.
 
-The description field is CRITICAL for skill discovery. **Describe WHEN to use the skill, NEVER summarize HOW it works.**
+✅ `"Fix for ENOENT errors in npm monorepos. Use when: (1) npm run fails with ENOENT, (2) symlinked deps cause failures."`
+❌ `"Extract and organize npm monorepo fixes by analyzing symlinks and paths."`
 
-**Why this matters:** If the description summarizes the workflow/process, Claude follows the short description as a shortcut instead of reading the full SKILL.md. The skill's detailed steps, examples, and nuances get ignored.
-
-**Good** (trigger conditions):
-
-```yaml
-description: |
-  Fix for "ENOENT: no such file or directory" errors in npm monorepos.
-  Use when: (1) npm run fails with ENOENT, (2) paths work in root but
-  not in packages, (3) symlinked dependencies cause failures.
-```
-
-**Bad** (workflow summary — Claude will follow this instead of reading the skill):
-
-```yaml
-description: Extract and organize npm monorepo fixes by analyzing symlinks and paths.
-```
-
-</details>
-
-**Guidelines:**
-
-- **Concise** - Claude is smart; only add what it doesn't know
-- **Under 500 lines** - Move large docs to `references/`
-- **Examples over explanations** - Show, don't tell
+**Guidelines:** Concise (Claude is smart). Under 600 lines. Examples over explanations.
 
 ---
 
-## PHASE 1: EVALUATE
-
-### Step 1.1: Self-Evaluation Questions
+## Phase 1: Evaluate
 
 Ask yourself:
 
-1. "What did I just learn that wasn't obvious before starting?"
+1. "What did I learn that wasn't obvious before starting?"
 2. "Would future-me benefit from having this documented?"
-3. "Was the solution non-obvious from documentation alone?"
-4. "Is this a multi-step workflow I'd repeat on similar tasks?"
+3. "Was the solution non-obvious from docs alone?"
+4. "Is this a multi-step workflow I'd repeat?"
 5. "Did I query an external service the user will ask about again?"
 
-**If NO to all → Skip extraction, nothing to learn.**
-
-**Note:** External service queries (Jira tickets, GitHub PRs, Confluence pages) are almost always worth extracting - users frequently repeat these requests.
+**If NO to all → Skip, nothing to learn.** External service queries are almost always worth extracting.
 
 ---
 
-## PHASE 2: CHECK EXISTING
-
-### Step 2.1: Search for Related Skills
-
-Before creating, search for related skills:
+## Phase 2: Check Existing
 
 ```bash
 ls .claude/skills/ 2>/dev/null
@@ -168,63 +87,40 @@ ls ~/.claude/pilot/skills/ 2>/dev/null
 rg -i "keyword" ~/.claude/pilot/skills/ 2>/dev/null
 ```
 
-| Found                | Action                           |
-| -------------------- | -------------------------------- |
-| Nothing related      | Create new skill                 |
-| Same trigger and fix | Update existing (bump version)   |
-| Partial overlap      | Update existing with new variant |
+| Found | Action |
+|-------|--------|
+| Nothing related | Create new |
+| Same trigger/fix | Update existing (bump version) |
+| Partial overlap | Update with new variant |
 
 ---
 
-## PHASE 3: CREATE SKILL
+## Phase 3: Create Skill
 
-### Step 3.1: Choose Location
-
-**Project skills**: `.claude/skills/[skill-name]/SKILL.md`
-
-### Step 3.2: Write SKILL.md
-
-Use the template from Step 0.4. Ensure the description field contains specific trigger conditions.
+Write to `.claude/skills/[skill-name]/SKILL.md` using the template from Phase 0. Ensure description contains specific trigger conditions.
 
 ---
 
-## PHASE 4: QUALITY GATES
-
-### Step 4.1: Final Checklist
-
-Before finalizing:
+## Phase 4: Quality Gates
 
 - [ ] Description contains specific trigger conditions
 - [ ] Solution verified to work
-- [ ] Content specific enough to be actionable
-- [ ] Content general enough to be reusable
+- [ ] Specific enough to be actionable
+- [ ] General enough to be reusable
 - [ ] No sensitive information
 
 ---
 
-## EXAMPLE
+## Example
 
-**Scenario**: Discovered LSP `findReferences` can find dead code by checking if functions have only 1 reference (their definition) or only test references.
+**Scenario:** Discovered LSP `findReferences` can find dead code by checking if functions have only 1 reference (their definition) or only test references.
 
-**Skill Created**: `.claude/skills/lsp-dead-code-finder/SKILL.md`
+**Result:** `.claude/skills/lsp-dead-code-finder/SKILL.md`
 
-```markdown
----
+```yaml
 name: lsp-dead-code-finder
 description: |
   Find dead/unused code using LSP findReferences. Use when: (1) user asks
   to find dead code, (2) cleaning up codebase, (3) refactoring. Key insight:
   function with only 1 reference (definition) or only test refs is dead code.
----
-
-# LSP Dead Code Finder
-
-...
 ```
-
----
-
-## REMEMBER
-
-**Continuous improvement.** Every valuable discovery should benefit future sessions.
-Evaluate after significant work. Extract selectively. Create carefully.

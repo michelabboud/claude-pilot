@@ -20,7 +20,7 @@ const phases = [
     steps: [
       "Explores codebase with semantic search, asks clarifying questions",
       "Writes detailed spec with scope, tasks, and definition of done",
-      "Plan-reviewer sub-agent validates completeness independently",
+      "Plan-reviewer sub-agent validates completeness (conditional, skipped for simple plans)",
       "Waits for your approval — edit the plan directly before accepting",
     ],
   },

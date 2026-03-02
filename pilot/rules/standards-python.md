@@ -58,4 +58,4 @@ basedpyright src                                    # Type check
 - [ ] `basedpyright src` — clean
 - [ ] Coverage ≥ 80%
 - [ ] No unused imports
-- [ ] No production file exceeds 300 lines (500 = hard limit)
+- [ ] No production file exceeds 400 lines (600 = hard limit)

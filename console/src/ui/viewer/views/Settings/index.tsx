@@ -9,22 +9,21 @@ import { ModelSelect } from "./ModelSelect.js";
 import { ExtendedContextToggle } from "./ExtendedContextToggle.js";
 
 const GENERAL_ROWS: { key: string; label: string; sub?: string }[] = [
-  { key: "main", label: "Main session", sub: "Quick Mode / direct chat" },
-  { key: "vault", label: "/vault" },
-  { key: "sync", label: "/sync" },
-  { key: "learn", label: "/learn" },
+  { key: "main", label: "Main Session", sub: "Quick Mode / direct chat" },
+  { key: "vault", label: "Vault" },
+  { key: "sync", label: "Sync" },
+  { key: "learn", label: "Learn" },
 ];
 
 const SPEC_ROWS: { key: string; label: string }[] = [
-  { key: "spec", label: "/spec (dispatcher)" },
-  { key: "spec-plan", label: "/spec planning" },
-  { key: "spec-implement", label: "/spec implement" },
-  { key: "spec-verify", label: "/spec verify" },
+  { key: "spec-plan", label: "Planning" },
+  { key: "spec-implement", label: "Implementation" },
+  { key: "spec-verify", label: "Verification" },
 ];
 
-const AGENT_ROWS: { key: string; label: string }[] = [
-  { key: "plan-reviewer", label: "plan-reviewer" },
-  { key: "spec-reviewer", label: "spec-reviewer" },
+const REVIEWER_ROWS: { key: string; label: string }[] = [
+  { key: "plan-reviewer", label: "Plan Review" },
+  { key: "spec-reviewer", label: "Code Review" },
 ];
 
 function DefaultBadge({ model }: { model: string }) {
@@ -171,7 +170,7 @@ export function SettingsView() {
                 return (
                   <tr key={row.key}>
                     <td>
-                      <span className="font-mono text-sm">{row.label}</span>
+                      <span className="text-sm">{row.label}</span>
                       {row.sub && (
                         <div className="text-xs text-base-content/50">
                           {row.sub}
@@ -202,7 +201,7 @@ export function SettingsView() {
               {SPEC_ROWS.map((row) => (
                 <tr key={row.key}>
                   <td>
-                    <span className="font-mono text-sm">{row.label}</span>
+                    <span className="text-sm">{row.label}</span>
                   </td>
                   <td>
                     <ModelSelect
@@ -221,12 +220,12 @@ export function SettingsView() {
                 </tr>
               ))}
 
-              {/* --- Sub-Agents --- */}
-              <SectionHeader>Sub-Agents</SectionHeader>
-              {AGENT_ROWS.map((row) => (
+              {/* --- Reviewers --- */}
+              <SectionHeader>Reviewers</SectionHeader>
+              {REVIEWER_ROWS.map((row) => (
                 <tr key={row.key}>
                   <td>
-                    <span className="font-mono text-sm">{row.label}</span>
+                    <span className="text-sm">{row.label}</span>
                   </td>
                   <td>
                     <ModelSelect

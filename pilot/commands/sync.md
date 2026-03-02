@@ -6,727 +6,209 @@ model: sonnet
 
 # /sync - Sync Project Rules & Skills
 
-**Sync custom rules and skills with the current state of the codebase.** Reads existing rules/skills, explores code patterns, identifies gaps, updates documentation, and creates new skills when workflows are discovered.
+**Sync custom rules and skills with the current codebase.** Reads existing rules/skills, explores code patterns, identifies gaps, updates documentation, creates new skills.
+
+**Flow:** Read existing → Index → Explore → Compare → Sync project/MCP/skills → Discover new rules/skills → Summary
+
+**Team sharing:** Use `/vault` after sync to push/pull assets via sx.
 
 ---
 
-## 📋 TABLE OF CONTENTS
+## Phase 0: Reference
 
-| Phase                                                    | What Happens                                 |
-| -------------------------------------------------------- | -------------------------------------------- |
-| [0. Reference](#phase-0-reference)                       | Guidelines, output locations, error handling |
-| [1. Read Existing](#phase-1-read-existing-rules--skills) | Load rules & skills, build inventory         |
-| [2. Build Index](#phase-2-initialize-vexor-index)        | Initialize Vexor for semantic search         |
-| [3. Explore](#phase-3-explore-codebase)                  | Discover patterns with Vexor/Grep            |
-| [4. Compare](#phase-4-compare--identify-gaps)            | Find outdated/missing documentation          |
-| [5. Sync Project](#phase-5-sync-project-rule)            | Update project.md                            |
-| [6. Sync MCP](#phase-6-sync-mcp-rules)                   | Document user MCP servers                    |
-| [7. Sync Skills](#phase-7-sync-existing-skills)          | Update existing skills                       |
-| [8. New Rules](#phase-8-discover-new-rules)              | Document undocumented patterns               |
-| [9. New Skills](#phase-9-discover--create-skills)        | Create skills via /learn                     |
-| [10. Summary](#phase-10-summary)                         | Report changes                               |
+### Guidelines
 
-### Quick Reference
+- **Always use AskUserQuestion** when asking the user anything
+- **Read before writing** — check existing rules before creating
+- **Write concise rules** — every word costs tokens in context
+- **Idempotent** — running multiple times produces consistent results
 
-- **Phase 0:** Guidelines, output locations, error handling
-- **Phases 1-4:** Discovery (read, index, explore, compare)
-- **Phases 5-7:** Sync existing (project, MCP, skills)
-- **Phases 8-9:** Create new (rules, skills)
-- **Phase 10:** Report
+### Output Locations
 
-**Team sharing:** Use `/vault` to push/pull assets via sx after sync completes.
+**Custom rules** in `.claude/rules/`: `project.md` (tech stack, structure), `mcp-servers.md` (custom MCP servers), `[pattern-name].md` (tribal knowledge).
 
----
+**Custom skills** in `.claude/skills/[name]/SKILL.md`: workflows, tool integrations, domain expertise.
 
-# PHASE 0: REFERENCE
+Use unique names (not `plan`, `implement`, `verify`, `standards-*`) for custom skills.
 
-## 0.1 Guidelines
+### Error Handling
 
-- **Always use AskUserQuestion tool** when asking the user anything
-- **Read before writing** — Always check existing rules before creating new ones
-- **Write concise rules** — Every word costs tokens in the context window
-- **Idempotent** — Running multiple times produces consistent results
+| Issue | Action |
+|-------|--------|
+| Vexor not installed | Use Grep/Glob, skip indexing |
+| No MCP servers | Skip MCP documentation |
+| No README.md | Ask user for description |
+| No package.json/pyproject.toml | Infer from file extensions |
 
-## 0.2 Output Locations
+### Writing Concise Rules
 
-**Custom rules** in `.claude/rules/`:
+Rules load every session — every word costs tokens.
 
-| Rule Type            | File                | Purpose                         |
-| -------------------- | ------------------- | ------------------------------- |
-| Project context      | `project.md`        | Tech stack, structure, commands |
-| MCP servers          | `mcp-servers.md`    | Custom MCP server documentation |
-| Discovered standards | `[pattern-name].md` | Tribal knowledge, conventions   |
-
-**Custom skills** in `.claude/skills/`:
-
-| Skill Type        | Directory          | Purpose                               |
-| ----------------- | ------------------ | ------------------------------------- |
-| Workflows         | `[workflow-name]/` | Multi-step procedures                 |
-| Tool integrations | `[tool-name]/`     | File format or API handling           |
-| Domain expertise  | `[domain-name]/`   | Specialized knowledge with references |
-
-**Note:** Use unique names (not `plan`, `implement`, `verify`, `standards-*`) for custom skills.
-
-## 0.3 Error Handling
-
-| Issue                          | Action                                       |
-| ------------------------------ | -------------------------------------------- |
-| Vexor not installed            | Use Grep/Glob for exploration, skip indexing |
-| No MCP servers configured      | Skip MCP documentation                       |
-| No README.md                   | Ask user for project description             |
-| No package.json/pyproject.toml | Infer tech stack from file extensions        |
-
-## 0.4 Writing Concise Rules
-
-Rules are loaded into every session. Every word costs tokens.
-
-- **Lead with the rule** — What to do first, why second
-- **Use code examples** — Show, don't tell
-- **Skip the obvious** — Don't document standard framework behavior
-- **One concept per rule** — Don't combine unrelated patterns
-- **Bullet points > paragraphs** — Scannable beats readable
-- **Max ~100 lines per file** — Split large topics
-
-<details>
-<summary>Good vs Bad Example</summary>
-
-**Good:**
-
-```markdown
-## API Response Envelope
-
-All responses use `{ success, data, error }`.
-
-- Always include `code` and `message` in errors
-- Never return raw data without envelope
-```
-
-**Bad:**
-
-```markdown
-## Error Handling Guidelines
-
-When an error occurs in our application, we have established a consistent pattern...
-[3 more paragraphs]
-```
-
-</details>
+- **Lead with the rule** — what to do first, why second
+- **Code examples over prose** — show, don't tell
+- **Skip the obvious** — don't document standard framework behavior
+- **One concept per rule** — don't combine unrelated patterns
+- **Bullet points > paragraphs** — scannable beats readable
+- **Max ~100 lines per file** — split large topics
 
 ---
-
-# EXECUTION SEQUENCE
 
 ## Phase 1: Read Existing Rules & Skills
 
-**MANDATORY FIRST STEP: Understand what's already documented.**
+**MANDATORY FIRST STEP.**
 
-#### Step 1.1: Read Custom Rules
-
-1. **List all custom rules:**
-
-   ```bash
-   ls -la .claude/rules/*.md 2>/dev/null
-   ```
-
-2. **Read each existing rule file** to understand:
-   - What patterns are already documented
-   - What areas are covered (project, MCP, API, search, CDK, etc.)
-   - What conventions are established
-   - Last updated timestamps
-
-#### Step 1.2: Read Custom Skills
-
-1. **List all custom skills:**
-
-   ```bash
-   ls -la .claude/skills/*/SKILL.md 2>/dev/null
-   ```
-
-2. **Read each SKILL.md** to understand:
-   - What workflows/tools are documented
-   - Trigger conditions and use cases
-   - Referenced scripts or assets
-   - Whether the skill is still relevant
-
-3. **Build mental inventory:**
-   ```
-   Documented rules: [list from reading files]
-   Documented skills: [list skill names and purposes]
-   Potential gaps to investigate: [areas not covered]
-   Possibly outdated: [rules/skills with old content or changed workflows]
-   ```
+1. `ls -la .claude/rules/*.md 2>/dev/null` — read each rule file
+2. `ls -la .claude/skills/*/SKILL.md 2>/dev/null` — read each skill file
+3. Check for legacy CLAUDE.md: `ls CLAUDE.md claude.md .claude.md 2>/dev/null` — read if found
+4. Build mental inventory: documented rules, documented skills, CLAUDE.md contents (if any), potential gaps, possibly outdated items
 
 ## Phase 2: Initialize Vexor Index
 
-**Build/update the semantic search index before exploration.**
+1. Check: `vexor --version` — if not installed, inform user, use Grep/Glob instead
+2. Build index (use `timeout: 900000` for first run): `vexor index --path /absolute/path/to/project`
+3. Verify: `vexor search "main entry point" --top 3`
 
-> **Note:** First-time indexing can take 5-15 minutes as embeddings are generated locally. Processing time depends on hardware: GPU-accelerated systems are faster, CPU-only systems take longer. Subsequent syncs are much faster due to caching.
-
-1. **Check Vexor availability:**
-
-   ```bash
-   vexor --version
-   ```
-
-2. **If Vexor not installed:** Inform user, will use Grep/Glob for exploration instead.
-
-3. **Build or update the index (use extended timeout for first run):**
-
-   ```bash
-   vexor index --path /absolute/path/to/project
-   ```
-
-   Use Bash with `timeout: 900000` (15 minutes) for first-time indexing.
-
-4. **Verify index is working:**
-   ```bash
-   vexor search "main entry point" --top 3
-   ```
+> First-time indexing can take 5-15 minutes. Subsequent syncs are faster due to caching.
 
 ## Phase 3: Explore Codebase
 
-**Discover current patterns using Vexor, Grep, and file analysis.**
-
-1. **Scan directory structure:**
-
-   ```bash
-   tree -L 3 -I 'node_modules|.git|__pycache__|*.pyc|dist|build|.venv|.next|coverage|.cache|cdk.out|.pytest_cache|.ruff_cache'
-   ```
-
-2. **Identify technologies:**
-   - Check `package.json`, `pyproject.toml`, `tsconfig.json`, `go.mod`, etc.
-   - Note frameworks, build tools, test frameworks
-
-3. **Search for patterns with Vexor:**
-
-   ```bash
-   # Find API patterns
-   vexor search "API response format error handling" --top 5
-
-   # Find test patterns
-   vexor search "test fixtures mocking patterns" --top 5
-
-   # Find configuration patterns
-   vexor search "configuration settings environment" --top 5
-
-   # Search based on gaps identified in Phase 1
-   vexor search "[undocumented area]" --top 5
-   ```
-
-4. **Use Grep for specific conventions:**
-   - Response structures, error formats
-   - Naming conventions, prefixes/suffixes
-   - Import patterns, module organization
-
-5. **Read representative files** (5-10) in key areas to understand actual patterns
+1. **Directory structure:** `tree -L 3 -I 'node_modules|.git|__pycache__|dist|build|.venv|.next|coverage|.cache|cdk.out'`
+2. **Technologies:** Check `package.json`, `pyproject.toml`, `tsconfig.json`, `go.mod`
+3. **Vexor searches:** API patterns, test patterns, configuration, gaps from Phase 1
+4. **Grep:** Response structures, naming conventions, import patterns
+5. **Read** 5-10 representative files in key areas
 
 ## Phase 4: Compare & Identify Gaps
 
-**Compare discovered patterns against existing documentation.**
-
-1. **For each existing rule, check:**
-   - Is the documented pattern still accurate?
-   - Are there new patterns not yet documented?
-   - Has the technology stack changed?
-   - Are commands/paths still correct?
-
-2. **Identify gaps:**
-   - Undocumented tribal knowledge
-   - New conventions that emerged
-   - Changed patterns not reflected in rules
-   - Missing areas entirely
-
-3. **Use AskUserQuestion to confirm findings:**
-   ```
-   Question: "I compared existing rules with the codebase. Here's what I found:"
-   Header: "Sync Results"
-   Options:
-   - "Update all" - Apply all suggested changes
-   - "Review each" - Walk through changes one by one
-   - "Show details" - Explain what changed before updating
-   - "Skip updates" - Keep existing rules as-is
-   ```
+1. For each existing rule: still accurate? new patterns? tech stack changed? commands/paths correct?
+2. Identify gaps: undocumented tribal knowledge, new conventions, changed patterns
+3. AskUserQuestion to confirm findings: "Update all" | "Review each" | "Show details" | "Skip updates"
 
 ## Phase 5: Sync Project Rule
 
-**Update `project.md` with current project state.**
+**Update `.claude/rules/project.md` with current project state.**
 
-1. **If project.md exists:**
-   - Compare documented tech stack with actual
-   - Verify directory structure is current
-   - Check if commands still work
-   - Update "Last Updated" timestamp
-   - Preserve custom "Additional Context" sections
+### Step 5.0: Handle Existing CLAUDE.md — CONDITIONAL
 
-2. **If project.md doesn't exist, create it:**
+**Only if Phase 1 found a CLAUDE.md file (any variant).**
+
+If both CLAUDE.md AND `.claude/rules/project.md` exist: read both, check for redundant content. If CLAUDE.md has unique content not in project.md, offer to merge it in. If fully redundant, suggest removing CLAUDE.md.
+
+If CLAUDE.md exists but NO `.claude/rules/project.md`: AskUserQuestion:
+- "Migrate to modular rules (Recommended)" — Split CLAUDE.md into `.claude/rules/project.md` + topic-specific rule files. Advantages: smaller context per session, topic-specific loading, survives Pilot updates, team-shareable via `/vault`.
+- "Keep CLAUDE.md as-is" — Skip creating project.md. CLAUDE.md stays as the single source of project context.
+- "Create project.md alongside CLAUDE.md" — Keep both. project.md gets tech stack/structure, CLAUDE.md keeps custom instructions.
+
+**If migrating:** Read CLAUDE.md, identify logical sections (project overview, tech stack, conventions, patterns, etc.). Create `project.md` from overview/stack/structure sections. Create additional rule files for distinct topics (e.g., `conventions.md`, `api-patterns.md`). AskUserQuestion to confirm the split before writing. After writing, ask: "Remove CLAUDE.md?" | "Rename to CLAUDE.md.bak" | "Keep both".
+
+### Step 5.1: Create or Update project.md
+
+If exists: compare tech stack, verify structure/commands, update timestamp, preserve custom sections.
+
+If doesn't exist (and user didn't choose to keep CLAUDE.md only), create using this structure:
 
 ```markdown
-# Project: [Name from package.json/pyproject.toml or directory]
+# Project: [Name]
 
-**Last Updated:** [Current date]
+**Last Updated:** [Date]
 
 ## Overview
-
-[Brief description from README.md or ask user]
+[Brief description from README or ask user]
 
 ## Technology Stack
-
-- **Language:** [Primary language]
-- **Framework:** [Main framework]
-- **Build Tool:** [Vite, Webpack, etc.]
-- **Testing:** [Jest, Pytest, etc.]
-- **Package Manager:** [npm, yarn, pnpm, uv, etc.]
+- **Language / Framework / Build Tool / Testing / Package Manager**
 
 ## Directory Structure
-```
-
-[Simplified tree - key directories only]
-
-```
+[Simplified tree — key directories only]
 
 ## Key Files
-
-- **Configuration:** [Main config files]
-- **Entry Points:** [src/index.ts, main.py, etc.]
-- **Tests:** [Test directory location]
+- **Configuration / Entry Points / Tests**
 
 ## Development Commands
-
-- **Install:** `[command]`
-- **Dev:** `[command]`
-- **Build:** `[command]`
-- **Test:** `[command]`
-- **Lint:** `[command]`
+| Task | Command |
+|------|---------|
+| Install / Dev / Build / Test / Lint | `[command]` |
 
 ## Architecture Notes
-
-[Brief description of patterns]
+[Brief patterns description]
 ```
 
 ## Phase 6: Sync MCP Rules
 
-**Update MCP server documentation for user-configured servers.**
+**Document user-configured MCP servers (skip Pilot core: context7, mem-search, web-search, web-fetch, grep-mcp).**
 
-MCP servers are configured in `.mcp.json`:
+#### Step 6.1: Discover
 
-**Pilot Core Servers (skip these - already documented in standard rules):**
+Parse `.mcp.json`, exclude Pilot core servers.
 
-- `context7` - Library documentation
-- `mem-search` - Persistent memory
-- `web-search` - Web search via open-websearch
-- `web-fetch` - Web page fetching via fetcher-mcp
-- `grep-mcp` - GitHub code search via grep.app
+#### Step 6.2: Smoke-Test
 
-#### Step 6.1: Discover All MCP Servers
-
-1. **Check `.mcp.json`:**
-
-   ```bash
-   cat .mcp.json 2>/dev/null | head -50
+For each user server:
+1. `ToolSearch(query="+server-name keyword")` to discover tools
+2. Call each tool with minimal read-only arguments (**safety: only read-only tools**)
+3. Record per-tool: success | auth error | connection error | schema error | timeout
+4. Report health check:
    ```
-
-2. **Build inventory of user servers:**
-   - Parse the config file
-   - Exclude Pilot core servers: `context7`, `mem-search`, `web-search`, `web-fetch`, `grep-mcp`
-
-#### Step 6.2: Smoke-Test MCP Servers
-
-**Test every tool on each user server to surface auth, permission, and connectivity issues.**
-
-For each user server discovered in Step 6.1:
-
-1. **Load the server's tools:**
-   - Use `ToolSearch(query="+server-name keyword")` to discover and load available tools
-   - Review the returned tool schemas to understand parameters
-
-2. **Probe each tool with a minimal read-only call:**
-   - Call loaded tools directly with minimal arguments (prefer list/get operations over create/delete)
-   - **Safety:** Only call read-only tools (list, get, search, describe). Skip tools that create, update, delete, or modify state. Check the tool schema returned by ToolSearch when unsure.
-
-3. **Record results per tool:**
-
-   | Result                  | Meaning                             | Action                       |
-   | ----------------------- | ----------------------------------- | ---------------------------- |
-   | Success (data returned) | Tool works, auth valid              | Document as working          |
-   | Auth/permission error   | Missing or expired credentials      | Flag in report, note in docs |
-   | Connection error        | Server unreachable or misconfigured | Flag in report               |
-   | Schema/param error      | Tool works but needs specific args  | Document required params     |
-   | Timeout                 | Server slow or hanging              | Flag in report               |
-
-4. **Report findings to user:**
-
-   ```
-   MCP Server Health Check:
-
    ✅ polar — 3/3 tools working
-   ⚠️ typefully — 4/5 tools working, 1 permission error
-     └ typefully_create_draft: requires WRITE permission (read-only tools work)
-
-   ❌ my-api — 0/2 tools working (connection refused)
+   ⚠️ typefully — 4/5 working, 1 permission error
+   ❌ my-api — 0/2 working (connection refused)
    ```
+5. If issues: AskUserQuestion "Document working tools only" | "Document all with status notes" | "Skip MCP sync"
 
-5. **If issues found, use AskUserQuestion:**
-   ```
-   Question: "Found MCP server issues. How to proceed?"
-   Header: "MCP Issues"
-   Options:
-   - "Document working tools only" - Skip broken tools/servers
-   - "Document all with status notes" - Include broken tools with error notes
-   - "Skip MCP sync" - Don't document any MCP servers
-   ```
+#### Step 6.3: Document
 
-#### Step 6.3: Document User MCP Servers
+Compare against existing `mcp-servers.md`. If changes detected, ask user: "Update all" | "Review each" | "Skip"
 
-For each user-configured server (not Pilot core):
+#### Step 6.4: Write
 
-1. **Get server tools and descriptions:**
-   - Use `ToolSearch(query="+server-name keyword")` to discover tools and inspect their schemas
+Create/update `.claude/rules/mcp-servers.md`:
 
-2. **Compare against existing `mcp-servers.md`:**
-   - Check if server is already documented
-   - Check if tools have changed
-   - Check if server was removed
-
-3. **If changes detected, use AskUserQuestion:**
-   ```
-   Question: "Found MCP server changes. Update documentation?"
-   Header: "MCP Sync"
-   Options:
-   - "Update all" - Document all user MCP servers
-   - "Review each" - Walk through changes one by one
-   - "Skip" - Keep existing documentation
-   ```
-
-#### Step 6.4: Write MCP Documentation
-
-If user approves, create/update `.claude/rules/mcp-servers.md`.
-
-Include smoke-test results from Step 6.2 — mark tools with their tested status:
-
-````markdown
-## User MCP Servers
-
-Custom MCP servers configured for this project.
-
+```markdown
 ### [server-name]
-
 **Source:** `.mcp.json`
 **Purpose:** [Brief description]
-**Status:** ✅ All tools working | ⚠️ Partial | ❌ Broken
+**Status:** ✅ All working | ⚠️ Partial | ❌ Broken
 
-**Available Tools:**
+| Tool | Status | Description |
+|------|--------|-------------|
 
-| Tool          | Status                    | Description        |
-| ------------- | ------------------------- | ------------------ |
-| `list_items`  | ✅                        | Lists all items    |
-| `create_item` | ⚠️ Needs WRITE permission | Creates a new item |
-
-**Example Usage:**
-
-Use `ToolSearch(query="+server-name keyword")` to discover and load tools, then call them directly.
-````
-
+**Example:** `ToolSearch(query="+server-name keyword")` then call directly.
 ```
 
-#### Step 6.5: Skip Conditions
-
-Skip MCP documentation if:
-- No `.mcp.json` exists
-- Only Pilot core servers are configured (no user servers)
-- User declines documentation update
+**Skip if:** no `.mcp.json`, only Pilot core servers, user declines.
 
 ## Phase 7: Sync Existing Skills
 
-**Update custom skills in `.claude/skills/` to reflect current codebase.**
+For each skill from Phase 1:
+1. **Relevance:** Does the workflow/tool still exist? Has process changed?
+2. **Currency:** Steps accurate? APIs changed? Examples working?
+3. **Triggers:** Description still accurate for discovery?
 
-#### Step 7.1: Review Each Custom Skill
+If updates needed: AskUserQuestion (multiSelect) with what changed and why. For each selected: update content, bump version (e.g., 1.0.0 → 1.0.1). Confirm each: "Yes, update it" | "Edit first" | "Skip this one".
 
-For each skill found in Phase 1.2:
-
-1. **Check if skill is still relevant:**
-   - Does the workflow/tool still exist in codebase?
-   - Has the process changed?
-   - Are referenced files/scripts still valid?
-
-2. **Check if skill content is current:**
-   - Are the steps still accurate?
-   - Have APIs or commands changed?
-   - Are examples still working?
-
-3. **Check trigger conditions:**
-   - Is the description still accurate for discovery?
-   - Should trigger conditions be expanded/narrowed?
-
-#### Step 7.2: Update Outdated Skills
-
-For skills needing updates:
-
-1. **Use AskUserQuestion:**
-```
-
-Question: "These skills need updates. Which should I update?"
-Header: "Skill Updates"
-multiSelect: true
-Options:
-
-- "[skill-name]" - [What changed and why]
-- "[skill-name]" - [What changed and why]
-- "None" - Skip skill updates
-
-```
-
-2. **For each selected skill:**
-- Read the current SKILL.md
-- Update content to reflect current state
-- Bump version in frontmatter (e.g., `version: 1.0.0` → `version: 1.0.1`)
-- Update any referenced scripts/assets
-
-**Version format:** `MAJOR.MINOR.PATCH` (e.g., 1.0.0 → 1.0.1 for fixes, 1.1.0 for features)
-**sx vault versions:** sx auto-increments vault versions (v1 → v2 → v3) on each `sx add`
-
-3. **Confirm before writing:**
-```
-
-Question: "Here's the updated [skill-name]. Apply changes?"
-Header: "Confirm Update"
-Options:
-
-- "Yes, update it"
-- "Edit first"
-- "Skip this one"
-
-```
-
-#### Step 7.3: Remove Obsolete Skills
-
-If a skill is no longer relevant:
-
-1. **Use AskUserQuestion:**
-```
-
-Question: "[skill-name] appears obsolete. Remove it?"
-Header: "Remove Skill"
-Options:
-
-- "Yes, remove it"
-- "Keep it" - Still useful
-- "Update instead" - Workflow changed but still needed
-
-```
-
-2. **If removing:** Delete the skill directory
+If obsolete: AskUserQuestion "Yes, remove it" | "Keep it" | "Update instead". If removing: delete the skill directory.
 
 ## Phase 8: Discover New Rules
 
-**Find and document undocumented tribal knowledge.**
+1. List undocumented areas (comparing Phase 1 + Phase 3)
+2. Prioritize by: frequency, uniqueness, mistake likelihood
+3. AskUserQuestion (multiSelect): which areas to document
+4. For each: ask clarifying questions, draft rule, confirm before creating
+5. Write to `.claude/rules/[pattern-name].md`
 
-#### Step 8.1: Identify Undocumented Areas
-
-Based on Phase 1 (existing rules) and Phase 3 (codebase exploration):
-
-1. **List areas NOT yet covered by existing rules**
-
-2. **Prioritize by:**
-- Frequency of pattern usage in codebase
-- Uniqueness (not standard framework behavior)
-- Likelihood of mistakes without documentation
-
-3. **Use AskUserQuestion:**
-```
-
-Question: "I found these undocumented areas. Which should we add rules for?"
-Header: "New Standards"
-multiSelect: true
-Options:
-
-- "[Area 1]" - [Pattern found, why it matters]
-- "[Area 2]" - [Pattern found, why it matters]
-- "[Area 3]" - [Pattern found, why it matters]
-- "None" - Skip adding new standards
-
-```
-
-#### Step 8.2: Document Selected Patterns
-
-For each selected pattern:
-
-1. **Ask clarifying questions:**
-- "What problem does this pattern solve?"
-- "Are there exceptions to this pattern?"
-- "What mistakes do people commonly make?"
-
-2. **Draft the rule** based on codebase examples + user input
-
-3. **Confirm before creating:**
-```
-
-Question: "Here's the draft for [filename]. Create this rule?"
-Header: "Confirm Rule"
-Options:
-
-- "Yes, create it"
-- "Edit first" - I want to modify it
-- "Skip this one"
-
-````
-
-4. **Write to `.claude/rules/[pattern-name].md`**
-
-#### Step 8.3: Rule Format
-
-```markdown
-## [Standard Name]
-
-[One-line summary]
-
-### When to Apply
-
-- [Trigger 1]
-- [Trigger 2]
-
-### The Pattern
-
-```[language]
-[Code example]
-````
-
-### Why
-
-[1-2 sentences if not obvious]
-
-### Common Mistakes
-
-- [Mistake to avoid]
-
-### Examples
-
-**Good:**
-
-```[language]
-[Correct usage]
-```
-
-**Bad:**
-
-```[language]
-[Incorrect usage]
-```
-
-```
+**Rule format:** Standard Name → When to Apply → The Pattern (code) → Why (if not obvious) → Common Mistakes → Good/Bad examples.
 
 ## Phase 9: Discover & Create Skills
 
-**Identify patterns that would be better as skills than rules.**
+Skills are appropriate for: multi-step workflows, tool integrations, reusable scripts, domain expertise.
 
-Skills are appropriate when you find:
-- **Multi-step workflows** - Procedures with sequential steps
-- **Tool integrations** - Working with specific file formats, APIs, or external tools
-- **Reusable scripts** - Code that gets rewritten repeatedly
-- **Domain expertise** - Complex knowledge that benefits from bundled references
-
-#### Step 9.1: Identify Skill Candidates
-
-Based on codebase exploration, look for:
-
-1. **Repeated workflows** - Same sequence of steps in multiple places
-2. **Complex tool usage** - Specific patterns for working with tools/formats
-3. **Scripts that could be bundled** - Utility code that's reused
-
-**Use AskUserQuestion:**
-```
-
-Question: "I found patterns that might work better as skills. Create any?"
-Header: "New Skills"
-multiSelect: true
-Options:
-
-- "[Workflow 1]" - [Description of multi-step process]
-- "[Tool integration]" - [Description of tool/format handling]
-- "[Domain area]" - [Description of specialized knowledge]
-- "None" - Skip skill creation
-
-```
-
-#### Step 9.2: Create Selected Skills
-
-For each selected skill, **invoke the `/learn` command**:
-
-```
-
-Skill(skill="learn")
-
-```
-
-The `/learn` command will:
-1. Evaluate if the pattern is worth extracting
-2. Check for existing related skills
-3. Create the skill directory in `.claude/skills/`
-4. Write the SKILL.md with proper frontmatter and trigger conditions
-
-See `.claude/commands/learn.md` for the full skill creation process.
-
-**Important:** Use a unique skill name (not `plan`, `implement`, `verify`, or `standards-*`) so it's preserved during updates.
-
-#### Step 9.3: Verify Skill Creation
-
-After `/learn` completes:
-1. Verify skill directory exists in `.claude/skills/`
-2. Confirm SKILL.md has proper frontmatter (name, description with triggers)
-3. Test skill is recognized: mention it in conversation to trigger
+1. Identify candidates from exploration: repeated workflows, complex tool usage, bundled scripts
+2. AskUserQuestion (multiSelect): which to create
+3. For each: invoke `Skill(skill="learn")` to handle creation
+4. Verify: skill directory exists, SKILL.md has proper frontmatter
 
 ## Phase 10: Summary
 
-**Report what was synced:**
+Report: Vexor index status, rules updated, new rules created, skills updated, new skills created, skills removed, unchanged items.
 
-```
-
-## Sync Complete
-
-**Vexor Index:** Updated (X files indexed)
-
-**Rules Updated:**
-
-- project.md - Updated tech stack, commands
-- mcp-servers.md - Added 2 new servers
-
-**New Rules Created:**
-
-- api-responses.md - Response envelope pattern
-
-**Skills Updated:**
-
-- my-workflow - Updated steps for new API
-- lsp-cleaner - Added new detection pattern
-
-**New Skills Created:**
-
-- deploy-process - Multi-step deployment workflow
-
-**Skills Removed:**
-
-- old-workflow - No longer relevant
-
-**No Changes Needed:**
-
-- cdk-rules.md - Still current
-- opensearch-mcp-server.md - Still current
-
-```
-
-**Offer to continue:**
-```
-
-Question: "Sync complete. What next?"
-Header: "Continue?"
-Options:
-
-- "Share via Team Vault" - Push new assets to your team with /vault
-- "Discover more standards" - Look for more patterns to document
-- "Create more skills" - Look for more workflow patterns
-- "Done" - Finish sync
-
-```
-
-**If user selects "Share via Team Vault":** Invoke `Skill(skill='vault')` to handle team sharing.
-
-```
+Then offer: "Share via Team Vault" (`Skill(skill='vault')`) | "Discover more standards" | "Create more skills" | "Done"

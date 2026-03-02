@@ -11,10 +11,10 @@ const routingTable = [
   },
   {
     phase: "Plan Verification",
-    model: "Opus",
-    color: "text-violet-400",
-    bg: "bg-violet-400/10",
-    why: "Catching gaps, missing edge cases, and requirement mismatches before implementation starts saves expensive rework. Independent review needs independent reasoning.",
+    model: "Sonnet",
+    color: "text-sky-400",
+    bg: "bg-sky-400/10",
+    why: "The plan-reviewer sub-agent validates completeness and challenges assumptions. Conditional: skipped for simple plans (≤3 tasks) to save time and tokens.",
   },
   {
     phase: "Implementation",
@@ -25,17 +25,17 @@ const routingTable = [
   },
   {
     phase: "Code Verification",
-    model: "Opus",
-    color: "text-violet-400",
-    bg: "bg-violet-400/10",
-    why: "Independent code review against the plan requires the same reasoning depth as planning — catching subtle bugs, logic errors, and spec deviations.",
+    model: "Sonnet",
+    color: "text-sky-400",
+    bg: "bg-sky-400/10",
+    why: "The unified spec-reviewer agent handles deep code review (compliance + quality + goal). The orchestrator runs mechanical checks and applies fixes efficiently.",
   },
 ];
 
 const insight = [
   "Implementation is the easy part when the plan is good and verification is thorough",
-  "Pilot invests reasoning power (Opus) where it has the highest impact: planning and review",
-  "Fast execution (Sonnet) is used where a clear spec makes quality predictable",
+  "Pilot invests reasoning power (Opus) where it has the highest impact: planning",
+  "Sonnet handles implementation and verification — guided by a solid plan and structured review agents",
   "The result: better output at lower cost than running Opus everywhere",
 ];
 

@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
     spec: "sonnet",
     "spec-plan": "opus",
     "spec-implement": "sonnet",
-    "spec-verify": "opus",
+    "spec-verify": "sonnet",
     vault: "sonnet",
     sync: "sonnet",
     learn: "sonnet",

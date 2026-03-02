@@ -10,146 +10,45 @@ hooks:
 
 # /spec-plan - Planning Phase
 
-**Phase 1 of the /spec workflow.** Explores the codebase, designs an implementation plan, verifies it, and gets user approval.
+**Phase 1 of the /spec workflow.** Explores codebase, designs implementation plan, verifies it, gets user approval.
 
-**Input:** Task description (new plan) or plan path (continue unapproved plan)
-**Output:** Approved plan file at `docs/plans/YYYY-MM-DD-<slug>.md`
-**Next phase:** On approval → `Skill(skill='spec-implement', args='<plan-path>')`
-
----
-
-## ⛔ KEY CONSTRAINTS (Rules Summary)
-
-| #   | Rule                                                                                                     |
-| --- | -------------------------------------------------------------------------------------------------------- |
-| 1   | **NO sub-agents during planning** - Use direct tools only. Exception: Step 1.7 launches `plan-reviewer` via the **Task tool** (`subagent_type="pilot:plan-reviewer"`). |
-| 2   | **NEVER SKIP verification** - Plan verification (Step 1.7) is mandatory. No exceptions.                  |
-| 3   | **ONLY stopping point is plan approval** - Everything else is automatic. Never ask "Should I fix these?" |
-| 4   | **Batch questions together** - Don't interrupt user flow                                                 |
-| 5   | **Run explorations sequentially** - One at a time, never in parallel                                     |
-| 6   | **NEVER write code during planning** - Separate phases                                                   |
-| 7   | **NEVER assume - verify by reading files**                                                               |
-| 8   | **Re-read plan after user edits** - Before asking for approval again                                     |
-| 9   | **Quality over speed** - Never rush due to context pressure                                              |
-| 10  | **Plan file is source of truth** - Survives across auto-compaction cycles                                               |
+**Input:** Task description (new) or plan path (continue unapproved)
+**Output:** Approved plan at `docs/plans/YYYY-MM-DD-<slug>.md`
+**Next:** On approval → `Skill(skill='spec-implement', args='<plan-path>')`
 
 ---
 
-> **WARNING: DO NOT use the built-in `ExitPlanMode` or `EnterPlanMode` tools.**
+## ⛔ Critical Constraints
 
-## Using AskUserQuestion - Core Planning Tool
+- **NO sub-agents during planning** except Step 1.7 (plan-reviewer)
+- **NEVER write code during planning** — planning and implementation are separate phases
+- **NEVER assume — verify by reading files**
+- **Plan file is source of truth** — survives across auto-compaction cycles
+- **Quality over speed** — never rush due to context pressure
 
-**Questions are grouped into batches for smooth user experience:**
+---
 
-| Batch       | When                         | Purpose                                |
-| ----------- | ---------------------------- | -------------------------------------- |
-| **Batch 1** | Phase 0 (before exploration) | Clarify task, scope, priorities        |
-| **Batch 2** | Phase 2 (after exploration)  | Architecture choices, design decisions |
+## Asking User Questions
 
-**When to Use AskUserQuestion:**
+**⛔ ALWAYS use the `AskUserQuestion` tool** — never list numbered questions in plain text. Each question gets its own entry with predefined options users can select. This provides a structured form UI that is much easier to answer than freeform numbered lists.
 
-| Situation                     | Example Question                                                     |
-| ----------------------------- | -------------------------------------------------------------------- |
-| **Unclear requirements**      | "Should this feature support batch processing or single items only?" |
-| **Multiple valid approaches** | Present 2-3 options with trade-offs for user to choose               |
-| **Ambiguous scope**           | "Should we include error recovery, or fail fast?"                    |
-| **Technology choices**        | "Prefer async/await or callbacks for this integration?"              |
-| **Priority decisions**        | "Performance or simplicity - which matters more here?"               |
-| **Missing domain knowledge**  | "How does the existing auth flow work in production?"                |
+**Questions batched into max 2 interactions:** Batch 1 (before exploration) clarifies task/scope/priorities. Batch 2 (after exploration) resolves architecture/design decisions.
 
-**Questioning philosophy — Dream extraction, not requirements gathering:**
-
-- **Start open, then narrow** — Begin with "What does success look like?" before diving into specifics
-- **Follow energy** — If the user is excited about a detail, explore it; if they're vague, they may not care about the specifics
-- **Challenge vagueness** — "Fast" means what? Sub-100ms? Under 2 seconds? Make abstract concrete
-- **Present interpretations as options** — "I think you mean X — should we do X (simple, covers 80%) or Y (comprehensive, handles edge cases)?" is better than "What do you want?"
-
-**Anti-patterns to avoid:**
-
-- **Checklist walking** — Don't ask every possible question; focus on genuine ambiguities
-- **Canned questions** — Adapt questions to the specific task, not generic templates
-- **Shallow acceptance** — Don't accept "it should work well" — ask what "well" means concretely
-- **Interrogation** — 1-2 focused questions are better than 4 vague ones
-
-**Key principles:**
-
-- Present options, not open-ended questions when possible
-- Include trade-offs for each option
-- **Batch related questions together** — don't interrupt user flow
-- Don't proceed with assumptions — ASK
-- **Scope guardrail** — Questions clarify HOW to implement, not WHETHER to expand scope
+**Principles:** Present options with trade-offs (not open-ended). Start open, narrow down. Challenge vagueness — make abstract concrete. 1-2 focused questions beat 4 vague ones. Questions clarify HOW to implement, not whether to expand scope. Skip if task is clear and unambiguous.
 
 ## Extending Existing Plans
 
-**When adding tasks to existing plan:**
+When adding tasks to an existing plan: load it, parse structure, verify compatibility, mark new tasks with `[NEW]`, update totals. If original + new > 12 tasks, suggest splitting.
 
-1. Load existing plan: `Read(file_path="docs/plans/...")`
-2. Parse structure (architecture, completed tasks, pending tasks)
-3. Check git status for partially completed work
-4. Verify new tasks are compatible with existing architecture
-5. Check total: If original + new > 12 tasks, suggest splitting
-6. Mark new tasks with `[NEW]` prefix
-7. Update total count: `Total Tasks: X (Originally: Y)`
-8. Add extension history: `> Extended [Date]: Tasks X-Y for [feature]`
+## ⚠️ Migration/Refactoring Tasks
 
-## ⚠️ CRITICAL: Migration/Refactoring Tasks
+**When replacing existing code, complete a Feature Inventory BEFORE creating tasks:**
 
-**When the task involves migrating, refactoring, or replacing existing code, you MUST complete these additional steps to prevent missing features.**
+1. List ALL files being replaced with their functions/classes
+2. Map EVERY function to a task — no row may be "Not mapped"
+3. Every row needs a Task # or explicit "Out of Scope" with user confirmation
 
-### Mandatory Feature Inventory (Phase 1.5)
-
-**After exploration but BEFORE creating tasks:**
-
-1. **List ALL files being replaced:**
-
-   ```markdown
-   ## Feature Inventory - Files Being Replaced
-
-   | Old File         | Functions/Classes                | Status        |
-   | ---------------- | -------------------------------- | ------------- |
-   | `old/module1.py` | `func_a()`, `func_b()`, `ClassX` | ⬜ Not mapped |
-   | `old/module2.py` | `func_c()`, `func_d()`           | ⬜ Not mapped |
-   ```
-
-2. **Map EVERY function/feature to a new task:**
-
-   ```markdown
-   ## Feature Mapping - Old → New
-
-   | Old Feature        | New Location   | Task #        |
-   | ------------------ | -------------- | ------------- |
-   | `module1.func_a()` | `new/step1.py` | Task 3        |
-   | `module1.func_b()` | `new/step1.py` | Task 3        |
-   | `module2.func_c()` | `new/step2.py` | Task 5        |
-   | `module2.func_d()` | ❌ MISSING     | ⚠️ NEEDS TASK |
-   ```
-
-3. **Verify 100% coverage before proceeding:**
-   - Every row must have a Task # or explicit "Out of Scope" justification
-   - "Out of Scope" means the feature is INTENTIONALLY REMOVED (with user confirmation)
-   - "Out of Scope" does NOT mean "migrate as-is" - that still needs a task!
-
-### "Out of Scope" Clarification
-
-**CRITICAL: "Out of Scope" has a precise meaning:**
-
-| Phrase                             | Meaning                                    | Requires Task?                      |
-| ---------------------------------- | ------------------------------------------ | ----------------------------------- |
-| "Out of Scope: Changes to X"       | X will be migrated AS-IS, no modifications | ✅ YES - migration task             |
-| "Out of Scope: Feature X"          | X is intentionally REMOVED/not included    | ❌ NO - but needs user confirmation |
-| "Out of Scope: New features for X" | X migrates as-is, no NEW features added    | ✅ YES - migration task             |
-
-### Pre-Task Verification Gate
-
-**Before finalizing tasks, verify:**
-
-- [ ] All old files listed in Feature Inventory
-- [ ] All functions/classes from old files identified
-- [ ] Every feature mapped to a task OR explicitly marked "REMOVED" with user confirmation
-- [ ] No row in Feature Mapping has "⬜ Not mapped" status
-- [ ] User has confirmed any features marked for removal
-
-**If any checkbox is unchecked, DO NOT proceed to implementation.**
+"Out of Scope: Changes to X" = X migrates AS-IS (still needs migration task). "Out of Scope: Feature X" = X intentionally REMOVED (needs user confirmation, no task needed).
 
 ---
 
@@ -157,39 +56,22 @@ hooks:
 
 ### Step 1.1: Create Plan File Header (FIRST)
 
-**Immediately upon starting planning, create the plan file header for status bar detection.**
+1. **Parse worktree** from arguments: `--worktree=yes|no` (default: `Yes`). Strip flag from task description.
 
-1. **Parse worktree choice from arguments:**
-   - Look for `--worktree=yes` or `--worktree=no` at the end of the arguments
-   - Strip the `--worktree=...` flag from the task description
-   - Default to `Yes` if no flag is present (backward compatibility)
+2. **Create worktree early (if yes):**
+   ```bash
+   ~/.pilot/bin/pilot worktree detect --json <plan_slug>
+   # If not found:
+   ~/.pilot/bin/pilot worktree create --json <plan_slug>
+   # Returns: {"path": "...", "branch": "spec/<slug>", "base_branch": "main"}
+   ```
+   All file writes use the worktree path as base. If creation fails (old git): continue without worktree, set to `No`.
 
-2. **Create worktree early (if `--worktree=yes`):**
+3. **Generate filename:** `docs/plans/YYYY-MM-DD-<feature-slug>.md` — slug from first 3-4 words (lowercase, hyphens). If worktree active, use worktree path as base directory.
 
-   Creating the worktree NOW (before writing the plan file) ensures the plan file lives inside the worktree from the start. This avoids the plan file being stranded on the main branch.
+4. `mkdir -p docs/plans`
 
-   - Generate the plan slug from the task description (same logic as filename: first 3-4 words, lowercase, hyphens)
-   - Check for existing worktree first:
-     ```bash
-     ~/.pilot/bin/pilot worktree detect --json <plan_slug>
-     ```
-   - If not found, create one:
-     ```bash
-     ~/.pilot/bin/pilot worktree create --json <plan_slug>
-     # Returns: {"path": "...", "branch": "spec/<slug>", "base_branch": "main"}
-     ```
-   - Note the worktree `path` from the JSON output — all file writes (including the plan file) should use paths relative to this worktree directory
-   - If creation fails due to old git version (error contains "git >= 2.15 required"): Log a warning and continue without worktree isolation. Set worktree choice to `No`.
-
-3. **Generate filename:** `docs/plans/YYYY-MM-DD-<feature-slug>.md`
-   - Use current date
-   - Create slug from first 3-4 words of task description (lowercase, hyphens)
-   - Example: "add user authentication" → `2026-01-24-add-user-authentication.md`
-   - **If worktree is active:** Use the worktree path as the base directory (e.g., `<worktree_path>/docs/plans/...`)
-
-4. **Create directory if needed:** `mkdir -p docs/plans`
-
-5. **Write initial header immediately (with worktree choice from dispatcher):**
+5. **Write initial header:**
 
    ```markdown
    # [Feature Name] Implementation Plan
@@ -198,7 +80,7 @@ hooks:
    Status: PENDING
    Approved: No
    Iterations: 0
-   Worktree: [Yes|No - from dispatcher's --worktree flag]
+   Worktree: [Yes|No]
    Type: Feature
 
    > Planning in progress...
@@ -212,232 +94,111 @@ hooks:
    _Exploring codebase and gathering requirements..._
    ```
 
-6. **Register plan association (MANDATORY):**
+6. **Register plan:** `~/.pilot/bin/pilot register-plan "<plan_path>" "PENDING" 2>/dev/null || true`
 
-   ```bash
-   ~/.pilot/bin/pilot register-plan "<plan_path>" "PENDING" 2>/dev/null || true
-   ```
-
-   This tells the statusline which plan belongs to THIS session. Without it, parallel sessions show the wrong plan.
-
-7. **Why this matters:**
-   - Status bar shows "Spec: <name> [/plan]" immediately
-   - User sees progress even during exploration phase
-   - Plan file exists for continuation across auto-compaction cycles
-   - Plan is correctly associated with this specific terminal
-
-**CRITICAL:** Do this FIRST, before any exploration or questions.
+**Do this FIRST** — before any exploration or questions. Status bar shows progress immediately.
 
 ---
 
 ### Step 1.2: Task Understanding, Discuss & Clarify
 
-**First, clearly state your understanding of the task.**
+1. Restate the task in your own words — core problem, assumptions
+2. Identify gray areas:
 
-Before any exploration:
+   | Domain | Typical Gray Areas |
+   |--------|-------------------|
+   | UI/frontend | Layout, interaction patterns, empty/loading states |
+   | API/backend | Response shape, error codes, auth, pagination |
+   | CLI/scripts | Output format, flags, exit codes |
+   | Data/config | Schema, migration, validation, defaults |
 
-1. Restate what the user is asking for in your own words
-2. Identify the core problem being solved
-3. List any assumptions you're making
+3. **If gray areas exist** → notify, then use `AskUserQuestion` (Batch 1) with each question as a separate entry with predefined options:
+   ```bash
+   ~/.pilot/bin/pilot notify plan_approval "Input Needed" "<plan_name> — clarification questions" --plan-path "<plan_path>" 2>/dev/null || true
+   ```
+   Each question must have 2-4 concrete options. Use `multiSelect: true` when choices aren't mutually exclusive.
 
-**Then identify gray areas using domain-aware analysis:**
-
-Analyze the task description to find ambiguities that NEED resolution before planning. Different types of work have different gray areas:
-
-| Domain                                  | Typical Gray Areas                                                                         |
-| --------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Something users SEE** (UI/frontend)   | Layout density, interaction patterns, responsive breakpoints, empty states, loading states |
-| **Something users CALL** (API/backend)  | Response shape, error codes, auth model, pagination, rate limiting                         |
-| **Something users RUN** (CLI/scripts)   | Output format, flags/options, exit codes, interactive vs non-interactive                   |
-| **Something users STORE** (data/config) | Schema shape, migration strategy, validation rules, default values                         |
-| **Something users READ** (docs/content) | Audience level, structure, examples needed, update frequency                               |
-
-**Scope guardrail:** Questions should clarify HOW to implement the task, not WHETHER to expand scope. If discussion surfaces new feature ideas, capture them as "Deferred Ideas" in the plan's Open Questions section — don't add them to scope.
-
-**Then gather clarifications if needed (Question Batch 1):**
-
-If gray areas exist, **send a notification before asking** so the user sees it on the dashboard.
-
-**`<plan_name>`** = the slug from the plan filename (e.g., `add-user-authentication` from `2026-02-19-add-user-authentication.md`).
-
-```bash
-~/.pilot/bin/pilot notify plan_approval "Input Needed" "<plan_name> — clarification questions about the spec" --plan-path "<plan_path>" 2>/dev/null || true
-```
-
-Then use AskUserQuestion to ask focused questions per area in a single interaction. Present your interpretation as options when possible — "Should the API return paginated results (recommended for large datasets) or all results at once?" is better than "How should the API handle large result sets?"
-
-If the task is clear and unambiguous with no meaningful gray areas, skip directly to Step 1.3.
+If task is clear, skip to Step 1.3.
 
 ### Step 1.3: Exploration
 
-**Explore the codebase systematically.** Run explorations **one at a time** (sequentially, not in parallel).
+**Explore systematically, one area at a time (sequentially, not parallel).**
 
-#### 🔧 Tools for Exploration
+| Tool | When |
+|------|------|
+| **Context7** | Library/framework docs |
+| **Vexor** | Semantic code search |
+| **grep-mcp** | Real-world GitHub examples |
+| **Read/Grep/Glob** | Direct file exploration |
 
-| Tool               | When to Use                | Example                                                                                            |
-| ------------------ | -------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Context7**       | Library/framework docs     | `resolve-library-id(query="your question", libraryName="lib")` then `query-docs(libraryId, query)` |
-| **Vexor**          | Semantic code search       | `vexor search "query" --mode code`                                                                 |
-| **grep-mcp**       | Real-world GitHub examples | `searchGitHub(query="FastMCP", language=["Python"])`                                               |
-| **Read/Grep/Glob** | Direct file exploration    | Use directly, no sub-agents                                                                        |
+**Areas (in order):** Architecture → Similar Features → Dependencies → Tests
 
-**Exploration areas (in order):**
+For each: document hypotheses, note full file paths, track unanswered questions. After exploration: read identified files to verify hypotheses, build complete mental model, identify integration points, note reusable patterns.
 
-1. **Architecture** - Project structure, entry points, how components connect
-2. **Similar Features** - Existing patterns that relate to the task, what can be reused
-3. **Dependencies** - Imports, modules, what will be impacted
-4. **Tests** - Test infrastructure, existing patterns, available fixtures
+### Step 1.3b: Present Findings & Scope Selection — CONDITIONAL
 
-**For each area:**
+**Only when exploration revealed multiple possible directions or scope is ambiguous.** Skip for straightforward tasks.
 
-- Document hypotheses (not conclusions)
-- Note full file paths for relevant code
-- Track questions that remain unanswered
-
-**After explorations complete:**
-
-1. Read each identified file to verify hypotheses
-2. Build a complete mental model of current architecture
-3. Identify integration points and potential risks
-4. Note reusable patterns
-
-### Step 1.3b: Present Findings & Brainstorm (Scope Selection) — CONDITIONAL
-
-**Only do this step when exploration revealed multiple possible directions or the scope is ambiguous.** Skip for straightforward tasks where the scope is clear from the user's request (e.g., "fix this bug", "add a logout button", "refactor the auth module").
-
-**Triggers for this step:**
-- Task is exploratory or open-ended ("analyze X and see what we can improve", "find gaps in our system")
-- Exploration uncovered significantly more opportunities than the user likely expected
-- Multiple valid approaches exist and user preference matters for scoping
-
-**Process:**
-
-1. **Send notification** so the user knows their input is needed:
-
-   ```bash
-   ~/.pilot/bin/pilot notify plan_approval "Findings Ready" "<plan_name> — review discovered items and select what to include" --plan-path "<plan_path>" 2>/dev/null || true
-   ```
-
-2. **List ALL discovered gaps/opportunities** with a brief assessment for each (1-2 sentences: what it is, why it matters or doesn't, effort level).
-
-3. **Use AskUserQuestion with `multiSelect: true`** to let the user pick which items to include:
-
-   ```
-   Question: "Which of these items should we include in the plan?"
-   Header: "Scope"
-   multiSelect: true
-   Options: [each discovered item as an option with description]
-   ```
-
-4. **Only proceed to Step 1.4 with the user's selected scope.** Items not selected go into the plan's "Out of Scope" or "Deferred Ideas" section.
+1. Notify user, list discovered gaps/opportunities with brief assessments
+2. `AskUserQuestion(multiSelect: true)` — let user pick which items to include
+3. Unselected items go to "Out of Scope" or "Deferred Ideas"
 
 ### Step 1.4: Design Decisions
 
-**Present findings and gather all design decisions (Question Batch 2).**
-
-Summarize what you found, then **send a notification before asking:**
+Summarize findings. Notify, then use `AskUserQuestion` (Batch 2) — each decision as a separate question with concrete options:
 
 ```bash
-~/.pilot/bin/pilot notify plan_approval "Design Decisions" "<plan_name> — architecture choices need your input" --plan-path "<plan_path>" 2>/dev/null || true
+~/.pilot/bin/pilot notify plan_approval "Design Decisions" "<plan_name> — architecture choices" --plan-path "<plan_path>" 2>/dev/null || true
 ```
 
-Then use AskUserQuestion with all decisions at once.
-
-**After user answers:**
-
-- Incorporate their choices into the plan design
-- Proceed to Step 1.5 — the user will review the full plan at Step 1.8
+Incorporate user choices into plan design, proceed to Step 1.5.
 
 ### Step 1.5: Implementation Planning
 
-**Task Granularity**
-
-Each task should be:
-
-- **Independently testable** — has its own tests that pass without other tasks being complete
-- **Focused** — touches 2-4 files max; more means it should be split
-- **Verifiable** — produces an observable result (test output, API response, UI change)
-
-Split a task if it has multiple unrelated DoD criteria. Merge tasks if one can't be tested without the other. Don't create tasks for setup/boilerplate that have no standalone value — fold them into the first task that uses them.
-
-**For each task, populate:**
-
-- **Dependencies** — Which tasks must complete first? Use `None` for tasks with no ordering requirements.
-- **Verify** — What concrete commands prove this task is done? Include test commands, build commands, or curl/CLI invocations. The implementation phase runs these after completing each task.
+**Task Granularity:** Each task: independently testable, focused (2-4 files max), verifiable. Split if multiple unrelated DoD criteria; merge if one can't be tested without the other. Don't create tasks for setup/boilerplate with no standalone value — fold into the first task that uses them.
 
 **Task Structure:**
 
 ```markdown
 ### Task N: [Component Name]
 
-**Objective:** [1-2 sentences describing what to build]
-
-**Dependencies:** [None | Task X, Task Y — tasks that must complete before this one]
+**Objective:** [1-2 sentences]
+**Dependencies:** [None | Task X, Task Y]
 
 **Files:**
-
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py`
 - Test: `tests/exact/path/to/test.py`
 
 **Key Decisions / Notes:**
-
-- [Technical approach or algorithm to use]
-- [Which existing pattern to follow, with file:line reference]
-- [Integration points with other tasks or existing code]
+- [Technical approach, pattern to follow with file:line ref]
 
 **Definition of Done:**
-
-- [ ] All tests pass (unit, integration if applicable)
-- [ ] No diagnostics errors (linting, type checking)
-- [ ] [Task-specific criterion with observable outcome]
-- [ ] [Task-specific criterion with observable outcome]
+- [ ] All tests pass
+- [ ] No diagnostics errors
+- [ ] [Verifiable criterion — e.g., "API returns 404 for nonexistent resources"]
 
 **Verify:**
-
-- `uv run pytest tests/path/to/test.py -q` — task-specific tests pass
-- [Additional verification command or check]
+- `uv run pytest tests/path/to/test.py -q`
 ```
 
-**⚠️ DoD criteria must be verifiable.** The verification phase checks each criterion against the actual code and running program. Replace the `[Task-specific criterion]` placeholders with criteria that can be checked with a specific test, command, or observation.
+**DoD must be verifiable.** ✅ "GET /api/users?role=admin returns only admin users" ❌ "Feature works correctly"
 
-✅ Good DoD examples:
+**Zero-context assumption:** Assume implementer knows nothing. Provide exact file paths, explain domain concepts, reference similar patterns.
 
-- "GET /api/users?role=admin returns only admin users"
-- "Form shows validation error when email field is empty"
-- "CLI exits with code 1 and prints usage when no arguments given"
-- "Retry logic attempts 3 times with exponential backoff before failing"
+#### Step 1.5.1: Goal Verification Criteria
 
-❌ Bad DoD (never use these):
-
-- "Feature works correctly"
-- "Edge cases handled appropriately"
-- "Error messages are clear and actionable"
-
-**Zero-context assumption:**
-
-- Assume implementer knows nothing about codebase
-- Provide exact file paths
-- Explain domain concepts
-- List integration points
-- Reference similar patterns in codebase
-
-### Step 1.5.1: Derive Goal Verification Criteria
-
-**After creating tasks, derive goal verification criteria for the `## Goal Verification` section in the plan:**
-
-1. State the goal (from Summary section)
-2. Derive 3-7 observable truths — falsifiable statements from the user's perspective (e.g., "Users can filter observations by project")
-3. For each truth, identify supporting artifacts — specific files that must exist with real implementation (not stubs)
-4. Identify 2-5 key links — critical connections between components that must be wired (e.g., "FilterComponent onChange → API call with `?project=` parameter")
-
-This section is NOT optional for new plans. Fill it in every time.
+After creating tasks, derive for the `## Goal Verification` section:
+1. State the goal
+2. Derive 3-7 observable truths (falsifiable, user-perspective)
+3. For each truth, identify supporting artifacts (files with real implementation)
+4. Identify 2-5 key links (critical component connections)
 
 ### Step 1.6: Write Full Plan
 
-**Save plan to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+**Save to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
-**Required plan template:**
+**Required sections:**
 
 ```markdown
 # [Feature Name] Implementation Plan
@@ -446,183 +207,68 @@ Created: [Date]
 Status: PENDING
 Approved: No
 Iterations: 0
-Worktree: No
+Worktree: [Yes|No]
 Type: Feature
 
-> **Status Lifecycle:** PENDING → COMPLETE → VERIFIED
-> **Iterations:** Tracks implement→verify cycles (incremented by verify phase)
->
-> - PENDING: Initial state, awaiting implementation
-> - COMPLETE: All tasks implemented
-> - VERIFIED: All checks passed
->
-> **Approval Gate:** Implementation CANNOT proceed until `Approved: Yes`
-> **Worktree:** Set at plan creation (from dispatcher). `Yes` uses git worktree isolation; `No` works directly on current branch (default)
-> **Type:** `Feature` or `Bugfix` — set at planning time, used by dispatcher for routing
-
 ## Summary
-
-**Goal:** [One sentence describing what this builds]
-
-**Architecture:** [2-3 sentences about chosen approach]
-
-**Tech Stack:** [Key technologies/libraries]
+**Goal:** [One sentence]
+**Architecture:** [2-3 sentences]
+**Tech Stack:** [Key technologies]
 
 ## Scope
-
 ### In Scope
-
-- [What WILL be changed/built]
-- [Specific components affected]
-
 ### Out of Scope
 
-- [What will NOT be changed]
-- [Explicit boundaries]
-
-## Prerequisites
-
-- [Any requirements before starting]
-- [Dependencies that must exist]
-- [Environment setup needed]
-
 ## Context for Implementer
+> Write for an implementer who has never seen the codebase.
+- **Patterns to follow:** [file:line references]
+- **Conventions:** [naming, organization, error handling]
+- **Key files:** [important files with descriptions]
+- **Gotchas:** [non-obvious dependencies]
+- **Domain context:** [business logic needed to understand task]
 
-> This section is critical for cross-session continuity. Write it for an implementer who has never seen the codebase.
+## Runtime Environment (only if project has a running service)
+- **Start command / Port / Deploy path / Health check / Restart procedure**
 
-- **Patterns to follow:** [Reference existing file:line that demonstrates the pattern, e.g., "Follow the route handler pattern in `src/routes/users.ts:45`"]
-- **Conventions:** [Naming, file organization, error handling approach used in this project]
-- **Key files:** [Important files the implementer must read first, with brief description of each]
-- **Gotchas:** [Non-obvious dependencies, quirks, things that look wrong but are intentional]
-- **Domain context:** [Business logic or domain concepts needed to understand the task]
-
-## Runtime Environment (if applicable)
-
-> Include this section when the project has a running service, API, or UI.
-> Delete if the project is a library or CLI tool with no long-running process.
-
-- **Start command:** [How to start the service, e.g., `bun worker-service.cjs`]
-- **Port:** [What port it listens on]
-- **Deploy path:** [Where built artifacts are installed, if different from source]
-- **Health check:** [How to verify the service is running, e.g., `curl http://localhost:PORT/health`]
-- **Restart procedure:** [How to restart after code changes]
-
-## Feature Inventory (FOR MIGRATION/REFACTORING ONLY)
-
-> **Include this section when replacing existing code. Delete if not applicable.**
-
-### Files Being Replaced
-
-| Old File       | Functions/Classes      | Mapped to Task |
-| -------------- | ---------------------- | -------------- |
-| `old/file1.py` | `func_a()`, `func_b()` | Task 3         |
-| `old/file2.py` | `ClassX`, `func_c()`   | Task 4, Task 5 |
-
-### Feature Mapping Verification
-
-- [ ] All old files listed above
-- [ ] All functions/classes identified
-- [ ] Every feature has a task number
-- [ ] No features accidentally omitted
-
-**⚠️ If any feature shows "❌ MISSING", add a task before implementation!**
+## Feature Inventory (only for migration/refactoring — see Migration section)
 
 ## Progress Tracking
-
-**MANDATORY: Update this checklist as tasks complete. Change `[ ]` to `[x]`.**
-
-- [ ] Task 1: [Brief summary]
-- [ ] Task 2: [Brief summary]
-- [ ] ...
-
-**Total Tasks:** [Number] | **Completed:** 0 | **Remaining:** [Number]
+- [ ] Task 1: [summary]
+**Total Tasks:** N | **Completed:** 0 | **Remaining:** N
 
 ## Implementation Tasks
-
-### Task 1: [Component Name]
-
-**Objective:** ...
-**Dependencies:** None
-**Files:** ...
-**Key Decisions / Notes:** ...
-**Definition of Done:** ...
-**Verify:** [Concrete commands to verify this task]
-
-### Task 2: [Component Name]
-
-**Objective:** ...
-**Dependencies:** Task 1
-**Files:** ...
-**Key Decisions / Notes:** ...
-**Definition of Done:** ...
-**Verify:** [Concrete commands to verify this task]
+[Tasks from Step 1.5]
 
 ## Testing Strategy
-
-- Unit tests: [What to test in isolation]
-- Integration tests: [What to test together]
-- Manual verification: [Steps to verify manually]
+- Unit / Integration / Manual verification
 
 ## Risks and Mitigations
-
-> Consider: breaking changes, backward compatibility, data loss/migration, performance regression, security implications, state management complexity, cross-component coupling, external dependency failures.
-
-| Risk     | Likelihood   | Impact       | Mitigation                           |
-| -------- | ------------ | ------------ | ------------------------------------ |
-| [Risk 1] | Low/Med/High | Low/Med/High | [Concrete, implementable mitigation] |
-
-**⚠️ Risk mitigations are commitments.** The verification phase (spec-reviewer) will check that every mitigation listed here is actually implemented in code. Write mitigations as concrete, implementable behaviors, not vague statements.
-
-✅ Good: "If selected project not in available list, reset to null (All Projects)"
-❌ Bad: "Handle edge cases appropriately"
+| Risk | Likelihood | Impact | Mitigation |
+⚠️ Mitigations are commitments — verification checks they're implemented.
+✅ "Reset to null when project not in list" ❌ "Handle edge cases"
 
 ## Goal Verification
+### Truths
+### Artifacts
+### Key Links
 
-> Derived from the plan's goal using goal-backward methodology. The spec-reviewer agent verifies these criteria during verification.
-
-### Truths (what must be TRUE for the goal to be achieved)
-
-- [Observable, falsifiable statement from user's perspective]
-- [e.g., "Users can filter observations by project"]
-
-### Artifacts (what must EXIST to support those truths)
-
-- [Specific file path or component that must exist with real implementation]
-- [e.g., "`src/components/ProjectFilter.tsx` — renders filter dropdown"]
-
-### Key Links (critical connections that must be WIRED)
-
-- [Connection between two components that must work]
-- [e.g., "ProjectFilter onChange → API call with `?project=` parameter"]
-
-## Open Questions
-
-- [Any remaining questions for the user]
-- [Decisions deferred to implementation]
-
-### Deferred Ideas
-
-- [Ideas surfaced during discussion that are out of scope for this plan]
+## Open Questions (only if any remain)
+### Deferred Ideas (only if any surfaced)
 ```
 
-### Step 1.7: Plan Verification
+### Step 1.7: Plan Verification — CONDITIONAL
 
-**⛔ THIS STEP IS NON-NEGOTIABLE. You MUST run plan verification before asking for approval.**
+**Run plan-reviewer when:** plan has >3 tasks, OR includes a Feature Inventory (migration), OR has unresolved open questions.
 
-Before presenting the plan to the user, verify it with the `plan-reviewer` agent. This unified agent performs both alignment checking (does the plan match user requirements?) and adversarial review (what could go wrong?) in a single pass.
+**Skip when:** plan has ≤3 tasks with clear scope and no migration — proceed directly to Step 1.8.
 
-#### Resolve Session Path for Findings Persistence
+**When running:**
 
 ```bash
-echo $PILOT_SESSION_ID
+SESS_ID=$(echo $PILOT_SESSION_ID)
 ```
 
-Define output path (replace `<session-id>` with the resolved value):
-- **Reviewer findings:** `~/.pilot/sessions/<session-id>/findings-plan-reviewer.json`
-
-#### Launch Plan Verification
-
-The agent has `background: true` in its definition, so it runs in the background automatically. As a fallback, also set `run_in_background=true`.
+Output path: `~/.pilot/sessions/<SESS_ID>/findings-plan-reviewer.json`
 
 ```
 Task(
@@ -630,97 +276,48 @@ Task(
   run_in_background=true,
   prompt="""
   **Plan file:** <plan-path>
-  **User request:** <original task description from user>
-  **Clarifications:** <any Q&A that clarified requirements>
-  **Output path:** <absolute path to findings-plan-reviewer.json>
+  **User request:** <original task description>
+  **Clarifications:** <any Q&A>
+  **Output path:** <absolute path to findings JSON>
 
-  Review this plan for both alignment with user requirements AND adversarial risks.
-  Check for missing features, scope issues, untested assumptions, and failure modes.
-
-  **IMPORTANT:** Write your final findings JSON to the output_path using the Write tool.
+  Review for alignment with requirements AND adversarial risks.
+  Write findings JSON to output_path using Write tool.
   """
 )
 ```
 
-The agent reads the plan once and does both alignment and adversarial review, persisting a single findings JSON to the session directory for reliable retrieval.
+**⛔ NEVER use `TaskOutput`** to retrieve results — it dumps the full agent transcript into context, wasting thousands of tokens.
 
-#### Collect and Fix Findings
+**Wait for results (bash polling — NOT Read loop):**
 
-**⛔ NEVER use `TaskOutput` to retrieve agent results.** TaskOutput dumps the full verbose agent transcript into context, wasting thousands of tokens. Instead, poll the output file with the Read tool.
+```bash
+OUTPUT_PATH="<findings-path>"
+for i in $(seq 1 30); do [ -f "$OUTPUT_PATH" ] && echo "READY" && break; sleep 10; done
+```
 
-**⚠️ IMPORTANT: Wait between polling attempts.** Run `sleep 10` via Bash before each Read attempt. The agent typically takes 3-7 minutes. Rapid-fire Read calls waste context and produce dozens of "file not found" errors.
+Then Read the file once. If not READY after 5 min, re-launch synchronously.
 
-1. **Wait 10 seconds, then attempt to read the findings file** using the Read tool on the path defined above
-2. **If the file doesn't exist yet** → run `sleep 10` and retry. Repeat up to 30 times (5 minutes total) before considering the agent failed.
-3. **If the file is still missing after 30 retries**, re-launch the agent synchronously (without `run_in_background`) with the same prompt
-4. **When the file is ready**, fix findings by severity: must_fix → should_fix → suggestion
-
-**Severity actions:**
-
-| Severity       | Action                                               |
-| -------------- | ---------------------------------------------------- |
-| **must_fix**   | Fix immediately - update plan before proceeding      |
-| **should_fix** | Fix immediately - update plan before proceeding      |
-| **suggestion** | Incorporate if reasonable, or note in Open Questions |
-
-**Only proceed to Step 1.8 after all must_fix and should_fix issues are resolved.**
+**Fix findings:** must_fix → should_fix immediately. Suggestions if reasonable. Proceed after all must_fix/should_fix resolved.
 
 ### Step 1.8: Get User Approval
 
-**⛔ MANDATORY APPROVAL GATE - This is NON-NEGOTIABLE**
+**⛔ MANDATORY APPROVAL GATE**
 
-**After saving plan:**
-
-0. **Send notification** so the user knows their input is needed:
-
+0. Notify:
    ```bash
-   ~/.pilot/bin/pilot notify plan_approval "Plan Ready for Review" "<plan_name> — your approval is needed to proceed with implementation" --plan-path "<plan_path>" 2>/dev/null || true
+   ~/.pilot/bin/pilot notify plan_approval "Plan Ready for Review" "<plan_name> — approval needed" --plan-path "<plan_path>" 2>/dev/null || true
    ```
 
-1. **Summarize the plan** - Provide a brief overview of:
-   - What will be built (goal)
-   - Key tasks (numbered list)
-   - Tech stack / approach
+1. Summarize: goal, key tasks, approach
 
-2. **Use AskUserQuestion to request approval:**
+2. AskUserQuestion:
+   - "Yes, proceed with implementation" — I've reviewed and it looks good
+   - "No, I need to make changes" — Let me edit first
 
-   ```
-   Question: "Do you approve this plan for implementation?"
-   Header: "Plan Review"
-   Options:
-   - "Yes, proceed with implementation" - I've reviewed the plan and it looks good
-   - "No, I need to make changes" - I want to edit the plan first
-   ```
+   Note: `Worktree:` field was already set at creation time (Step 1.1). Do NOT ask again here.
 
-   Note: The `Worktree:` field was already set at plan creation time (Step 1.1) based on the user's choice from the dispatcher. It does NOT need to be asked again here.
-
-3. **Based on user response:**
-
-   **If user approves (selects "Yes" or any approval option):**
-   - Update `Approved: No` → `Approved: Yes` in the plan file
-   - **Invoke implementation phase:** `Skill(skill='spec-implement', args='<plan-path>')`
-
-   **If user selects "No, I need to make changes":**
-   - Tell user: "Please edit the plan file at `<plan-path>`, then say 'ready' when done"
-   - Wait for user to confirm they're done editing
-   - Re-read the plan file to see their changes
-   - Ask for approval again using AskUserQuestion
-
-   **If user provides OTHER feedback (corrections, config values, clarifications):**
-   - This is NOT approval - they're giving you changes to incorporate
-   - Update the plan with their feedback
-   - Ask for approval AGAIN with a fresh AskUserQuestion
-
-4. **DO NOT proceed to implementation until user explicitly selects "Yes, proceed"**
-
-**⚠️ CRITICAL: Any response other than selecting "Yes, proceed with implementation" is NOT approval. Config feedback, threshold changes, clarifications = update plan, then re-ask.**
-
-**⚠️ CRITICAL: Claude handles the `Approved:` field update - user never edits it manually**
-
----
-
-## Context Management
-
-Context is managed automatically by auto-compaction. No agent action needed — just keep working.
+3. **If "Yes":** Set `Approved: Yes`, invoke `Skill(skill='spec-implement', args='<plan-path>')`
+   **If "No":** Tell user to edit plan, wait for "ready", re-read, ask again
+   **If other feedback (config values, threshold changes, clarifications):** This is NOT approval — incorporate changes into plan, then re-ask with fresh AskUserQuestion.
 
 ARGUMENTS: $ARGUMENTS

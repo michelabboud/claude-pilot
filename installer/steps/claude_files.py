@@ -16,6 +16,7 @@ from installer.downloads import (
     get_repo_files,
 )
 from installer.steps.base import BaseStep
+from installer.steps.config_migration import migrate_model_config
 from installer.steps.settings_merge import (
     cleanup_managed_files,
     load_manifest,
@@ -377,6 +378,7 @@ class ClaudeFilesStep(BaseStep):
             self._update_hooks_config(home_pilot_plugin_dir)
 
         self._merge_app_config()
+        migrate_model_config()
         self._cleanup_stale_rules(ctx)
         self._save_pilot_manifest(ctx)
 
