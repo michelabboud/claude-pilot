@@ -171,7 +171,7 @@ const WorkflowSteps = () => {
           <h3 className="text-lg font-semibold text-foreground mb-5 text-center">
             All Commands
           </h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             <div className="rounded-xl p-4 border border-border/40 bg-background/30">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -190,16 +190,6 @@ const WorkflowSteps = () => {
               <p className="text-xs text-muted-foreground">
                 Syncs rules and standards with your codebase — explores
                 patterns, discovers conventions, creates new skills.
-              </p>
-            </div>
-            <div className="rounded-xl p-4 border border-border/40 bg-background/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Brain className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Teams</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Teams dashboard — push, install, and browse shared rules,
-                skills, and commands. Automatic versioning via private Git repo.
               </p>
             </div>
             <div className="rounded-xl p-4 border border-border/40 bg-background/30">

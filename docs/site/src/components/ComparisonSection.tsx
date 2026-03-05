@@ -1,17 +1,93 @@
 import {
-  Clock,
-  Zap,
-  AlertTriangle,
-  CheckCircle2,
+  Activity,
   Brain,
-  FileCode2,
-  ShieldCheck,
+  Eye,
+  Infinity as InfinityIcon,
+  Shield,
+  Search,
+  Cpu,
+  GitBranch,
 } from "lucide-react";
 import { useInView } from "@/hooks/use-in-view";
 
+const agents = [
+  {
+    name: "HOOKS",
+    role: "Quality Enforcer",
+    icon: Activity,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+    borderColor: "border-primary/30",
+    desc: "Auto-lints, formats, and type-checks on every file edit. Catches issues before they compile, not after.",
+  },
+  {
+    name: "VERIFIER",
+    role: "Code Reviewer",
+    icon: Eye,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-400/10",
+    borderColor: "border-emerald-400/30",
+    desc: "Independent sub-agent that reviews code against the plan. Catches gaps that tests alone miss.",
+  },
+  {
+    name: "MEMORY",
+    role: "Context Keeper",
+    icon: Brain,
+    color: "text-violet-400",
+    bgColor: "bg-violet-400/10",
+    borderColor: "border-violet-400/30",
+    desc: "Persistent observations across sessions. Past decisions, debugging context, and learnings — always available.",
+  },
+  {
+    name: "CONTEXT",
+    role: "Session Manager",
+    icon: InfinityIcon,
+    color: "text-amber-400",
+    bgColor: "bg-amber-400/10",
+    borderColor: "border-amber-400/30",
+    desc: "Captures plan state before compaction, restores it after. Work continues exactly where it left off.",
+  },
+  {
+    name: "PLANNER",
+    role: "Architect",
+    icon: Search,
+    color: "text-sky-400",
+    bgColor: "bg-sky-400/10",
+    borderColor: "border-sky-400/30",
+    desc: "Explores your codebase with semantic search, writes detailed specs, and waits for your approval.",
+  },
+  {
+    name: "IMPLEMENTER",
+    role: "TDD Executor",
+    icon: Shield,
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/10",
+    borderColor: "border-rose-400/30",
+    desc: "Implements each task with strict TDD. Full access to quality hooks, rules, and project context.",
+  },
+  {
+    name: "STANDARDS",
+    role: "Knowledge Base",
+    icon: Cpu,
+    color: "text-cyan-400",
+    bgColor: "bg-cyan-400/10",
+    borderColor: "border-cyan-400/30",
+    desc: "Coding standards activated by file type — API design, accessibility, components, testing, and more.",
+  },
+  {
+    name: "WORKTREE",
+    role: "Isolation Engine",
+    icon: GitBranch,
+    color: "text-orange-400",
+    bgColor: "bg-orange-400/10",
+    borderColor: "border-orange-400/30",
+    desc: "Runs spec work in isolated git worktrees. Experiment safely, squash merge when verified, discard if not.",
+  },
+];
+
 const ComparisonSection = () => {
   const [headerRef, headerInView] = useInView<HTMLDivElement>();
-  const [cardsRef, cardsInView] = useInView<HTMLDivElement>();
+  const [gridRef, gridInView] = useInView<HTMLDivElement>();
 
   return (
     <section id="problem" className="py-16 lg:py-24 px-4 sm:px-6 relative">
@@ -39,156 +115,41 @@ const ComparisonSection = () => {
           </p>
         </div>
 
-        {/* Before & After Terminal Comparison */}
+        {/* Agent Roster Grid */}
         <div
-          ref={cardsRef}
-          className={`grid md:grid-cols-2 gap-6 sm:gap-8 stagger-children ${cardsInView ? "in-view" : ""}`}
+          ref={gridRef}
+          className={`grid sm:grid-cols-2 lg:grid-cols-4 gap-4 ${gridInView ? "animate-fade-in-up" : "opacity-0"}`}
         >
-          {/* Without Pilot Shell */}
-          <div className="glass rounded-2xl p-5 sm:p-6 relative border-slate-500/20 hover:border-slate-500/30 transition-colors">
-            <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-slate-500/20 text-slate-400 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
-              Without Structure
-            </div>
-
-            {/* Terminal window */}
-            <div className="mt-8 space-y-3">
-              {/* Terminal header */}
-              <div className="bg-background/80 rounded-t-lg px-4 py-2 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-slate-500/60" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                  <div className="w-3 h-3 rounded-full bg-blue-500/60" />
+          {agents.map((agent) => {
+            const Icon = agent.icon;
+            return (
+              <div
+                key={agent.name}
+                className={`group rounded-2xl p-5 border ${agent.borderColor} bg-card/30 backdrop-blur-sm
+                  hover:bg-card/50 hover:-translate-y-1 transition-all duration-300`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className={`w-10 h-10 ${agent.bgColor} rounded-xl flex items-center justify-center
+                    group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <Icon className={`h-5 w-5 ${agent.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground font-mono tracking-wide">
+                      {agent.name}
+                    </h3>
+                    <span className={`text-[10px] font-medium ${agent.color}`}>
+                      {agent.role}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground ml-2 font-mono">
-                  terminal
-                </span>
+                <p className="text-xs text-muted-foreground leading-relaxed group-hover:text-foreground/70 transition-colors">
+                  {agent.desc}
+                </p>
               </div>
-
-              {/* Terminal content */}
-              <div className="bg-background/50 rounded-b-lg p-4 font-mono text-xs sm:text-sm space-y-3">
-                <div>
-                  <span className="text-blue-400">you:</span>
-                  <span className="text-muted-foreground ml-2">
-                    Add user authentication
-                  </span>
-                </div>
-                <div>
-                  <span className="text-primary">claude:</span>
-                  <span className="text-muted-foreground ml-2">
-                    What framework? What patterns?
-                  </span>
-                </div>
-                <div className="text-slate-400/80 flex items-center gap-2 text-xs">
-                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-                  <span>No context from previous sessions</span>
-                </div>
-                <div className="text-slate-400/80 flex items-center gap-2 text-xs">
-                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-                  <span>No codebase knowledge</span>
-                </div>
-                <div className="border-t border-border/50 pt-3">
-                  <span className="text-muted-foreground">
-                    ...writes code without tests...
-                  </span>
-                </div>
-                <div className="text-slate-400/80 flex items-center gap-2 text-xs">
-                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-                  <span>No TDD enforcement</span>
-                </div>
-                <div className="border-t border-border/50 pt-3">
-                  <span className="text-muted-foreground">
-                    ...commits with issues...
-                  </span>
-                </div>
-                <div className="text-slate-400/80 flex items-center gap-2 text-xs">
-                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-                  <span>No quality checks or formatting</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Result */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-sm">
-              <Clock className="h-4 w-4" />
-              <span>Inconsistent. Untested. Risky.</span>
-            </div>
-          </div>
-
-          {/* With Pilot Shell */}
-          <div className="glass rounded-2xl p-5 sm:p-6 relative border-primary/20 hover:border-primary/30 transition-colors">
-            <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-primary/20 text-primary px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
-              With Pilot Shell
-            </div>
-
-            {/* Terminal window */}
-            <div className="mt-8 space-y-3">
-              {/* Terminal header */}
-              <div className="bg-background/80 rounded-t-lg px-4 py-2 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-slate-500/60" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                  <div className="w-3 h-3 rounded-full bg-blue-500/60" />
-                </div>
-                <span className="text-xs text-muted-foreground ml-2 font-mono">
-                  pilot
-                </span>
-              </div>
-
-              {/* Terminal content */}
-              <div className="bg-background/50 rounded-b-lg p-4 font-mono text-xs sm:text-sm space-y-2.5">
-                {/* /spec command */}
-                <div>
-                  <span className="text-primary">/spec</span>
-                  <span className="text-muted-foreground ml-2">
-                    "Add user authentication"
-                  </span>
-                </div>
-                {/* Context injection */}
-                <div className="text-primary/80 flex items-center gap-2 text-xs">
-                  <Brain className="h-3 w-3 flex-shrink-0" />
-                  <span>Persistent memory: Context injected</span>
-                </div>
-                <div className="text-primary/80 flex items-center gap-2 text-xs">
-                  <FileCode2 className="h-3 w-3 flex-shrink-0" />
-                  <span>Rules + Standards loaded</span>
-                </div>
-                <div className="border-t border-border/50 pt-2.5 text-xs">
-                  <span className="text-primary">→ Planning:</span>
-                  <span className="text-muted-foreground ml-1">
-                    Exploring codebase...
-                  </span>
-                </div>
-                <div className="text-primary/80 flex items-center gap-2 text-xs">
-                  <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                  <span>Plan created → Waiting for approval</span>
-                </div>
-                <div className="border-t border-border/50 pt-2.5 text-xs">
-                  <span className="text-primary">→ Implementing:</span>
-                  <span className="text-muted-foreground ml-1">
-                    TDD enforced
-                  </span>
-                </div>
-                <div className="text-primary/80 flex items-center gap-2 text-xs">
-                  <ShieldCheck className="h-3 w-3 flex-shrink-0" />
-                  <span>Quality hooks: linted, formatted, typed</span>
-                </div>
-                <div className="border-t border-border/50 pt-2.5 text-xs">
-                  <span className="text-primary">→ Verifying:</span>
-                  <span className="text-primary ml-1">All checks passed ✓</span>
-                </div>
-                <div className="text-primary/80 flex items-center gap-2 text-xs">
-                  <Zap className="h-3 w-3 flex-shrink-0" />
-                  <span>Complete! Anything else?</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Result */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-primary text-sm">
-              <Zap className="h-4 w-4" />
-              <span>Grab a coffee. Come back to verified code.</span>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

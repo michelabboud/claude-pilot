@@ -21,7 +21,7 @@ const insideItems: InsideItem[] = [
   {
     icon: Workflow,
     title: "Spec-Driven Development",
-    description: "Plan → Approve → Implement → Verify",
+    description: "Plan → Implement → Verify",
     summary:
       "A structured workflow with human review gates, sequential TDD, mandatory verification, and independent code review. Loops back automatically if any check fails.",
   },
