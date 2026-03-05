@@ -2,6 +2,12 @@
 
 All notable changes to Pilot Shell will be documented in this file.
 
+## [7.1.5] - 2026-03-05
+
+### Bug Fixes
+
+- Make hooks read-only, stop blocking plan mode, silence hook errors, optimize git statusline
+
 ## [7.1.4] - 2026-03-05
 
 ### Bug Fixes
